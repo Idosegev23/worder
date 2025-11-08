@@ -101,17 +101,55 @@ export default function GameScreen() {
     }
   }
 
-  const moveToNextWord = () => {
+  const checkIfCategoryCompleted = async () => {
+    if (!user) return false
+    
+    // בדיקה אם סיימנו את כל המילים בקטגוריה
+    const allProgress = await db.progress.where({ userId: user.id }).toArray()
+    
+    const completedWordsInCategory = new Set<number>()
+    words.forEach(word => {
+      if (word.id) {
+        const hasCorrect = allProgress.some(p => p.wordId === word.id && p.isCorrect)
+        if (hasCorrect) {
+          completedWordsInCategory.add(word.id)
+        }
+      }
+    })
+    
+    return completedWordsInCategory.size === words.length
+  }
+
+  const moveToNextWord = async () => {
     setFeedback(null)
     setAnswer('')
     setAttempts(0)
     setWrongAnswers([])
     setAudioPlayed(false)
     
-    if (currentIndex < words.length - 1) {
+    // בדיקה אם סיימנו את כל המילים בקטגוריה
+    const categoryCompleted = await checkIfCategoryCompleted()
+    
+    if (categoryCompleted) {
+      // סיימנו את הקטגוריה! עובר למתנות
+      console.log('✅ Category completed! Going to rewards...')
+      nav('/rewards')
+    } else if (currentIndex < words.length - 1) {
       setCurrentIndex(currentIndex + 1)
     } else {
-      nav('/categories')
+      // הגענו לסוף הרשימה אבל עדיין יש מילים שלא סיימנו
+      // חוזרים למילה הראשונה שלא סיימנו
+      const allProgress = await db.progress.where({ userId: user.id }).toArray()
+      let nextIndex = 0
+      for (let i = 0; i < words.length; i++) {
+        if (!words[i].id) continue
+        const hasCorrect = allProgress.some(p => p.wordId === words[i].id && p.isCorrect)
+        if (!hasCorrect) {
+          nextIndex = i
+          break
+        }
+      }
+      setCurrentIndex(nextIndex)
     }
   }
 
@@ -160,14 +198,8 @@ export default function GameScreen() {
       // אפקט חגיגי
       await triggerCelebration(document.getElementById('game-card') || undefined)
 
-      setTimeout(() => {
-        // בדוק אם סיימנו את הקטגוריה
-        if (currentIndex >= words.length - 1) {
-          // סיימנו קטגוריה! עובר למתנות
-          nav('/rewards')
-        } else {
-          moveToNextWord()
-        }
+      setTimeout(async () => {
+        await moveToNextWord()
       }, 3000)
     } else {
       // תשובה שגויה!
@@ -194,13 +226,8 @@ export default function GameScreen() {
         })
 
         // מעבר למילה הבאה אחרי 5 שניות
-        setTimeout(() => {
-          if (currentIndex >= words.length - 1) {
-            // סיימנו קטגוריה! עובר למתנות
-            nav('/rewards')
-          } else {
-            moveToNextWord()
-          }
+        setTimeout(async () => {
+          await moveToNextWord()
         }, 5000)
       } else {
         // ניסיון ראשון - תן לו לנסות שוב

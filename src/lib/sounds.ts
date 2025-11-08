@@ -14,10 +14,12 @@ const SOUND_URLS = {
 // יצירת צלילים בצורה בטוחה
 function createSound(src: string) {
   try {
-    return new Howl({ 
-      src: [src], 
+    return new Howl({
+      src: [src],
       volume: 0.3,
-      html5: true,
+      html5: false, // שימוש ב-Web Audio API במקום HTML5
+      pool: 3, // מקסימום 3 משחקים במקביל
+      preload: true,
       onloaderror: () => {
         console.log(`Sound could not load (optional)`)
       }
@@ -40,7 +42,7 @@ export const sfx = {
 export function play(name: keyof typeof sfx) {
   try {
     const sound = sfx[name]
-    if (sound) {
+    if (sound && sound.state() === 'loaded') {
       sound.play()
     }
   } catch (e) {
