@@ -157,12 +157,8 @@ export default function CategoryGrid() {
       }
     }
     
-    // טען נתונים בהתחלה
+    // טען נתונים רק פעם אחת בכניסה למסך
     loadCategoriesWithProgress()
-    
-    // רענן כל פעם שחוזרים למסך (למשל אחרי משחק)
-    const interval = setInterval(loadCategoriesWithProgress, 2000)
-    return () => clearInterval(interval)
   }, [user, nav])
 
   return (
