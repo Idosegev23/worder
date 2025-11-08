@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg text-text font-heebo;
+}
+
+/* Celebration Effects - הצלחה! */
+@keyframes celebrate {
+  0%, 100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
+  25% { transform: scale(1.1) rotate(-5deg); box-shadow: 0 0 50px rgba(16, 185, 129, 0.8); }
+  50% { transform: scale(1.15) rotate(5deg); box-shadow: 0 0 70px rgba(16, 185, 129, 1); }
+  75% { transform: scale(1.1) rotate(-3deg); box-shadow: 0 0 50px rgba(16, 185, 129, 0.8); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+@keyframes glow {
+  0%, 100% { 
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.7); 
+    border: 3px solid rgba(16, 185, 129, 0.5);
+  }
+  50% { 
+    box-shadow: 0 0 60px rgba(16, 185, 129, 1), 0 0 90px rgba(16, 185, 129, 0.8); 
+    border: 3px solid rgba(16, 185, 129, 1);
+  }
+}
+
+@keyframes victory-dance {
+  0%, 100% { 
+    transform: translateY(0) rotate(0deg); 
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(124, 58, 237, 0.1));
+  }
+  25% { 
+    transform: translateY(-10px) rotate(-3deg); 
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(124, 58, 237, 0.2));
+  }
+  50% { 
+    transform: translateY(-20px) rotate(3deg); 
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(124, 58, 237, 0.3));
+  }
+  75% { 
+    transform: translateY(-10px) rotate(-2deg); 
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(124, 58, 237, 0.2));
+  }
+}
+
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes vhs-glitch {
+  0%, 100% { 
+    transform: translateX(0); 
+    filter: hue-rotate(0deg); 
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  }
+  33% { 
+    transform: translateX(-2px); 
+    filter: hue-rotate(90deg); 
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+  }
+  66% { 
+    transform: translateX(2px); 
+    filter: hue-rotate(180deg); 
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+  }
+}
+
+@keyframes echo {
+  0% { opacity: 1; transform: translateX(0); }
+  50% { opacity: 0.5; transform: translateX(10px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.celebrate {
+  animation: celebrate 0.6s ease-in-out;
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background-size: 1000px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.glow {
+  animation: glow 1s ease-in-out infinite;
+}
+
+.victory-dance {
+  animation: victory-dance 0.8s ease-in-out;
+}
+
+.ripple {
+  animation: ripple 0.6s ease-in-out;
+}
+
+.vhs {
+  animation: vhs-glitch 0.3s linear 3;
+}
+
+.echo {
+  animation: echo 0.5s ease-in-out 2;
+}
+
+.cursor-magnet {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="16" cy="16" r="10" fill="red"/></svg>'), auto;
+}
+
+/* Particles container */
+.particles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.particle {
+  position: absolute;
+  pointer-events: none;
+}
+
