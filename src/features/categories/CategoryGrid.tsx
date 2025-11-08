@@ -20,7 +20,7 @@ export default function CategoryGrid() {
   const logout = useAuth(s => s.logout)
   const nav = useNavigate()
   const avatarRef = useRef<HTMLDivElement>(null)
-  const { stars, maxStreak, achievements } = useGame()
+  const { achievements } = useGame()
   const cardsRef = useRef<(HTMLDivElement | null)[]>([])
   const [showAchievement, setShowAchievement] = useState<typeof achievements[0] | null>(null)
 

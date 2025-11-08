@@ -1,4 +1,4 @@
-import { db, Category, Word, Profile, Reward } from './db'
+import { db, Category, Word, Reward } from './db'
 import { nanoid } from 'nanoid/non-secure'
 
 // קטגוריות

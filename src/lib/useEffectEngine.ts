@@ -1,4 +1,4 @@
-import { celebratoryEffects, mischievousEffects, Effect } from './effectsRegistry'
+import { celebratoryEffects, mischievousEffects } from './effectsRegistry'
 
 function pickWeighted<T extends { weight: number }>(items: T[]): T {
   const sum = items.reduce((a, i) => a + i.weight, 0)
