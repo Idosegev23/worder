@@ -1,14 +1,14 @@
 import { Howl } from 'howler'
 
-// צלילים חינמיים מהאינטרנט - Pixabay Free Sounds
-// רישיון: Creative Commons CC0 (שימוש חופשי)
+// צלילים חינמיים מ-Freesound.org
+// רישיון: Creative Commons (שימוש חופשי)
 const SOUND_URLS = {
-  correct: 'https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3', // Success sound
-  wrong: 'https://cdn.pixabay.com/audio/2022/03/10/audio_4dedf2bf94.mp3', // Wrong buzzer
-  boing: 'https://cdn.pixabay.com/audio/2021/08/09/audio_bb630cc098.mp3', // Boing
-  victory: 'https://cdn.pixabay.com/audio/2023/11/06/audio_0b20c10806.mp3', // Victory fanfare
-  cheer: 'https://cdn.pixabay.com/audio/2023/08/28/audio_3a68e30421.mp3', // Crowd cheer
-  sparkle: 'https://cdn.pixabay.com/audio/2022/03/24/audio_c8cb0b5b54.mp3', // Sparkle magic
+  correct: 'https://freesound.org/data/previews/320/320655_5260872-lq.mp3', // Success bell
+  wrong: 'https://freesound.org/data/previews/415/415209_5121236-lq.mp3', // Wrong buzz
+  boing: 'https://freesound.org/data/previews/341/341695_5858296-lq.mp3', // Boing
+  victory: 'https://freesound.org/data/previews/270/270319_5123851-lq.mp3', // Victory fanfare
+  cheer: 'https://freesound.org/data/previews/277/277203_3263906-lq.mp3', // Small crowd
+  sparkle: 'https://freesound.org/data/previews/415/415763_6378373-lq.mp3', // Magic sparkle
 }
 
 // יצירת צלילים בצורה בטוחה
