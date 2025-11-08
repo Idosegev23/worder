@@ -5,6 +5,7 @@ import { useAuth } from '../../store/useAuth'
 import { useGame } from '../../store/useGame'
 import { triggerCelebration, triggerFunnyEffect } from '../../lib/useEffectEngine'
 import { play } from '../../lib/sounds'
+import { speakWord } from '../../lib/openai-tts'
 import { Card } from '../../shared/ui/Card'
 import { Input } from '../../shared/ui/Input'
 import { Button } from '../../shared/ui/Button'
@@ -19,7 +20,11 @@ export default function GameScreen() {
   const [words, setWords] = useState<Word[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answer, setAnswer] = useState('')
-  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | 'show-answer' | null>(null)
+  const [attempts, setAttempts] = useState(0)
+  const [wrongAnswers, setWrongAnswers] = useState<string[]>([])
+  const [audioPlayed, setAudioPlayed] = useState(false)
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false)
 
   const currentWord = words[currentIndex]
 
@@ -82,6 +87,34 @@ export default function GameScreen() {
 
   const normalizeAnswer = (str: string) => str.trim().toLowerCase()
 
+  const handlePlayAudio = async () => {
+    if (!currentWord || isPlayingAudio) return
+    
+    try {
+      setIsPlayingAudio(true)
+      setAudioPlayed(true) // מעקב שלחצו על השמעה
+      await speakWord(currentWord.en)
+    } catch (error) {
+      console.error('Audio playback failed:', error)
+    } finally {
+      setIsPlayingAudio(false)
+    }
+  }
+
+  const moveToNextWord = () => {
+    setFeedback(null)
+    setAnswer('')
+    setAttempts(0)
+    setWrongAnswers([])
+    setAudioPlayed(false)
+    
+    if (currentIndex < words.length - 1) {
+      setCurrentIndex(currentIndex + 1)
+    } else {
+      nav('/categories')
+    }
+  }
+
   const checkAnswer = async () => {
     if (!currentWord || !answer.trim()) return
 
@@ -90,20 +123,8 @@ export default function GameScreen() {
     const given = normalizeAnswer(answer)
 
     const isCorrect = [canonical, ...variants].includes(given)
-
-    // שמירת התקדמות ב-DB
-    const progressEntry = {
-      userId: user!.id,
-      wordId: currentWord.id!,
-      isCorrect,
-      attempts: 1,
-      lastAnswer: answer,
-      answeredAt: Date.now()
-    }
-    
-    console.log('Saving progress:', progressEntry)
-    await db.progress.add(progressEntry)
-    console.log('Progress saved successfully')
+    const currentAttempts = attempts + 1
+    setAttempts(currentAttempts)
 
     if (isCorrect) {
       // תשובה נכונה!
@@ -111,6 +132,18 @@ export default function GameScreen() {
       setFeedback('correct')
       incrementScore()
       incrementStreak()
+
+      // שמירת התקדמות ב-DB
+      await db.progress.add({
+        userId: user!.id,
+        wordId: currentWord.id!,
+        isCorrect: true,
+        attempts: currentAttempts,
+        lastAnswer: answer,
+        wrongAnswers: wrongAnswers,
+        audioPlayed: audioPlayed,
+        answeredAt: Date.now()
+      })
 
       // בדיקת הישגים
       const newStreak = streak + 1
@@ -124,34 +157,48 @@ export default function GameScreen() {
         unlockAchievement('streak_20', 'רצף של 20! 🚀', 'ענית נכון על 20 מילים ברצף! מדהים!', '🚀')
       }
 
-      // תמיד אפקט חגיגי משוגע! (לא רק 65%)
+      // אפקט חגיגי
       await triggerCelebration(document.getElementById('game-card') || undefined)
 
-      // המתנה ארוכה יותר כדי לראות את האפקט
-      setTimeout(async () => {
-        setFeedback(null)
-        setAnswer('')
-        if (currentIndex < words.length - 1) {
-          setCurrentIndex(currentIndex + 1)
-        } else {
-          // סיום קטגוריה! תמיד חוזרים לבחירת קטגוריות
-          // מסך הקטגוריות יבדוק אם סיימנו הכול ויעביר למתנות אם צריך
-          nav('/categories')
-        }
-      }, 3000)
+      setTimeout(moveToNextWord, 3000)
     } else {
       // תשובה שגויה!
+      const newWrongAnswers = [...wrongAnswers, answer]
+      setWrongAnswers(newWrongAnswers)
+      
       play('wrong')
-      setFeedback('wrong')
       resetStreak()
 
-      // תמיד אפקט שובב!
-      await triggerFunnyEffect(document.getElementById('game-card') || undefined)
+      if (currentAttempts >= 2) {
+        // אחרי 2 ניסיונות - מציגים את התשובה
+        setFeedback('show-answer')
+        
+        // שמירת התקדמות ב-DB
+        await db.progress.add({
+          userId: user!.id,
+          wordId: currentWord.id!,
+          isCorrect: false,
+          attempts: currentAttempts,
+          lastAnswer: answer,
+          wrongAnswers: newWrongAnswers,
+          audioPlayed: audioPlayed,
+          answeredAt: Date.now()
+        })
 
-      // הסרת הפידבק אחרי זמן קצר
-      setTimeout(() => {
-        setFeedback(null)
-      }, 2000)
+        // מעבר למילה הבאה אחרי 5 שניות
+        setTimeout(moveToNextWord, 5000)
+      } else {
+        // ניסיון ראשון - תן לו לנסות שוב
+        setFeedback('wrong')
+        
+        // אפקט עדין
+        await triggerFunnyEffect(document.getElementById('game-card') || undefined)
+
+        setTimeout(() => {
+          setFeedback(null)
+          setAnswer('') // ניקוי התשובה
+        }, 2000)
+      }
     }
   }
 
@@ -222,9 +269,32 @@ export default function GameScreen() {
             </button>
           </div>
 
-        {/* המילה באנגלית */}
-        <div className="word-text text-5xl font-bold text-center mb-8 py-8">
-          {currentWord.en}
+        {/* המילה באנגלית + כפתור השמעה */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="word-text text-5xl font-bold">
+              {currentWord.en}
+            </div>
+            <button
+              onClick={handlePlayAudio}
+              disabled={isPlayingAudio}
+              className={`p-4 rounded-full transition-all ${
+                isPlayingAudio 
+                  ? 'bg-primary/50 animate-pulse' 
+                  : audioPlayed 
+                  ? 'bg-accent text-white hover:scale-110'
+                  : 'bg-sky text-white hover:scale-110'
+              }`}
+              title="השמע את המילה"
+            >
+              <span className="text-3xl">{isPlayingAudio ? '🔊' : '🔉'}</span>
+            </button>
+          </div>
+          {attempts > 0 && (
+            <div className="text-sm text-muted">
+              ניסיון {attempts} מתוך 2
+            </div>
+          )}
         </div>
 
         {/* שדה תשובה */}
@@ -241,12 +311,32 @@ export default function GameScreen() {
         {/* פידבק */}
         {feedback === 'correct' && (
           <div className="text-accent text-center text-3xl font-bold animate-pulse bg-accent/20 py-4 rounded-xl">
-            ✓ תשובה נכונה! כל הכבוד! 🎉
+            🎉 תשובה נכונה! כל הכבוד! ⭐
           </div>
         )}
         {feedback === 'wrong' && (
-          <div className="text-danger text-center text-3xl font-bold animate-pulse bg-danger/20 py-4 rounded-xl">
-            ✗ אופס! נסה שוב 😅
+          <div className="text-orange-500 text-center text-2xl font-bold bg-orange-100 py-4 rounded-xl">
+            💭 לא בדיוק... נסה שוב! אתה יכול! 💪
+          </div>
+        )}
+        {feedback === 'show-answer' && (
+          <div className="bg-gradient-to-r from-blue-100 to-purple-100 py-6 px-4 rounded-xl border-2 border-blue-300">
+            <div className="text-center mb-3">
+              <div className="text-2xl font-bold text-blue-700 mb-2">
+                💡 התשובה הנכונה היא:
+              </div>
+              <div className="text-4xl font-bold text-purple-600 mb-2">
+                {currentWord.he}
+              </div>
+              {currentWord.altHe && currentWord.altHe.length > 0 && (
+                <div className="text-sm text-muted mt-2">
+                  תשובות נוספות: {currentWord.altHe.join(', ')}
+                </div>
+              )}
+              <div className="text-sm text-blue-600 mt-3">
+                עובר למילה הבאה... ✨
+              </div>
+            </div>
           </div>
         )}
 

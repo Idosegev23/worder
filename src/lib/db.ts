@@ -39,6 +39,8 @@ export interface Progress {
   isCorrect: boolean
   attempts: number
   lastAnswer?: string
+  wrongAnswers?: string[] // כל התשובות השגויות
+  audioPlayed?: boolean // האם לחץ על כפתור ההשמעה
   answeredAt: number
 }
 

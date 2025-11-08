@@ -235,34 +235,22 @@ export const celebratoryEffects: Effect[] = [
   }
 ]
 
-// אפקטים שובבים - לתשובות שגויות!
+// אפקטים עדינים - לתשובות שגויות (ללא רעידות ואפקטים מטרידים)
 export const mischievousEffects: Effect[] = [
   {
-    key: 'flipScreen',
-    weight: 1,
-    safe: false,
-    run: async ({ root }) => {
-      gsap.to(root, { rotate: 180, duration: 0.25, yoyo: true, repeat: 1, ease: 'power2.inOut' })
-      await sleep(600)
-    }
-  },
-  {
-    key: 'invertColors',
-    weight: 2,
-    safe: false,
-    run: async ({ root }) => {
-      root.style.filter = 'invert(1)'
-      await sleep(800)
-      root.style.filter = ''
-    }
-  },
-  {
-    key: 'shake',
+    key: 'gentlePulse',
     weight: 3,
     safe: true,
     run: async ({ root }) => {
-      gsap.fromTo(root, { x: -8 }, { x: 8, duration: 0.06, repeat: 9, yoyo: true })
-      await sleep(600)
+      // פעימה עדינה - ללא רעידה
+      gsap.to(root, { 
+        scale: 1.03, 
+        duration: 0.3, 
+        yoyo: true, 
+        repeat: 2,
+        ease: 'power1.inOut' 
+      })
+      await sleep(1000)
     }
   },
   {
@@ -289,13 +277,13 @@ export const mischievousEffects: Effect[] = [
     }
   },
   {
-    key: 'vhsGlitch',
+    key: 'fadeEffect',
     weight: 2,
-    safe: false,
+    safe: true,
     run: async ({ root }) => {
-      root.classList.add('vhs')
+      // דהייה עדינה
+      gsap.to(root, { opacity: 0.6, duration: 0.3, yoyo: true, repeat: 1 })
       await sleep(700)
-      root.classList.remove('vhs')
     }
   },
   {

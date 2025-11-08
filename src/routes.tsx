@@ -12,6 +12,7 @@ import UsersTable from './features/admin/UsersTable'
 import RewardsTable from './features/admin/RewardsTable'
 import BackupRestore from './features/admin/BackupRestore'
 import ProgressTable from './features/admin/ProgressTable'
+import ErrorsTable from './features/admin/ErrorsTable'
 
 export default function RoutesView() {
   return useRoutes([
@@ -28,6 +29,7 @@ export default function RoutesView() {
     { path: '/admin/rewards', element: <RewardsTable /> },
     { path: '/admin/backup', element: <BackupRestore /> },
     { path: '/admin/progress', element: <ProgressTable /> },
+    { path: '/admin/errors', element: <ErrorsTable /> },
   ])
 }
 
