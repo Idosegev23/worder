@@ -121,6 +121,8 @@ export default function GameScreen() {
   }
 
   const moveToNextWord = async () => {
+    if (!user) return
+    
     setFeedback(null)
     setAnswer('')
     setAttempts(0)
