@@ -1,19 +1,39 @@
 import { Howl } from 'howler'
 
+// יצירת צלילים בצורה בטוחה - אם הקובץ לא קיים, לא יהיה שגיאה
+function createSound(src: string) {
+  try {
+    return new Howl({ 
+      src: [src], 
+      volume: 0.3,
+      html5: true,
+      onloaderror: () => {
+        console.log(`Sound file not found: ${src} (optional)`)
+      }
+    })
+  } catch (e) {
+    console.log(`Could not load sound: ${src}`)
+    return null
+  }
+}
+
 export const sfx = {
-  correct: new Howl({ src: ['/sfx/correct.mp3'], volume: 0.3 }),
-  wrong: new Howl({ src: ['/sfx/wrong.mp3'], volume: 0.3 }),
-  boing: new Howl({ src: ['/sfx/boing.mp3'], volume: 0.3 }),
-  victory: new Howl({ src: ['/sfx/victory.mp3'], volume: 0.3 }),
-  cheer: new Howl({ src: ['/sfx/cheer.mp3'], volume: 0.3 }),
-  sparkle: new Howl({ src: ['/sfx/sparkle.mp3'], volume: 0.3 }),
+  correct: createSound('/sfx/correct.mp3'),
+  wrong: createSound('/sfx/wrong.mp3'),
+  boing: createSound('/sfx/boing.mp3'),
+  victory: createSound('/sfx/victory.mp3'),
+  cheer: createSound('/sfx/cheer.mp3'),
+  sparkle: createSound('/sfx/sparkle.mp3'),
 }
 
 export function play(name: keyof typeof sfx) {
   try {
-    sfx[name]?.play()
+    const sound = sfx[name]
+    if (sound) {
+      sound.play()
+    }
   } catch (e) {
-    console.warn('Sound not available:', name)
+    // Silently fail - sounds are optional
   }
 }
 
