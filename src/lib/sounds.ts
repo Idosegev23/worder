@@ -18,8 +18,8 @@ function createSound(src: string) {
       src: [src], 
       volume: 0.3,
       html5: true,
-      onloaderror: (id, error) => {
-        console.log(`Sound could not load (optional): ${error}`)
+      onloaderror: () => {
+        console.log(`Sound could not load (optional)`)
       }
     })
   } catch (e) {
