@@ -160,7 +160,15 @@ export default function GameScreen() {
       // אפקט חגיגי
       await triggerCelebration(document.getElementById('game-card') || undefined)
 
-      setTimeout(moveToNextWord, 3000)
+      setTimeout(() => {
+        // בדוק אם סיימנו את הקטגוריה
+        if (currentIndex >= words.length - 1) {
+          // סיימנו קטגוריה! עובר למתנות
+          nav('/rewards')
+        } else {
+          moveToNextWord()
+        }
+      }, 3000)
     } else {
       // תשובה שגויה!
       const newWrongAnswers = [...wrongAnswers, answer]
@@ -186,7 +194,14 @@ export default function GameScreen() {
         })
 
         // מעבר למילה הבאה אחרי 5 שניות
-        setTimeout(moveToNextWord, 5000)
+        setTimeout(() => {
+          if (currentIndex >= words.length - 1) {
+            // סיימנו קטגוריה! עובר למתנות
+            nav('/rewards')
+          } else {
+            moveToNextWord()
+          }
+        }, 5000)
       } else {
         // ניסיון ראשון - תן לו לנסות שוב
         setFeedback('wrong')

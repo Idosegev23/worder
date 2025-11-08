@@ -93,67 +93,76 @@ export default function CategoryGrid() {
     if (!user) return
     
     const loadCategoriesWithProgress = async () => {
-      const allCategories = await db.categories.orderBy('order').toArray()
-      
-      const catsWithProgress = await Promise.all(
-        allCategories.map(async (cat) => {
-          const catWords = await db.words.where({ categoryId: cat.id, active: true }).toArray()
-          
-          if (catWords.length === 0) {
-            return { ...cat, completed: false, progress: 0 }
-          }
-          
-          // קבלת כל ההתקדמות של המשתמש
-          const allProgress = await db.progress.where({ userId: user.id }).toArray()
-          
-          console.log(`User ${user.id} has ${allProgress.length} progress entries`)
-          console.log(`Category ${cat.name} has ${catWords.length} words`)
-          
-          // ספירת תשובות נכונות ייחודיות לכל מילה בקטגוריה
-          const correctWordsInCategory = new Set<number>()
-          
-          catWords.forEach(word => {
-            if (!word.id) return // דילוג על מילים ללא ID
+      try {
+        const allCategories = await db.categories.orderBy('order').toArray()
+        
+        // קבלת כל ההתקדמות של המשתמש פעם אחת
+        const allProgress = await db.progress.toArray()
+        const userProgress = allProgress.filter(p => p.userId === user.id)
+        
+        console.log(`📊 User ${user.id} has ${userProgress.length} progress entries`)
+        
+        const catsWithProgress = await Promise.all(
+          allCategories.map(async (cat) => {
+            const catWords = await db.words
+              .where('categoryId')
+              .equals(cat.id!)
+              .filter(w => w.active !== false)
+              .toArray()
             
-            // בדיקה אם יש תשובה נכונה למילה הזו
-            const progressForWord = allProgress.filter(p => p.wordId === word.id)
-            const hasCorrectAnswer = progressForWord.some(p => p.isCorrect)
-            
-            if (hasCorrectAnswer) {
-              correctWordsInCategory.add(word.id)
-              console.log(`  Word "${word.en}" (${word.id}): CORRECT`)
-            } else if (progressForWord.length > 0) {
-              console.log(`  Word "${word.en}" (${word.id}): attempted but wrong`)
-            } else {
-              console.log(`  Word "${word.en}" (${word.id}): not attempted`)
+            if (catWords.length === 0) {
+              return { ...cat, completed: false, progress: 0 }
             }
+            
+            console.log(`📁 Category ${cat.name} has ${catWords.length} words`)
+            
+            // ספירת תשובות נכונות ייחודיות לכל מילה בקטגוריה
+            const correctWordsInCategory = new Set<number>()
+            
+            catWords.forEach(word => {
+              if (!word.id) return
+              
+              // בדיקה אם יש תשובה נכונה למילה הזו
+              const progressForWord = userProgress.filter(p => p.wordId === word.id)
+              const hasCorrectAnswer = progressForWord.some(p => p.isCorrect === true)
+              
+              if (hasCorrectAnswer) {
+                correctWordsInCategory.add(word.id)
+                console.log(`  ✅ Word "${word.en}" (${word.id}): CORRECT`)
+              } else if (progressForWord.length > 0) {
+                console.log(`  ❌ Word "${word.en}" (${word.id}): attempted but wrong`)
+              } else {
+                console.log(`  ⏸️  Word "${word.en}" (${word.id}): not attempted`)
+              }
+            })
+            
+            const completed = correctWordsInCategory.size === catWords.length && catWords.length > 0
+            const progress = catWords.length > 0 ? Math.round((correctWordsInCategory.size / catWords.length) * 100) : 0
+            
+            console.log(`📈 Category ${cat.name}: ${correctWordsInCategory.size}/${catWords.length} = ${progress}%`)
+            
+            return { ...cat, completed, progress }
           })
-          
-          const completed = correctWordsInCategory.size === catWords.length && catWords.length > 0
-          const progress = catWords.length > 0 ? Math.round((correctWordsInCategory.size / catWords.length) * 100) : 0
-          
-          console.log(`Category ${cat.name}: ${correctWordsInCategory.size}/${catWords.length} = ${progress}%`)
-          
-          return { ...cat, completed, progress }
-        })
-      )
-      
-      setCats(catsWithProgress)
-      
-      // בדיקה: אם סיימנו הכול → מתנות
-      // חשוב: רק אם יש לפחות קטגוריה אחת והכול מושלם
-      const allCompleted = catsWithProgress.length === 4 && catsWithProgress.every(c => c.completed)
-      
-      console.log('Categories status:', catsWithProgress.map(c => ({ name: c.name, completed: c.completed, progress: c.progress })))
-      console.log('All completed?', allCompleted)
-      
-      if (allCompleted) {
-        console.log('All 4 categories completed! Redirecting to rewards...')
-        nav('/rewards')
+        )
+        
+        setCats(catsWithProgress)
+        
+        console.log('📊 Categories summary:', catsWithProgress.map(c => ({ 
+          name: c.name, 
+          completed: c.completed, 
+          progress: c.progress 
+        })))
+      } catch (error) {
+        console.error('Error loading categories with progress:', error)
       }
     }
     
+    // טען נתונים בהתחלה
     loadCategoriesWithProgress()
+    
+    // רענן כל פעם שחוזרים למסך (למשל אחרי משחק)
+    const interval = setInterval(loadCategoriesWithProgress, 2000)
+    return () => clearInterval(interval)
   }, [user, nav])
 
   return (
