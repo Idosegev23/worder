@@ -2,7 +2,9 @@
 
 interface ImportMetaEnv {
   readonly VITE_OPENAI_API_KEY: string
-  // add more env variables here as needed
+  readonly VITE_SUPABASE_URL: string
+  readonly VITE_SUPABASE_ANON_KEY: string
+  readonly VITE_USE_BROWSER_TTS?: string
 }
 
 interface ImportMeta {

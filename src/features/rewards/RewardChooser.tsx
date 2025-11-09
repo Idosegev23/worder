@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { db, Reward } from '../../lib/db'
+import { Reward, getActiveRewards, saveRewardChoice } from '../../lib/supabase'
 import { useAuth } from '../../store/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '../../shared/ui/Card'
@@ -25,14 +25,15 @@ export default function RewardChooser() {
     }
 
     // בחירת 2 מתנות אקראיות
-    db.rewards
-      .where({ active: true })
-      .toArray()
+    getActiveRewards()
       .then(all => {
         if (all.length >= 2) {
           const shuffled = all.sort(() => Math.random() - 0.5)
           setRewards([shuffled[0], shuffled[1]])
         }
+      })
+      .catch(error => {
+        console.error('Error loading rewards:', error)
       })
   }, [user, nav])
 
@@ -135,12 +136,11 @@ export default function RewardChooser() {
     }, 600)
 
     // שמירת הבחירה ב-DB
-    await db.userRewardChoices.add({
+    await saveRewardChoice({
       userId: user.id,
-      rewardAId: rewards[0].id!,
-      rewardBId: rewards[1].id!,
-      chosenId: reward.id!,
-      chosenAt: Date.now(),
+      rewardAId: rewards[0].id,
+      rewardBId: rewards[1].id,
+      chosenId: reward.id,
       reported: false
     })
 

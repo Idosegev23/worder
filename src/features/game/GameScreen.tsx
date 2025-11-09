@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { db, Word } from '../../lib/db'
+import { Word, getWordsByCategory, getUserProgress, saveProgress } from '../../lib/supabase'
 import { useAuth } from '../../store/useAuth'
 import { useGame } from '../../store/useGame'
 import { triggerCelebration, triggerFunnyEffect } from '../../lib/useEffectEngine'
@@ -37,26 +37,16 @@ export default function GameScreen() {
     const loadWords = async () => {
       try {
         console.log('Loading words for category:', categoryId)
-        const allWords = await db.words
-          .where({ categoryId: Number(categoryId) })
-          .toArray()
+        const activeWords = await getWordsByCategory(Number(categoryId))
         
-        console.log('Found words:', allWords)
-        
-        const activeWords = allWords
-          .filter(w => w.active !== false)
-          .sort((a, b) => (a.order || 0) - (b.order || 0))
-        
-        console.log('Active words:', activeWords)
+        console.log('Found active words:', activeWords)
         setWords(activeWords)
         
         // מציאת המילה הראשונה שעוד לא נענתה עליה נכון
-        const userProgress = await db.progress.where({ userId: user.id }).toArray()
+        const userProgress = await getUserProgress(user.id)
         
         let firstUnansweredIndex = 0
         for (let i = 0; i < activeWords.length; i++) {
-          if (!activeWords[i].id) continue // דילוג על מילים ללא ID
-          
           const hasCorrectAnswer = userProgress.some(
             p => p.wordId === activeWords[i].id && p.isCorrect
           )
@@ -105,15 +95,13 @@ export default function GameScreen() {
     if (!user) return false
     
     // בדיקה אם סיימנו את כל המילים בקטגוריה
-    const allProgress = await db.progress.where({ userId: user.id }).toArray()
+    const allProgress = await getUserProgress(user.id)
     
     const completedWordsInCategory = new Set<number>()
     words.forEach(word => {
-      if (word.id) {
-        const hasCorrect = allProgress.some(p => p.wordId === word.id && p.isCorrect)
-        if (hasCorrect) {
-          completedWordsInCategory.add(word.id)
-        }
+      const hasCorrect = allProgress.some(p => p.wordId === word.id && p.isCorrect)
+      if (hasCorrect) {
+        completedWordsInCategory.add(word.id)
       }
     })
     
@@ -141,10 +129,9 @@ export default function GameScreen() {
     } else {
       // הגענו לסוף הרשימה אבל עדיין יש מילים שלא סיימנו
       // חוזרים למילה הראשונה שלא סיימנו
-      const allProgress = await db.progress.where({ userId: user.id }).toArray()
+      const allProgress = await getUserProgress(user.id)
       let nextIndex = 0
       for (let i = 0; i < words.length; i++) {
-        if (!words[i].id) continue
         const hasCorrect = allProgress.some(p => p.wordId === words[i].id && p.isCorrect)
         if (!hasCorrect) {
           nextIndex = i
@@ -174,15 +161,14 @@ export default function GameScreen() {
       incrementStreak()
 
       // שמירת התקדמות ב-DB
-      await db.progress.add({
+      await saveProgress({
         userId: user!.id,
-        wordId: currentWord.id!,
+        wordId: currentWord.id,
         isCorrect: true,
         attempts: currentAttempts,
         lastAnswer: answer,
         wrongAnswers: wrongAnswers,
-        audioPlayed: audioPlayed,
-        answeredAt: Date.now()
+        audioPlayed: audioPlayed
       })
 
       // בדיקת הישגים
@@ -216,15 +202,14 @@ export default function GameScreen() {
         setFeedback('show-answer')
         
         // שמירת התקדמות ב-DB
-        await db.progress.add({
+        await saveProgress({
           userId: user!.id,
-          wordId: currentWord.id!,
+          wordId: currentWord.id,
           isCorrect: false,
           attempts: currentAttempts,
           lastAnswer: answer,
           wrongAnswers: newWrongAnswers,
-          audioPlayed: audioPlayed,
-          answeredAt: Date.now()
+          audioPlayed: audioPlayed
         })
 
         // מעבר למילה הבאה אחרי 5 שניות

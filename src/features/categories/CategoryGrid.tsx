@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { db, Category } from '../../lib/db'
+import { Category, getCategories, getWordsByCategory, getUserProgress } from '../../lib/supabase'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card } from '../../shared/ui/Card'
 import { useAuth } from '../../store/useAuth'
@@ -94,21 +94,16 @@ export default function CategoryGrid() {
     
     const loadCategoriesWithProgress = async () => {
       try {
-        const allCategories = await db.categories.orderBy('order').toArray()
+        const allCategories = await getCategories()
         
         // קבלת כל ההתקדמות של המשתמש פעם אחת
-        const allProgress = await db.progress.toArray()
-        const userProgress = allProgress.filter(p => p.userId === user.id)
+        const userProgress = await getUserProgress(user.id)
         
         console.log(`📊 User ${user.id} has ${userProgress.length} progress entries`)
         
         const catsWithProgress = await Promise.all(
           allCategories.map(async (cat) => {
-            const catWords = await db.words
-              .where('categoryId')
-              .equals(cat.id!)
-              .filter(w => w.active !== false)
-              .toArray()
+            const catWords = await getWordsByCategory(cat.id)
             
             if (catWords.length === 0) {
               return { ...cat, completed: false, progress: 0 }
@@ -120,8 +115,6 @@ export default function CategoryGrid() {
             const correctWordsInCategory = new Set<number>()
             
             catWords.forEach(word => {
-              if (!word.id) return
-              
               // בדיקה אם יש תשובה נכונה למילה הזו
               const progressForWord = userProgress.filter(p => p.wordId === word.id)
               const hasCorrectAnswer = progressForWord.some(p => p.isCorrect === true)

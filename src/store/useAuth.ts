@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { db, Profile } from '../lib/db'
-import { nanoid } from 'nanoid/non-secure'
+import { Profile, getUserByUsername, createUser, updateUser, supabase } from '../lib/supabase'
 
 type AuthState = {
   user?: Profile
@@ -18,35 +17,50 @@ export const useAuth = create<AuthState>()(
       user: undefined,
   
   login: async (username, password) => {
-    const u = await db.profiles.where({ username, password }).first()
-    if (u) {
-      set({ user: u })
+    try {
+      // התחברות פשוטה - רק username + password
+      const { data, error } = await supabase
+        .from('worder_profiles')
+        .select('*')
+        .eq('username', username)
+        .eq('password', password)
+        .single()
+      
+      if (error || !data) return false
+      
+      set({ user: data as Profile })
       return true
+    } catch (error) {
+      console.error('Login error:', error)
+      return false
     }
-    return false
   },
   
   register: async (firstName, lastName, password) => {
-    const username = `${firstName} ${lastName}`
-    const exists = await db.profiles.where({ username }).first()
-    if (exists) return false
-    
-    const id = nanoid()
-    const profile: Profile = {
-      id,
-      firstName,
-      lastName,
-      role: 'user',
-      username,
-      password,
-      avatarStyle: 'bottts',
-      avatarSeed: id,
-      createdAt: Date.now()
+    try {
+      const username = `${firstName} ${lastName}`
+      
+      // בדיקה אם המשתמש כבר קיים
+      const existing = await getUserByUsername(username)
+      if (existing) return false
+      
+      // יצירת משתמש חדש
+      const profile = await createUser({
+        firstName,
+        lastName,
+        username,
+        password,
+        role: 'user',
+        avatarStyle: 'bottts',
+        avatarSeed: crypto.randomUUID()
+      })
+      
+      set({ user: profile })
+      return true
+    } catch (error) {
+      console.error('Register error:', error)
+      return false
     }
-    
-    await db.profiles.add(profile)
-    set({ user: profile })
-    return true
   },
   
   logout: () => set({ user: undefined }),
@@ -55,18 +69,34 @@ export const useAuth = create<AuthState>()(
     const user = get().user
     if (!user) return
     
-    await db.profiles.update(user.id, { avatarStyle: style, avatarSeed: seed })
-    set({ user: { ...user, avatarStyle: style, avatarSeed: seed } })
+    try {
+      const updated = await updateUser(user.id, {
+        avatarStyle: style,
+        avatarSeed: seed
+      })
+      set({ user: updated })
+    } catch (error) {
+      console.error('Update avatar error:', error)
+    }
   },
   
   refreshUser: async () => {
     const user = get().user
     if (!user) return
     
-    // טעינה מחדש מה-DB כדי לקבל עדכונים
-    const updated = await db.profiles.get(user.id)
-    if (updated) {
-      set({ user: updated })
+    try {
+      // טעינה מחדש מה-DB כדי לקבל עדכונים
+      const { data } = await supabase
+        .from('worder_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      
+      if (data) {
+        set({ user: data as Profile })
+      }
+    } catch (error) {
+      console.error('Refresh user error:', error)
     }
   }
     }),

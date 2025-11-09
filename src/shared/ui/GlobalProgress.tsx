@@ -1,6 +1,6 @@
 import { useGame } from '../../store/useGame'
 import { useEffect, useState } from 'react'
-import { db } from '../../lib/db'
+import { getAllActiveWords, getUserProgress } from '../../lib/supabase'
 import { useAuth } from '../../store/useAuth'
 
 export function GlobalProgress() {
@@ -13,14 +13,19 @@ export function GlobalProgress() {
     if (!user) return
     
     const loadProgress = async () => {
-      // ספירת כל המילים הפעילות
-      const allWords = await db.words.where({ active: true }).toArray()
-      setTotalWords(allWords.length)
-      
-      // ספירת מילים שנענו עליהן נכון
-      const progress = await db.progress.where({ userId: user.id, isCorrect: true }).toArray()
-      const uniqueWords = new Set(progress.map(p => p.wordId))
-      setCompletedWords(uniqueWords.size)
+      try {
+        // ספירת כל המילים הפעילות
+        const allWords = await getAllActiveWords()
+        setTotalWords(allWords.length)
+        
+        // ספירת מילים שנענו עליהן נכון
+        const progress = await getUserProgress(user.id)
+        const correctProgress = progress.filter(p => p.isCorrect)
+        const uniqueWords = new Set(correctProgress.map(p => p.wordId))
+        setCompletedWords(uniqueWords.size)
+      } catch (error) {
+        console.error('Error loading global progress:', error)
+      }
     }
     
     loadProgress()
