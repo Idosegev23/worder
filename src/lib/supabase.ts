@@ -89,6 +89,27 @@ interface WordDB {
   created_at: string
 }
 
+// Exported types (camelCase for app compatibility)
+export interface Category {
+  id: number
+  name: 'Nouns' | 'Verbs' | 'Prepositions' | 'Adjectives'
+  displayName: string
+  displayOrder: number
+  createdAt: string
+}
+
+export interface Word {
+  id: number
+  categoryId: number
+  en: string
+  he: string
+  altEn?: string[]
+  altHe?: string[]
+  displayOrder?: number
+  active: boolean
+  createdAt: string
+}
+
 // Helper to convert DB to App format
 function dbToCategory(db: CategoryDB): Category {
   return {
@@ -115,15 +136,6 @@ function dbToWord(db: WordDB): Word {
 }
 
 // Helper to convert App to DB format
-function categoryToDb(category: Partial<Category>): Partial<CategoryDB> {
-  return {
-    id: category.id,
-    name: category.name,
-    display_name: category.displayName,
-    display_order: category.displayOrder
-  }
-}
-
 function wordToDb(word: Partial<Word>): Partial<WordDB> {
   return {
     id: word.id,
@@ -197,6 +209,17 @@ export interface Reward {
   payload?: any
   active: boolean
   created_at: string
+}
+
+export interface UserRewardChoice {
+  id: number
+  userId: string // camelCase לתאימות
+  rewardAId: number
+  rewardBId: number
+  chosenId?: number
+  chosenAt?: string
+  reported: boolean
+  createdAt: string
 }
 
 // Internal DB types for UserRewardChoice
