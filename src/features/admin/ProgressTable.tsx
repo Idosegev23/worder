@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { db, Progress, Profile, Word } from '../../lib/db'
+import { Progress, Profile, Word, supabase, getAllWords } from '../../lib/supabase'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAdmin } from '../../store/useAdmin'
 import { Card } from '../../shared/ui/Card'
@@ -13,7 +13,7 @@ type StudentStats = {
   correctAnswers: number
   wrongAnswers: number
   successRate: number
-  lastActivity: number
+  lastActivity: string
 }
 
 type DetailedProgress = Progress & {
@@ -38,30 +38,50 @@ export default function ProgressTable() {
   }, [isAuth, nav])
 
   const loadStats = async () => {
-    // טעינת כל המשתמשים
-    const users = await db.profiles.where({ role: 'user' }).toArray()
-    
-    // חישוב סטטיסטיקות לכל משתמש
-    const statsPromises = users.map(async (user) => {
-      const progressRecords = await db.progress.where({ userId: user.id }).toArray()
+    try {
+      // טעינת כל המשתמשים
+      const { data: users } = await supabase
+        .from('worder_profiles')
+        .select('*')
+        .eq('role', 'user')
       
-      const totalAttempts = progressRecords.length
-      const correctAnswers = progressRecords.filter(p => p.isCorrect).length
-      const wrongAnswers = totalAttempts - correctAnswers
-      const successRate = totalAttempts > 0 ? (correctAnswers / totalAttempts) * 100 : 0
-      const lastActivity = progressRecords.length > 0 
-        ? Math.max(...progressRecords.map(p => p.answeredAt))
-        : user.createdAt
+      if (!users) return
+      
+      // חישוב סטטיסטיקות לכל משתמש
+      const statsPromises = users.map(async (user) => {
+        const { data: progressRecords } = await supabase
+          .from('worder_progress')
+          .select('*')
+          .eq('user_id', user.id)
+        
+        const records = progressRecords || []
+        const totalAttempts = records.length
+        const correctAnswers = records.filter(p => p.is_correct).length
+        const wrongAnswers = totalAttempts - correctAnswers
+        const successRate = totalAttempts > 0 ? (correctAnswers / totalAttempts) * 100 : 0
+        const lastActivity = records.length > 0 
+          ? records.reduce((max, p) => p.answered_at > max ? p.answered_at : max, records[0].answered_at)
+          : user.created_at
 
-      return {
-        user,
-        totalAttempts,
-        correctAnswers,
-        wrongAnswers,
-        successRate,
-        lastActivity
-      }
-    })
+        return {
+          user: {
+            id: user.id,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            username: user.username,
+            password: user.password,
+            role: user.role,
+            avatarStyle: user.avatar_style,
+            avatarSeed: user.avatar_seed,
+            createdAt: user.created_at
+          },
+          totalAttempts,
+          correctAnswers,
+          wrongAnswers,
+          successRate,
+          lastActivity
+        }
+      })
 
     const allStats = await Promise.all(statsPromises)
     // מיון לפי פעילות אחרונה

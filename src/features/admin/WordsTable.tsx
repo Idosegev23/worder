@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { db, Word, Category } from '../../lib/db'
+import { Word, Category, getAllWords, getCategories, upsertWord, deleteWord } from '../../lib/supabase'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAdmin } from '../../store/useAdmin'
 import { Card } from '../../shared/ui/Card'
@@ -29,13 +29,17 @@ export default function WordsTable() {
   }, [isAuth, nav])
 
   const loadData = async () => {
-    const cats = await db.categories.toArray()
-    setCategories(cats)
-    const allWords = await db.words.toArray()
-    setWords(allWords)
+    try {
+      const cats = await getCategories()
+      setCategories(cats)
+      const allWords = await getAllWords()
+      setWords(allWords)
+    } catch (error) {
+      console.error('Error loading data:', error)
+    }
   }
 
-  const filteredWords = filter === 'all' ? words : words.filter(w => w.categoryId === filter)
+  const filteredWords = filter === 'all' ? words : words.filter(w => w.category_id === filter)
 
   const handleEdit = (word: Word) => {
     setEditing({ ...word })
@@ -44,41 +48,39 @@ export default function WordsTable() {
 
   const handleCreate = () => {
     setEditing({
-      categoryId: 1,
+      id: 0,
+      category_id: 1,
       en: '',
       he: '',
-      altEn: [],
-      altHe: [],
-      order: words.length,
-      active: true
+      alt_en: [],
+      alt_he: [],
+      display_order: words.length,
+      active: true,
+      created_at: new Date().toISOString()
     })
     setIsModalOpen(true)
   }
 
   const handleSave = async () => {
     if (!editing) return
-    if (editing.id) {
-      await db.words.update(editing.id, {
-        categoryId: editing.categoryId,
-        en: editing.en,
-        he: editing.he,
-        altEn: editing.altEn,
-        altHe: editing.altHe,
-        order: editing.order,
-        active: editing.active
-      })
-    } else {
-      await db.words.add(editing)
+    try {
+      await upsertWord(editing)
+      setIsModalOpen(false)
+      setEditing(null)
+      loadData()
+    } catch (error) {
+      console.error('Error saving word:', error)
     }
-    setIsModalOpen(false)
-    setEditing(null)
-    loadData()
   }
 
   const handleDelete = async (id: number) => {
     if (confirm('למחוק מילה זו?')) {
-      await db.words.delete(id)
-      loadData()
+      try {
+        await deleteWord(id)
+        loadData()
+      } catch (error) {
+        console.error('Error deleting word:', error)
+      }
     }
   }
 

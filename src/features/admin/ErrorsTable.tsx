@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { db } from '../../lib/db'
+import { supabase } from '../../lib/supabase'
 import { Card } from '../../shared/ui/Card'
 
 type ErrorStat = {
@@ -23,9 +23,11 @@ export default function ErrorsTable() {
 
   const loadErrors = async () => {
     try {
-      const allProgress = await db.progress.toArray()
-      const allWords = await db.words.toArray()
-      const allCategories = await db.categories.toArray()
+      const { data: allProgress } = await supabase.from('worder_progress').select('*')
+      const { data: allWords } = await supabase.from('worder_words').select('*')
+      const { data: allCategories } = await supabase.from('worder_categories').select('*')
+
+      if (!allProgress || !allWords || !allCategories) return
 
       // קיבוץ לפי מילה
       const wordStats = new Map<number, {
@@ -38,9 +40,9 @@ export default function ErrorsTable() {
       }>()
 
       allProgress.forEach(p => {
-        if (!wordStats.has(p.wordId)) {
-          wordStats.set(p.wordId, {
-            wordId: p.wordId,
+        if (!wordStats.has(p.word_id)) {
+          wordStats.set(p.word_id, {
+            wordId: p.word_id,
             totalAttempts: 0,
             wrongAttempts: 0,
             wrongAnswers: [],
@@ -49,17 +51,17 @@ export default function ErrorsTable() {
           })
         }
 
-        const stat = wordStats.get(p.wordId)!
+        const stat = wordStats.get(p.word_id)!
         stat.totalAttempts++
         
-        if (!p.isCorrect) {
+        if (!p.is_correct) {
           stat.wrongAttempts++
-          if (p.wrongAnswers) {
-            stat.wrongAnswers.push(...p.wrongAnswers)
+          if (p.wrong_answers) {
+            stat.wrongAnswers.push(...p.wrong_answers)
           }
         }
 
-        if (p.audioPlayed) {
+        if (p.audio_played) {
           stat.listenedCount++
         } else {
           stat.notListenedCount++
@@ -73,7 +75,7 @@ export default function ErrorsTable() {
         const word = allWords.find(w => w.id === wordId)
         if (!word) return
 
-        const category = allCategories.find(c => c.id === word.categoryId)
+        const category = allCategories.find(c => c.id === word.category_id)
         
         // ספירת תשובות שגויות נפוצות
         const errorCounts = new Map<string, number>()

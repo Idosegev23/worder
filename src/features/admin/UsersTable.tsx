@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { db, Profile } from '../../lib/db'
+import { Profile, getAllUsers, updateUser, deleteUser } from '../../lib/supabase'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAdmin } from '../../store/useAdmin'
 import { Card } from '../../shared/ui/Card'
@@ -25,8 +25,12 @@ export default function UsersTable() {
   }, [isAuth, nav])
 
   const loadData = async () => {
-    const all = await db.profiles.toArray()
-    setUsers(all)
+    try {
+      const all = await getAllUsers()
+      setUsers(all)
+    } catch (error) {
+      console.error('Error loading users:', error)
+    }
   }
 
   const handleEdit = (user: Profile) => {
@@ -36,24 +40,36 @@ export default function UsersTable() {
 
   const handleSave = async () => {
     if (!editing) return
-    await db.profiles.update(editing.id, editing)
-    setIsModalOpen(false)
-    setEditing(null)
-    loadData()
+    try {
+      await updateUser(editing.id, editing)
+      setIsModalOpen(false)
+      setEditing(null)
+      loadData()
+    } catch (error) {
+      console.error('Error updating user:', error)
+    }
   }
 
   const handleDelete = async (id: string) => {
     if (confirm('למחוק משתמש זה?')) {
-      await db.profiles.delete(id)
-      loadData()
+      try {
+        await deleteUser(id)
+        loadData()
+      } catch (error) {
+        console.error('Error deleting user:', error)
+      }
     }
   }
 
   const handleResetPassword = async (user: Profile) => {
     const newPwd = prompt('סיסמה חדשה:', user.password)
     if (newPwd) {
-      await db.profiles.update(user.id, { password: newPwd })
-      loadData()
+      try {
+        await updateUser(user.id, { ...user, password: newPwd })
+        loadData()
+      } catch (error) {
+        console.error('Error resetting password:', error)
+      }
     }
   }
 

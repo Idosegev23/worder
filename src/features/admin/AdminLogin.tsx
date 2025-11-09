@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { db } from '../../lib/db'
+import { supabase } from '../../lib/supabase'
 import { useAdmin } from '../../store/useAdmin'
 import { Card } from '../../shared/ui/Card'
 import { Input } from '../../shared/ui/Input'
@@ -14,13 +14,24 @@ export default function AdminLogin() {
   const [e, setE] = useState('')
 
   const handleLogin = async () => {
-    const admin = await db.profiles.where({ username: u, password: p, role: 'admin' }).first()
-    if (!admin) {
+    try {
+      const { data, error } = await supabase
+        .from('worder_profiles')
+        .select('*')
+        .eq('username', u)
+        .eq('password', p)
+        .eq('role', 'admin')
+        .single()
+      
+      if (error || !data) {
+        setE('שגיאה בזיהוי אדמין')
+        return
+      }
+      adminLogin()
+      nav('/admin/dashboard')
+    } catch (error) {
       setE('שגיאה בזיהוי אדמין')
-      return
     }
-    adminLogin()
-    nav('/admin/dashboard')
   }
 
   return (
