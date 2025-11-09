@@ -39,7 +39,7 @@ export default function WordsTable() {
     }
   }
 
-  const filteredWords = filter === 'all' ? words : words.filter(w => w.category_id === filter)
+  const filteredWords = filter === 'all' ? words : words.filter(w => w.categoryId === filter)
 
   const handleEdit = (word: Word) => {
     setEditing({ ...word })
@@ -49,14 +49,14 @@ export default function WordsTable() {
   const handleCreate = () => {
     setEditing({
       id: 0,
-      category_id: 1,
+      categoryId: 1,
       en: '',
       he: '',
-      alt_en: [],
-      alt_he: [],
-      display_order: words.length,
+      altEn: [],
+      altHe: [],
+      displayOrder: words.length,
       active: true,
-      created_at: new Date().toISOString()
+      createdAt: new Date().toISOString()
     })
     setIsModalOpen(true)
   }

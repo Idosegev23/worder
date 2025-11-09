@@ -132,7 +132,7 @@ export default function ProgressTable() {
     }
   }
 
-  const formatDate = (timestamp: number) => {
+  const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleDateString('he-IL', {
       day: '2-digit',
       month: '2-digit',

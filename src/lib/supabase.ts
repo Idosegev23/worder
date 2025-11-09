@@ -68,7 +68,8 @@ function profileToDb(profile: Partial<Profile>): Partial<ProfileDB> {
   }
 }
 
-export interface Category {
+// Internal DB types (snake_case for Supabase)
+interface CategoryDB {
   id: number
   name: 'Nouns' | 'Verbs' | 'Prepositions' | 'Adjectives'
   display_name: string
@@ -76,7 +77,7 @@ export interface Category {
   created_at: string
 }
 
-export interface Word {
+interface WordDB {
   id: number
   category_id: number
   en: string
@@ -86,6 +87,54 @@ export interface Word {
   display_order?: number
   active: boolean
   created_at: string
+}
+
+// Helper to convert DB to App format
+function dbToCategory(db: CategoryDB): Category {
+  return {
+    id: db.id,
+    name: db.name,
+    displayName: db.display_name,
+    displayOrder: db.display_order,
+    createdAt: db.created_at
+  }
+}
+
+function dbToWord(db: WordDB): Word {
+  return {
+    id: db.id,
+    categoryId: db.category_id,
+    en: db.en,
+    he: db.he,
+    altEn: db.alt_en,
+    altHe: db.alt_he,
+    displayOrder: db.display_order,
+    active: db.active,
+    createdAt: db.created_at
+  }
+}
+
+// Helper to convert App to DB format
+function categoryToDb(category: Partial<Category>): Partial<CategoryDB> {
+  return {
+    id: category.id,
+    name: category.name,
+    display_name: category.displayName,
+    display_order: category.displayOrder
+  }
+}
+
+function wordToDb(word: Partial<Word>): Partial<WordDB> {
+  return {
+    id: word.id,
+    category_id: word.categoryId,
+    en: word.en,
+    he: word.he,
+    alt_en: word.altEn,
+    alt_he: word.altHe,
+    display_order: word.displayOrder,
+    active: word.active
+  }
 }
 
 export interface Progress {
@@ -150,7 +199,8 @@ export interface Reward {
   created_at: string
 }
 
-export interface UserRewardChoice {
+// Internal DB types for UserRewardChoice
+interface UserRewardChoiceDB {
   id: number
   user_id: string
   reward_a_id: number
@@ -159,6 +209,31 @@ export interface UserRewardChoice {
   chosen_at?: string
   reported: boolean
   created_at: string
+}
+
+function dbToUserRewardChoice(db: UserRewardChoiceDB): UserRewardChoice {
+  return {
+    id: db.id,
+    userId: db.user_id,
+    rewardAId: db.reward_a_id,
+    rewardBId: db.reward_b_id,
+    chosenId: db.chosen_id,
+    chosenAt: db.chosen_at,
+    reported: db.reported,
+    createdAt: db.created_at
+  }
+}
+
+function userRewardChoiceToDb(choice: Partial<UserRewardChoice>): Partial<UserRewardChoiceDB> {
+  return {
+    id: choice.id,
+    user_id: choice.userId,
+    reward_a_id: choice.rewardAId,
+    reward_b_id: choice.rewardBId,
+    chosen_id: choice.chosenId,
+    chosen_at: choice.chosenAt,
+    reported: choice.reported
+  }
 }
 
 // Database Helper Functions
@@ -171,7 +246,7 @@ export async function getCategories() {
     .order('display_order', { ascending: true })
   
   if (error) throw error
-  return data as Category[]
+  return (data as CategoryDB[]).map(dbToCategory)
 }
 
 /** Get all active words for a category */
@@ -184,7 +259,7 @@ export async function getWordsByCategory(categoryId: number) {
     .order('display_order', { ascending: true })
   
   if (error) throw error
-  return data as Word[]
+  return (data as WordDB[]).map(dbToWord)
 }
 
 /** Get all active words */
@@ -197,7 +272,7 @@ export async function getAllActiveWords() {
     .order('display_order', { ascending: true })
   
   if (error) throw error
-  return data as Word[]
+  return (data as WordDB[]).map(dbToWord)
 }
 
 /** Get all words (admin only) */
@@ -209,7 +284,7 @@ export async function getAllWords() {
     .order('display_order', { ascending: true })
   
   if (error) throw error
-  return data as Word[]
+  return (data as WordDB[]).map(dbToWord)
 }
 
 /** Get user progress for specific words */
@@ -318,14 +393,15 @@ export async function deleteUser(userId: string) {
 
 /** Create or update word */
 export async function upsertWord(word: Partial<Word>) {
+  const dbWord = wordToDb(word)
   const { data, error } = await supabase
     .from('worder_words')
-    .upsert(word)
+    .upsert(dbWord)
     .select()
     .single()
   
   if (error) throw error
-  return data as Word
+  return dbToWord(data as WordDB)
 }
 
 /** Delete word */
@@ -359,31 +435,33 @@ export async function getUserRewardChoices(userId: string) {
     .order('created_at', { ascending: false })
   
   if (error) throw error
-  return data as UserRewardChoice[]
+  return (data as UserRewardChoiceDB[]).map(dbToUserRewardChoice)
 }
 
 /** Save user reward choice */
-export async function saveRewardChoice(choice: Omit<UserRewardChoice, 'id' | 'created_at'>) {
+export async function saveRewardChoice(choice: Omit<UserRewardChoice, 'id' | 'createdAt'>) {
+  const dbChoice = userRewardChoiceToDb(choice)
   const { data, error } = await supabase
     .from('worder_user_reward_choices')
-    .insert(choice)
+    .insert(dbChoice)
     .select()
     .single()
   
   if (error) throw error
-  return data as UserRewardChoice
+  return dbToUserRewardChoice(data as UserRewardChoiceDB)
 }
 
 /** Update reward choice */
 export async function updateRewardChoice(choiceId: number, updates: Partial<UserRewardChoice>) {
+  const dbUpdates = userRewardChoiceToDb(updates)
   const { data, error } = await supabase
     .from('worder_user_reward_choices')
-    .update(updates)
+    .update(dbUpdates)
     .eq('id', choiceId)
     .select()
     .single()
   
   if (error) throw error
-  return data as UserRewardChoice
+  return dbToUserRewardChoice(data as UserRewardChoiceDB)
 }
 
