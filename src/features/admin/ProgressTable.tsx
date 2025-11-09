@@ -83,30 +83,53 @@ export default function ProgressTable() {
         }
       })
 
-    const allStats = await Promise.all(statsPromises)
-    // מיון לפי פעילות אחרונה
-    allStats.sort((a, b) => b.lastActivity - a.lastActivity)
-    setStats(allStats)
+      const allStats = await Promise.all(statsPromises)
+      // מיון לפי פעילות אחרונה
+      allStats.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
+      setStats(allStats)
+    } catch (error) {
+      console.error('Error loading stats:', error)
+    }
   }
 
   const handleViewDetails = async (user: Profile) => {
     setSelectedUser(user)
     
-    // טעינת כל ההתקדמות של המשתמש עם המילים
-    const progressRecords = await db.progress.where({ userId: user.id }).toArray()
-    
-    // הוספת פרטי המילים
-    const detailedProgress = await Promise.all(
-      progressRecords.map(async (p) => {
-        const word = await db.words.get(p.wordId)
-        return { ...p, word }
+    try {
+      // טעינת כל ההתקדמות של המשתמש עם המילים
+      const { data: progressRecords } = await supabase
+        .from('worder_progress')
+        .select('*')
+        .eq('user_id', user.id)
+      
+      if (!progressRecords) return
+      
+      const allWords = await getAllWords()
+      
+      // הוספת פרטי המילים
+      const detailedProgress = progressRecords.map((p) => {
+        const word = allWords.find(w => w.id === p.word_id)
+        return {
+          id: p.id,
+          userId: p.user_id,
+          wordId: p.word_id,
+          isCorrect: p.is_correct,
+          attempts: p.attempts,
+          lastAnswer: p.last_answer,
+          wrongAnswers: p.wrong_answers,
+          audioPlayed: p.audio_played,
+          answeredAt: p.answered_at,
+          word
+        }
       })
-    )
     
-    // מיון לפי זמן (אחרון קודם)
-    detailedProgress.sort((a, b) => b.answeredAt - a.answeredAt)
-    setUserProgress(detailedProgress)
-    setIsModalOpen(true)
+      // מיון לפי זמן (אחרון קודם)
+      detailedProgress.sort((a, b) => new Date(b.answeredAt).getTime() - new Date(a.answeredAt).getTime())
+      setUserProgress(detailedProgress)
+      setIsModalOpen(true)
+    } catch (error) {
+      console.error('Error loading user details:', error)
+    }
   }
 
   const formatDate = (timestamp: number) => {
