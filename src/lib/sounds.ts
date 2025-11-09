@@ -17,9 +17,9 @@ function createSound(src: string) {
     return new Howl({
       src: [src],
       volume: 0.3,
-      html5: false, // שימוש ב-Web Audio API במקום HTML5
-      pool: 3, // מקסימום 3 משחקים במקביל
-      preload: true,
+      html5: true, // חזרה ל-HTML5 Audio - עובד טוב יותר עם CORS
+      pool: 5, // הגדלת ה-pool ל-5
+      preload: false, // טעינה lazy - רק כשצריך
       onloaderror: () => {
         console.log(`Sound could not load (optional)`)
       }
@@ -42,7 +42,8 @@ export const sfx = {
 export function play(name: keyof typeof sfx) {
   try {
     const sound = sfx[name]
-    if (sound && sound.state() === 'loaded') {
+    if (sound) {
+      // נסה לנגן גם אם לא נטען עדיין
       sound.play()
     }
   } catch (e) {
