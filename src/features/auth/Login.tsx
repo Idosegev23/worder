@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../../store/useAuth'
-import { seedAll } from '../../lib/seed'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card } from '../../shared/ui/Card'
 import { Input } from '../../shared/ui/Input'
@@ -12,10 +11,6 @@ export default function Login() {
   const [err, setErr] = useState('')
   const login = useAuth(s => s.login)
   const nav = useNavigate()
-
-  useEffect(() => {
-    seedAll()
-  }, [])
 
   const handleLogin = async () => {
     const ok = await login(username, password)
