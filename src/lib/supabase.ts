@@ -353,42 +353,37 @@ export async function getActiveRewards() {
 
 /** Get user by username */
 export async function getUserByUsername(username: string) {
-  // נסה למצוא עם trim כדי להתמודד עם רווחים נוספים
-  const trimmedUsername = username.trim()
-  
-  // נסה קודם עם השם המדויק
-  let { data, error } = await supabase
-    .from('worder_profiles')
-    .select('*')
-    .eq('username', trimmedUsername)
-    .maybeSingle() // משתמש ב-maybeSingle במקום single כדי להימנע מ-406
-  
-  // אם לא מצאנו, נסה עם רווחים (למקרה שיש רווחים נוספים ב-DB)
-  if (!data && !error) {
-    const { data: dataWithSpaces, error: errorWithSpaces } = await supabase
-      .from('worder_profiles')
-      .select('*')
-      .ilike('username', `%${trimmedUsername}%`) // חיפוש חלקי
-      .maybeSingle()
-    
-    if (dataWithSpaces) {
-      // בדוק אם השם המסורס תואם (לאחר trim)
-      const dbUsernameTrimmed = (dataWithSpaces as any).username?.trim()
-      if (dbUsernameTrimmed === trimmedUsername) {
-        data = dataWithSpaces
-        error = errorWithSpaces
-      }
-    }
+  // נרמול השם: trim + המרת רווחים מרובים לרווח אחד
+  const normalizeUsername = (name: string) => {
+    return name.trim().replace(/\s+/g, ' ')
   }
   
-  if (error) {
-    console.error('getUserByUsername error:', error)
+  const normalizedUsername = normalizeUsername(username)
+  
+  // נסה למצוא עם חיפוש חלקי ואז נבדוק נרמול
+  const { data: allUsers, error: fetchError } = await supabase
+    .from('worder_profiles')
+    .select('*')
+    .ilike('username', `%${normalizedUsername.split(' ')[0]}%`) // חיפוש לפי המילה הראשונה
+  
+  if (fetchError) {
+    console.error('getUserByUsername error:', fetchError)
     return null
   }
   
-  if (!data) return null
+  if (!allUsers || allUsers.length === 0) {
+    return null
+  }
   
-  return dbToProfile(data as ProfileDB)
+  // מצא את המשתמש שהשם המנורמל שלו תואם
+  for (const user of allUsers) {
+    const dbUsernameNormalized = normalizeUsername((user as any).username || '')
+    if (dbUsernameNormalized === normalizedUsername) {
+      return dbToProfile(user as ProfileDB)
+    }
+  }
+  
+  return null
 }
 
 /** Create new user */
