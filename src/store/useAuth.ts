@@ -34,20 +34,20 @@ export const useAuth = create<AuthState>()(
   login: async (username, password) => {
     try {
       // התחברות פשוטה - רק username + password
-      const { data, error } = await supabase
-        .from('worder_profiles')
-        .select('*')
-        .eq('username', username)
-        .eq('password', password)
-        .single()
+      // נשתמש ב-getUserByUsername כדי להימנע מבעיות עם .single()
+      const profile = await getUserByUsername(username.trim())
       
-      if (error || !data) {
-        console.error('Login error:', error)
+      if (!profile) {
+        console.error('User not found:', username)
         return false
       }
       
-      // המרה מ-snake_case ל-camelCase
-      const profile = dbToProfile(data)
+      // בדיקת סיסמה
+      if (profile.password !== password) {
+        console.error('Invalid password for user:', username)
+        return false
+      }
+      
       set({ user: profile })
       return true
     } catch (error) {

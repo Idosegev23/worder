@@ -353,16 +353,41 @@ export async function getActiveRewards() {
 
 /** Get user by username */
 export async function getUserByUsername(username: string) {
-  const { data, error } = await supabase
+  // נסה למצוא עם trim כדי להתמודד עם רווחים נוספים
+  const trimmedUsername = username.trim()
+  
+  // נסה קודם עם השם המדויק
+  let { data, error } = await supabase
     .from('worder_profiles')
     .select('*')
-    .eq('username', username)
-    .single()
+    .eq('username', trimmedUsername)
+    .maybeSingle() // משתמש ב-maybeSingle במקום single כדי להימנע מ-406
+  
+  // אם לא מצאנו, נסה עם רווחים (למקרה שיש רווחים נוספים ב-DB)
+  if (!data && !error) {
+    const { data: dataWithSpaces, error: errorWithSpaces } = await supabase
+      .from('worder_profiles')
+      .select('*')
+      .ilike('username', `%${trimmedUsername}%`) // חיפוש חלקי
+      .maybeSingle()
+    
+    if (dataWithSpaces) {
+      // בדוק אם השם המסורס תואם (לאחר trim)
+      const dbUsernameTrimmed = (dataWithSpaces as any).username?.trim()
+      if (dbUsernameTrimmed === trimmedUsername) {
+        data = dataWithSpaces
+        error = errorWithSpaces
+      }
+    }
+  }
   
   if (error) {
-    if (error.code === 'PGRST116') return null // Not found
-    throw error
+    console.error('getUserByUsername error:', error)
+    return null
   }
+  
+  if (!data) return null
+  
   return dbToProfile(data as ProfileDB)
 }
 
