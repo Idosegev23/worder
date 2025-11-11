@@ -2,6 +2,21 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { Profile, getUserByUsername, createUser, updateUser, supabase } from '../lib/supabase'
 
+// Helper function to convert DB format to Profile (needed for login/refresh)
+function dbToProfile(db: any): Profile {
+  return {
+    id: db.id,
+    firstName: db.first_name,
+    lastName: db.last_name,
+    username: db.username,
+    password: db.password,
+    role: db.role,
+    avatarStyle: db.avatar_style,
+    avatarSeed: db.avatar_seed,
+    createdAt: db.created_at
+  }
+}
+
 type AuthState = {
   user?: Profile
   login: (username: string, password: string) => Promise<boolean>
@@ -26,9 +41,14 @@ export const useAuth = create<AuthState>()(
         .eq('password', password)
         .single()
       
-      if (error || !data) return false
+      if (error || !data) {
+        console.error('Login error:', error)
+        return false
+      }
       
-      set({ user: data as Profile })
+      // המרה מ-snake_case ל-camelCase
+      const profile = dbToProfile(data)
+      set({ user: profile })
       return true
     } catch (error) {
       console.error('Login error:', error)
@@ -86,14 +106,21 @@ export const useAuth = create<AuthState>()(
     
     try {
       // טעינה מחדש מה-DB כדי לקבל עדכונים
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('worder_profiles')
         .select('*')
         .eq('id', user.id)
         .single()
       
+      if (error) {
+        console.error('Refresh user error:', error)
+        return
+      }
+      
       if (data) {
-        set({ user: data as Profile })
+        // המרה מ-snake_case ל-camelCase
+        const profile = dbToProfile(data)
+        set({ user: profile })
       }
     } catch (error) {
       console.error('Refresh user error:', error)
