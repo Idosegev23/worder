@@ -80,19 +80,19 @@ export default function UserProfile() {
 
   if (showSuccess) {
     return (
-      <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-gold via-yellow-300 to-orange-400">
-        <Card className="w-full max-w-2xl text-center shadow-2xl border-4 border-gold">
-          <div className="text-9xl mb-6 animate-bounce">🎁</div>
-          <h1 className="text-6xl font-bold mb-6 text-primary">מזל טוב!</h1>
-          <p className="text-3xl mb-6 font-semibold text-secondary">
+      <div className="p-6">
+        <Card className="w-full text-center shadow-2xl border-4 border-gold bg-gradient-to-br from-gold/20 via-yellow-300/20 to-orange-400/20">
+          <div className="text-8xl mb-6 animate-bounce">🎁</div>
+          <h1 className="text-5xl font-bold mb-6 text-primary">מזל טוב!</h1>
+          <p className="text-2xl mb-6 font-semibold text-secondary">
             זכית בפרס הגדול! 🎉
           </p>
-          <p className="text-xl text-muted mb-8">
+          <p className="text-lg text-muted mb-8">
             תקבל את הפרס בשיעור הקרוב!<br />
             המורה שלך תודיע לך 🎊
           </p>
           <Button 
-            className="w-full max-w-md mx-auto text-xl py-6" 
+            className="w-full max-w-md mx-auto text-lg py-4" 
             onClick={() => setShowSuccess(false)}
           >
             סגור
@@ -103,18 +103,12 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-sky via-purple to-pink">
+    <div className="p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-5xl font-bold text-white drop-shadow-lg">
-            האזור האישי שלי
+          <h1 className="text-4xl font-bold text-primary">
+            האזור האישי שלי 👤
           </h1>
-          <button
-            onClick={() => nav('/categories')}
-            className="text-white hover:underline text-lg font-semibold"
-          >
-            חזרה
-          </button>
         </div>
 
         {/* פרטי משתמש */}

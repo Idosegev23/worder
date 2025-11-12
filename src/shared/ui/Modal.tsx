@@ -13,7 +13,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-surface rounded-2xl p-6 max-w-lg w-full shadow-2xl">
+      <div className="relative bg-surface rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {title && <h2 className="text-2xl font-bold mb-4">{title}</h2>}
         {children}
       </div>
