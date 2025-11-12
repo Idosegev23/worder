@@ -286,15 +286,6 @@ function dbToUserBenefit(db: UserBenefitDB): UserBenefit {
   }
 }
 
-function userBenefitToDb(benefit: Partial<UserBenefit>): Partial<UserBenefitDB> {
-  return {
-    id: benefit.id,
-    user_id: benefit.userId,
-    received_at: benefit.receivedAt,
-    claimed: benefit.claimed
-  }
-}
-
 // Database Helper Functions
 
 /** Get all categories ordered by display_order */

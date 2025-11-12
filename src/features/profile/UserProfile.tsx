@@ -234,7 +234,7 @@ export default function UserProfile() {
             </div>
           ) : (
             <div className="space-y-3">
-              {benefits.map((benefit, index) => (
+              {benefits.map((benefit) => (
                 <div
                   key={benefit.id}
                   className={`flex items-center justify-between p-4 rounded-lg border-2 ${
