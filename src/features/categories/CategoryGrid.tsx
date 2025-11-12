@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from 'react'
-import { Category, getCategories, getWordsByCategory, getUserProgress } from '../../lib/supabase'
+import { Category, getCategories, getWordsByCategory, getUserProgress, getUnclaimedBenefitsCount } from '../../lib/supabase'
 import { Link, useNavigate } from 'react-router-dom'
 import { Card } from '../../shared/ui/Card'
+import { Modal } from '../../shared/ui/Modal'
 import { useAuth } from '../../store/useAuth'
 import { useGame } from '../../store/useGame'
 import { makeAvatar, AvatarStyle } from '../../lib/dicebear'
 import { gsap } from 'gsap'
 import { GlobalProgress } from '../../shared/ui/GlobalProgress'
+import UserProfile from '../profile/UserProfile'
 
 type CategoryWithProgress = Category & {
   completed: boolean
@@ -16,6 +18,8 @@ type CategoryWithProgress = Category & {
 export default function CategoryGrid() {
   const [cats, setCats] = useState<CategoryWithProgress[]>([])
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [showProfile, setShowProfile] = useState(false)
+  const [benefitsCount, setBenefitsCount] = useState(0)
   const user = useAuth(s => s.user)
   const logout = useAuth(s => s.logout)
   const nav = useNavigate()
@@ -88,6 +92,22 @@ export default function CategoryGrid() {
       setTimeout(() => setShowAchievement(null), 5000)
     }
   }, [achievements])
+
+  // טעינת מספר הטבות
+  useEffect(() => {
+    if (!user) return
+    
+    const loadBenefitsCount = async () => {
+      try {
+        const count = await getUnclaimedBenefitsCount(user.id)
+        setBenefitsCount(count)
+      } catch (error) {
+        console.error('Error loading benefits count:', error)
+      }
+    }
+    
+    loadBenefitsCount()
+  }, [user])
 
   useEffect(() => {
     if (!user) return
@@ -184,18 +204,32 @@ export default function CategoryGrid() {
                     <span className="text-sm font-bold">{achievements.length} הישגים</span>
                   </div>
                 )}
+                {benefitsCount > 0 && (
+                  <div className="flex items-center gap-2 bg-accent/20 px-3 py-1 rounded-full">
+                    <span>⭐</span>
+                    <span className="text-sm font-bold">{benefitsCount} הטבות</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
-          <button
-            onClick={() => {
-              logout()
-              window.location.href = '/'
-            }}
-            className="text-secondary hover:underline text-sm font-semibold"
-          >
-            יציאה
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowProfile(true)}
+              className="bg-gradient-to-r from-accent to-secondary text-white px-4 py-2 rounded-lg hover:scale-105 transition-transform text-sm font-semibold shadow-lg"
+            >
+              👤 האזור האישי
+            </button>
+            <button
+              onClick={() => {
+                logout()
+                window.location.href = '/'
+              }}
+              className="text-secondary hover:underline text-sm font-semibold"
+            >
+              יציאה
+            </button>
+          </div>
         </div>
 
         {/* סרגל התקדמות גלובלי */}
@@ -281,6 +315,17 @@ export default function CategoryGrid() {
           ))}
         </div>
       </div>
+
+      {/* מודל פרופיל */}
+      <Modal isOpen={showProfile} onClose={() => {
+        setShowProfile(false)
+        // רענון מספר ההטבות בסגירה
+        if (user) {
+          getUnclaimedBenefitsCount(user.id).then(count => setBenefitsCount(count))
+        }
+      }}>
+        <UserProfile />
+      </Modal>
     </div>
   )
 }

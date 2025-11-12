@@ -5,6 +5,7 @@ import AvatarPicker from './features/avatar/AvatarPicker'
 import CategoryGrid from './features/categories/CategoryGrid'
 import GameScreen from './features/game/GameScreen'
 import RewardChooser from './features/rewards/RewardChooser'
+import UserProfile from './features/profile/UserProfile'
 import AdminLogin from './features/admin/AdminLogin'
 import AdminDashboard from './features/admin/AdminDashboard'
 import WordsTable from './features/admin/WordsTable'
@@ -22,6 +23,7 @@ export default function RoutesView() {
     { path: '/categories', element: <CategoryGrid /> },
     { path: '/play/:categoryId', element: <GameScreen /> },
     { path: '/rewards', element: <RewardChooser /> },
+    { path: '/profile', element: <UserProfile /> },
     { path: '/admin', element: <AdminLogin /> },
     { path: '/admin/dashboard', element: <AdminDashboard /> },
     { path: '/admin/words', element: <WordsTable /> },

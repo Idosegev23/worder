@@ -222,6 +222,14 @@ export interface UserRewardChoice {
   createdAt: string
 }
 
+export interface UserBenefit {
+  id: number
+  userId: string
+  receivedAt: string
+  claimed: boolean
+  createdAt: string
+}
+
 // Internal DB types for UserRewardChoice
 interface UserRewardChoiceDB {
   id: number
@@ -231,6 +239,15 @@ interface UserRewardChoiceDB {
   chosen_id?: number
   chosen_at?: string
   reported: boolean
+  created_at: string
+}
+
+// Internal DB types for UserBenefit
+interface UserBenefitDB {
+  id: number
+  user_id: string
+  received_at: string
+  claimed: boolean
   created_at: string
 }
 
@@ -256,6 +273,25 @@ function userRewardChoiceToDb(choice: Partial<UserRewardChoice>): Partial<UserRe
     chosen_id: choice.chosenId,
     chosen_at: choice.chosenAt,
     reported: choice.reported
+  }
+}
+
+function dbToUserBenefit(db: UserBenefitDB): UserBenefit {
+  return {
+    id: db.id,
+    userId: db.user_id,
+    receivedAt: db.received_at,
+    claimed: db.claimed,
+    createdAt: db.created_at
+  }
+}
+
+function userBenefitToDb(benefit: Partial<UserBenefit>): Partial<UserBenefitDB> {
+  return {
+    id: benefit.id,
+    user_id: benefit.userId,
+    received_at: benefit.receivedAt,
+    claimed: benefit.claimed
   }
 }
 
@@ -506,5 +542,71 @@ export async function updateRewardChoice(choiceId: number, updates: Partial<User
   
   if (error) throw error
   return dbToUserRewardChoice(data as UserRewardChoiceDB)
+}
+
+/** Get user benefits */
+export async function getUserBenefits(userId: string) {
+  const { data, error } = await supabase
+    .from('worder_user_benefits')
+    .select('*')
+    .eq('user_id', userId)
+    .order('received_at', { ascending: false })
+  
+  if (error) throw error
+  return (data as UserBenefitDB[]).map(dbToUserBenefit)
+}
+
+/** Add a benefit for user */
+export async function addBenefit(userId: string) {
+  const { data, error } = await supabase
+    .from('worder_user_benefits')
+    .insert({ user_id: userId })
+    .select()
+    .single()
+  
+  if (error) throw error
+  return dbToUserBenefit(data as UserBenefitDB)
+}
+
+/** Get count of unclaimed benefits */
+export async function getUnclaimedBenefitsCount(userId: string) {
+  const { data, error } = await supabase
+    .from('worder_user_benefits')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('claimed', false)
+  
+  if (error) throw error
+  return data?.length || 0
+}
+
+/** Claim big prize (marks 5 benefits as claimed) */
+export async function claimBigPrize(userId: string) {
+  // Get first 5 unclaimed benefits
+  const { data: benefits, error: fetchError } = await supabase
+    .from('worder_user_benefits')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('claimed', false)
+    .order('received_at', { ascending: true })
+    .limit(5)
+  
+  if (fetchError) throw fetchError
+  
+  if (!benefits || benefits.length < 5) {
+    throw new Error('Not enough benefits to claim big prize')
+  }
+  
+  const benefitIds = benefits.map(b => b.id)
+  
+  // Mark them as claimed
+  const { error: updateError } = await supabase
+    .from('worder_user_benefits')
+    .update({ claimed: true })
+    .in('id', benefitIds)
+  
+  if (updateError) throw updateError
+  
+  return true
 }
 

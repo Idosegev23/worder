@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { Reward, getActiveRewards, saveRewardChoice } from '../../lib/supabase'
+import { addBenefit } from '../../lib/supabase'
 import { useAuth } from '../../store/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '../../shared/ui/Card'
@@ -8,12 +8,30 @@ import { fireConfetti } from '../../lib/confetti'
 import { play } from '../../lib/sounds'
 import { gsap } from 'gsap'
 
+// פרסים מעפנים
+const SILLY_PRIZES = [
+  { emoji: '🧻', title: 'גליל נייר טואלט', description: 'מזל טוב! זכית בגליל נייר טואלט משומש (כמעט)' },
+  { emoji: '✏️', title: 'מחק משומש', description: 'וואו! מחק שכבר מחק הכל פרט לתקוות שלך' },
+  { emoji: '🧦', title: 'גרב בודד', description: 'מדהים! גרב אחד בלי הזוג שלו, בול כמו בכביסה' },
+  { emoji: '🔘', title: 'כפתור', description: 'יש! כפתור שנפל מחולצה לפני 3 שנים' },
+  { emoji: '🛍️', title: 'שקית ריקה', description: 'כל הכבוד! שקית ניילון ריקה (ידידותית לסביבה?)' },
+  { emoji: '🥄', title: 'כפית פלסטיק שבורה', description: 'מעולה! כפית שכבר לא כפית אבל עדיין כפית' },
+  { emoji: '📎', title: 'מהדק נייר חלוד', description: 'נחמד! מהדק שראה ימים טובים יותר' },
+  { emoji: '🗑️', title: 'פתק ממוחזר', description: 'יופי! פתק עם רשימת קניות של מישהו אחר' },
+]
+
+type PrizeResult = {
+  type: 'benefit' | 'silly'
+  benefit?: any
+  silly?: typeof SILLY_PRIZES[0]
+}
+
 export default function RewardChooser() {
   const user = useAuth(s => s.user)
   const nav = useNavigate()
-  const [rewards, setRewards] = useState<[Reward, Reward] | null>(null)
-  const [chosen, setChosen] = useState<Reward | null>(null)
-  const [hoveredId, setHoveredId] = useState<number | null>(null)
+  const [ready, setReady] = useState(false)
+  const [result, setResult] = useState<PrizeResult | null>(null)
+  const [hoveredId, setHoveredId] = useState<1 | 2 | null>(null)
   const card1Ref = useRef<HTMLDivElement>(null)
   const card2Ref = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
@@ -24,22 +42,13 @@ export default function RewardChooser() {
       return
     }
 
-    // בחירת 2 מתנות אקראיות
-    getActiveRewards()
-      .then(all => {
-        if (all.length >= 2) {
-          const shuffled = all.sort(() => Math.random() - 0.5)
-          setRewards([shuffled[0], shuffled[1]])
-        }
-      })
-      .catch(error => {
-        console.error('Error loading rewards:', error)
-      })
+    // פשוט מסמנים שמוכנים להתחיל
+    setReady(true)
   }, [user, nav])
 
   // אנימציית כניסה דרמטית!
   useEffect(() => {
-    if (!rewards) return
+    if (!ready) return
 
     // קונפטי מיד בכניסה
     fireConfetti()
@@ -95,14 +104,14 @@ export default function RewardChooser() {
     }
 
     setTimeout(floatAnimation, 800)
-  }, [rewards])
+  }, [ready])
 
-  const handleChoose = async (reward: Reward) => {
-    if (!user || !rewards) return
+  const handleChoose = async (boxId: 1 | 2) => {
+    if (!user || result) return
 
     // אנימציה טרום בחירה - הקלף הנבחר גדל והשני נעלם
-    const chosenCard = reward.id === rewards[0].id ? card1Ref.current : card2Ref.current
-    const otherCard = reward.id === rewards[0].id ? card2Ref.current : card1Ref.current
+    const chosenCard = boxId === 1 ? card1Ref.current : card2Ref.current
+    const otherCard = boxId === 1 ? card2Ref.current : card1Ref.current
 
     if (chosenCard && otherCard) {
       // הקלף השני נעלם
@@ -135,24 +144,39 @@ export default function RewardChooser() {
       fireConfetti()
     }, 600)
 
-    // שמירת הבחירה ב-DB
-    await saveRewardChoice({
-      userId: user.id,
-      rewardAId: rewards[0].id,
-      rewardBId: rewards[1].id,
-      chosenId: reward.id,
-      reported: false
-    })
+    // הגרלה: 70% הטבה, 30% מעפן
+    const isBenefit = Math.random() < 0.7
+    
+    let prizeResult: PrizeResult
+    
+    if (isBenefit) {
+      // זכה בהטבה!
+      try {
+        const benefit = await addBenefit(user.id)
+        prizeResult = { type: 'benefit', benefit }
+      } catch (error) {
+        console.error('Error adding benefit:', error)
+        // אם יש שגיאה, נותנים לו פרס מעפן במקום
+        const randomSilly = SILLY_PRIZES[Math.floor(Math.random() * SILLY_PRIZES.length)]
+        prizeResult = { type: 'silly', silly: randomSilly }
+      }
+    } else {
+      // פרס מעפן
+      const randomSilly = SILLY_PRIZES[Math.floor(Math.random() * SILLY_PRIZES.length)]
+      prizeResult = { type: 'silly', silly: randomSilly }
+    }
 
     setTimeout(() => {
-      setChosen(reward)
+      setResult(prizeResult)
     }, 1000)
   }
 
-  const handleCardHover = (rewardId: number, isHovering: boolean) => {
-    setHoveredId(isHovering ? rewardId : null)
+  const handleCardHover = (boxId: 1 | 2, isHovering: boolean) => {
+    if (result) return // אם כבר בחר, לא מגיבים לריחוף
     
-    const cardRef = rewardId === rewards?.[0].id ? card1Ref.current : card2Ref.current
+    setHoveredId(isHovering ? boxId : null)
+    
+    const cardRef = boxId === 1 ? card1Ref.current : card2Ref.current
     if (!cardRef) return
 
     if (isHovering) {
@@ -173,46 +197,66 @@ export default function RewardChooser() {
     }
   }
 
-  if (!rewards) {
+  if (!ready) {
     return (
       <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-purple to-pink">
         <Card className="shadow-2xl">
-          <p className="text-muted">טוען מתנות... 🎁</p>
+          <p className="text-muted">מכין פרסים... 🎁</p>
         </Card>
       </div>
     )
   }
 
-  if (chosen) {
-    return (
-      <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-gold via-yellow-300 to-orange-400">
-        <Card className="w-full max-w-lg text-center shadow-2xl border-4 border-gold">
-          <div className="text-8xl mb-6 animate-bounce">🎉</div>
-          <h1 className="text-5xl font-bold mb-6 text-primary">כל הכבוד!</h1>
-          <p className="text-2xl mb-4 font-semibold">בחרת ב:</p>
-          <div className="text-4xl font-bold text-secondary mb-4 animate-pulse">
-            {chosen.title}
-          </div>
-          <p className="text-muted text-lg mb-6">{chosen.description}</p>
-          {chosen.payload?.url && (
-            <a
-              href={chosen.payload.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block bg-accent text-white px-6 py-3 rounded-xl hover:scale-110 transition-transform text-lg font-bold mb-4"
+  if (result) {
+    if (result.type === 'benefit') {
+      return (
+        <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-gold via-yellow-300 to-orange-400">
+          <Card className="w-full max-w-lg text-center shadow-2xl border-4 border-gold">
+            <div className="text-8xl mb-6 animate-bounce">🎉</div>
+            <h1 className="text-5xl font-bold mb-6 text-primary">מזל טוב!</h1>
+            <p className="text-2xl mb-4 font-semibold">זכית בהטבה! ⭐</p>
+            <div className="text-4xl font-bold text-secondary mb-4 animate-pulse">
+              הטבה #{result.benefit?.id}
+            </div>
+            <p className="text-muted text-lg mb-6">
+              צבור 5 הטבות וקבל פרס גדול! 🎁<br />
+              בדוק את ההתקדמות באזור האישי שלך
+            </p>
+            <Button 
+              className="w-full mt-6 text-lg py-4" 
+              onClick={() => nav('/categories')}
             >
-              🎁 לחץ כאן לקבלת המתנה
-            </a>
-          )}
-          <Button 
-            className="w-full mt-6 text-lg py-4" 
-            onClick={() => nav('/categories')}
-          >
-            חזרה לקטגוריות
-          </Button>
-        </Card>
-      </div>
-    )
+              חזרה לקטגוריות
+            </Button>
+          </Card>
+        </div>
+      )
+    } else {
+      // פרס מעפן
+      const silly = result.silly!
+      return (
+        <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-purple-400 via-pink-300 to-orange-300">
+          <Card className="w-full max-w-lg text-center shadow-2xl border-4 border-purple-500">
+            <div className="text-8xl mb-6 animate-bounce">{silly.emoji}</div>
+            <h1 className="text-5xl font-bold mb-6 text-purple-600">אופס!</h1>
+            <p className="text-2xl mb-4 font-semibold">זכית ב:</p>
+            <div className="text-4xl font-bold text-orange-600 mb-4 animate-pulse">
+              {silly.title}
+            </div>
+            <p className="text-muted text-lg mb-6">{silly.description}</p>
+            <p className="text-sm text-purple-600 mb-6">
+              😅 אל תדאג, בפעם הבאה תזכה בהטבה!
+            </p>
+            <Button 
+              className="w-full mt-6 text-lg py-4" 
+              onClick={() => nav('/categories')}
+            >
+              חזרה לקטגוריות
+            </Button>
+          </Card>
+        </div>
+      )
+    }
   }
 
   return (
@@ -236,43 +280,43 @@ export default function RewardChooser() {
         </p>
         
         <div className="grid md:grid-cols-2 gap-8">
-          {rewards.map((reward, index) => (
+          {[1, 2].map((boxId) => (
             <div
-              key={reward.id}
-              ref={index === 0 ? card1Ref : card2Ref}
+              key={boxId}
+              ref={boxId === 1 ? card1Ref : card2Ref}
               className="relative"
             >
               <Card
                 className={`cursor-pointer transition-all transform shadow-2xl border-4 ${
-                  hoveredId === reward.id 
+                  hoveredId === boxId 
                     ? 'border-gold shadow-gold/50' 
                     : 'border-white/30'
                 }`}
-                onClick={() => handleChoose(reward)}
-                onMouseEnter={() => handleCardHover(reward.id!, true)}
-                onMouseLeave={() => handleCardHover(reward.id!, false)}
+                onClick={() => handleChoose(boxId as 1 | 2)}
+                onMouseEnter={() => handleCardHover(boxId as 1 | 2, true)}
+                onMouseLeave={() => handleCardHover(boxId as 1 | 2, false)}
               >
                 {/* אייקון ענק */}
                 <div className="text-8xl text-center mb-6">
-                  {index === 0 ? '🎁' : '🎉'}
+                  🎁
                 </div>
                 
                 <div className="text-3xl font-bold mb-4 text-center text-primary">
-                  {reward.title}
+                  קופסה מסתורית #{boxId}
                 </div>
                 
                 <p className="text-muted text-center text-lg">
-                  {reward.description}
+                  מה מסתתר בפנים? 🤔
                 </p>
                 
                 {/* אפקט זוהר */}
-                {hoveredId === reward.id && (
+                {hoveredId === boxId && (
                   <div className="absolute inset-0 bg-gradient-to-r from-gold/20 via-yellow-300/20 to-gold/20 rounded-xl animate-pulse pointer-events-none" />
                 )}
               </Card>
               
               {/* כוכבים מסביב */}
-              {hoveredId === reward.id && (
+              {hoveredId === boxId && (
                 <>
                   <div className="absolute -top-4 -left-4 text-4xl animate-bounce">⭐</div>
                   <div className="absolute -top-4 -right-4 text-4xl animate-bounce" style={{ animationDelay: '0.1s' }}>⭐</div>
