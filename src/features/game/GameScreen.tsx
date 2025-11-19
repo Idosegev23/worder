@@ -159,12 +159,12 @@ export default function GameScreen() {
     }
   }
 
-  const checkAnswer = async () => {
-    if (!currentWord || !answer.trim()) return
+  const checkAnswerWithOption = async (selectedAnswer: string) => {
+    if (!currentWord) return
 
     const canonical = normalizeAnswer(currentWord.he)
     const variants = (currentWord.altHe || []).map(normalizeAnswer)
-    const given = normalizeAnswer(answer)
+    const given = normalizeAnswer(selectedAnswer)
 
     const isCorrect = [canonical, ...variants].includes(given)
     const currentAttempts = attempts + 1
@@ -183,7 +183,7 @@ export default function GameScreen() {
         wordId: currentWord.id,
         isCorrect: true,
         attempts: currentAttempts,
-        lastAnswer: answer,
+        lastAnswer: selectedAnswer,
         wrongAnswers: wrongAnswers,
         audioPlayed: audioPlayed
       })
@@ -208,15 +208,15 @@ export default function GameScreen() {
       }, 3000)
     } else {
       // תשובה שגויה!
-      const newWrongAnswers = [...wrongAnswers, answer]
+      const newWrongAnswers = [...wrongAnswers, selectedAnswer]
       setWrongAnswers(newWrongAnswers)
       
       play('wrong')
       resetStreak()
 
-      if (currentAttempts >= 2) {
-        // אחרי 2 ניסיונות - מציגים את התשובה
-        setFeedback('show-answer')
+      // במשחקי בחירה - תמיד מראים טעות מיד, אין "ניסיון שני" באותו אופן
+      if (isChoiceGame || currentAttempts >= 2) {
+        setFeedback(isChoiceGame ? 'wrong' : 'show-answer')
         
         // שמירת התקדמות ב-DB
         await saveProgress({
@@ -224,17 +224,29 @@ export default function GameScreen() {
           wordId: currentWord.id,
           isCorrect: false,
           attempts: currentAttempts,
-          lastAnswer: answer,
+          lastAnswer: selectedAnswer,
           wrongAnswers: newWrongAnswers,
           audioPlayed: audioPlayed
         })
 
-        // מעבר למילה הבאה אחרי 5 שניות
-        setTimeout(async () => {
-          await moveToNextWord()
-        }, 5000)
+        // במשחקי בחירה - מחכים קצת ואז מנקים את הפידבק כדי שיוכל לנסות שוב
+        // אלא אם כן הגענו למקסימום ניסיונות (2) ואז מראים תשובה
+        if (isChoiceGame && currentAttempts < 2) {
+            await triggerFunnyEffect(document.getElementById('game-card') || undefined)
+            setTimeout(() => {
+                setFeedback(null)
+                setAnswer('') // ניקוי כדי לאפשר בחירה חדשה
+            }, 1500)
+        } else {
+            // אם זה לא משחק בחירה או שזה ניסיון שני במשחק בחירה
+            if (isChoiceGame) setFeedback('show-answer') // מראה את התשובה הנכונה
+            
+            setTimeout(async () => {
+              await moveToNextWord()
+            }, 4000)
+        }
       } else {
-        // ניסיון ראשון - תן לו לנסות שוב
+        // ניסיון ראשון במשחק הקלדה - תן לו לנסות שוב
         setFeedback('wrong')
         
         // אפקט עדין
@@ -246,6 +258,10 @@ export default function GameScreen() {
         }, 2000)
       }
     }
+  }
+
+  const checkAnswer = async () => {
+    checkAnswerWithOption(answer)
   }
 
   if (words.length === 0) {
@@ -359,14 +375,25 @@ export default function GameScreen() {
                 <button
                   key={option}
                   onClick={() => {
-                    setAnswer(option)
-                    setTimeout(() => checkAnswer(), 100)
+                    // אם כבר יש פידבק, לא עושים כלום
+                    if (feedback) return;
+                    
+                    setAnswer(option);
+                    // קריאה ישירה לבדיקה - חשוב מאוד להשתמש בערך העדכני
+                    // נשתמש בפונקציה ייעודית לבדיקה עם האופציה שנבחרה
+                    checkAnswerWithOption(option);
                   }}
                   disabled={feedback !== null}
                   className={`py-6 px-8 rounded-xl text-2xl font-bold transition-all transform hover:scale-105 ${
-                    feedback !== null
-                      ? 'bg-muted text-muted cursor-not-allowed'
-                      : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-2xl active:scale-95'
+                    feedback === 'correct' && answer === option
+                      ? 'bg-accent text-white shadow-lg scale-110 ring-4 ring-green-300' // נבחר ונכון
+                      : feedback === 'wrong' && answer === option
+                      ? 'bg-red-500 text-white shadow-lg scale-95 ring-4 ring-red-300' // נבחר ושגוי
+                      : feedback === 'show-answer' && normalizeAnswer(currentWord.he) === option
+                      ? 'bg-accent text-white shadow-lg animate-pulse ring-4 ring-blue-300' // התשובה הנכונה שמוצגת
+                      : feedback !== null
+                      ? 'bg-muted text-white/50 cursor-not-allowed opacity-50' // שאר הכפתורים בזמן פידבק
+                      : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-2xl active:scale-95' // מצב רגיל
                   }`}
                 >
                   {option.toUpperCase()}
