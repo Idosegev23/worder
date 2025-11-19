@@ -25,8 +25,17 @@ export default function GameScreen() {
   const [wrongAnswers, setWrongAnswers] = useState<string[]>([])
   const [audioPlayed, setAudioPlayed] = useState(false)
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
+  const [categoryName, setCategoryName] = useState<string>('')
 
   const currentWord = words[currentIndex]
+  
+  // זיהוי אם זה משחק בחירה (כפתורים) או הקלדה
+  const isChoiceGame = categoryName === 'Am/Is/Are' || categoryName === 'Have/Has'
+  const choiceOptions = categoryName === 'Am/Is/Are' 
+    ? ['am', 'is', 'are'] 
+    : categoryName === 'Have/Has' 
+    ? ['have', 'has'] 
+    : []
 
   useEffect(() => {
     if (!user) {
@@ -41,6 +50,14 @@ export default function GameScreen() {
         
         console.log('Found active words:', activeWords)
         setWords(activeWords)
+        
+        // טעינת שם הקטגוריה
+        const { getCategories } = await import('../../lib/supabase')
+        const categories = await getCategories()
+        const currentCat = categories.find(c => c.id === Number(categoryId))
+        if (currentCat) {
+          setCategoryName(currentCat.name)
+        }
         
         // מציאת המילה הראשונה שעוד לא נענתה עליה נכון
         const userProgress = await getUserProgress(user.id)
@@ -301,41 +318,72 @@ export default function GameScreen() {
         {/* המילה באנגלית + כפתור השמעה */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="word-text text-5xl font-bold">
+            <div className="word-text text-4xl font-bold">
               {currentWord.en}
             </div>
-            <button
-              onClick={handlePlayAudio}
-              disabled={isPlayingAudio}
-              className={`p-4 rounded-full transition-all ${
-                isPlayingAudio 
-                  ? 'bg-primary/50 animate-pulse' 
-                  : audioPlayed 
-                  ? 'bg-accent text-white hover:scale-110'
-                  : 'bg-sky text-white hover:scale-110'
-              }`}
-              title="השמע את המילה"
-            >
-              <span className="text-3xl">{isPlayingAudio ? '🔊' : '🔉'}</span>
-            </button>
+            {!isChoiceGame && (
+              <button
+                onClick={handlePlayAudio}
+                disabled={isPlayingAudio}
+                className={`p-4 rounded-full transition-all ${
+                  isPlayingAudio 
+                    ? 'bg-primary/50 animate-pulse' 
+                    : audioPlayed 
+                    ? 'bg-accent text-white hover:scale-110'
+                    : 'bg-sky text-white hover:scale-110'
+                }`}
+                title="השמע את המילה"
+              >
+                <span className="text-3xl">{isPlayingAudio ? '🔊' : '🔉'}</span>
+              </button>
+            )}
           </div>
-          {attempts > 0 && (
+          {attempts > 0 && !isChoiceGame && (
             <div className="text-sm text-muted">
               ניסיון {attempts} מתוך 2
             </div>
           )}
+          {isChoiceGame && (
+            <div className="text-lg text-muted mt-2">
+              בחר את התשובה הנכונה 👇
+            </div>
+          )}
         </div>
 
-        {/* שדה תשובה */}
+        {/* שדה תשובה או כפתורי בחירה */}
         <div className="space-y-4">
-          <Input
-            placeholder="תרגם לעברית..."
-            value={answer}
-            onChange={e => setAnswer(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && checkAnswer()}
-            disabled={feedback !== null}
-            className="text-xl text-center"
-          />
+          {isChoiceGame ? (
+            // כפתורי בחירה
+            <div className="grid grid-cols-2 gap-4">
+              {choiceOptions.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => {
+                    setAnswer(option)
+                    setTimeout(() => checkAnswer(), 100)
+                  }}
+                  disabled={feedback !== null}
+                  className={`py-6 px-8 rounded-xl text-2xl font-bold transition-all transform hover:scale-105 ${
+                    feedback !== null
+                      ? 'bg-muted text-muted cursor-not-allowed'
+                      : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-2xl active:scale-95'
+                  }`}
+                >
+                  {option.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          ) : (
+            // שדה הקלדה רגיל
+            <Input
+              placeholder="תרגם לעברית..."
+              value={answer}
+              onChange={e => setAnswer(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && checkAnswer()}
+              disabled={feedback !== null}
+              className="text-xl text-center"
+            />
+          )}
 
         {/* פידבק */}
         {feedback === 'correct' && (
@@ -369,13 +417,15 @@ export default function GameScreen() {
           </div>
         )}
 
-          <Button
-            className="w-full submit-btn"
-            onClick={checkAnswer}
-            disabled={!answer.trim() || feedback !== null}
-          >
-            בדוק תשובה
-          </Button>
+          {!isChoiceGame && (
+            <Button
+              className="w-full submit-btn"
+              onClick={checkAnswer}
+              disabled={!answer.trim() || feedback !== null}
+            >
+              בדוק תשובה
+            </Button>
+          )}
         </div>
       </Card>
       </div>

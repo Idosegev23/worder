@@ -38,9 +38,9 @@ async function speakWithOpenAI(word: string): Promise<void> {
     },
     body: JSON.stringify({
       model: 'tts-1',
-      voice: 'alloy',
+      voice: 'nova', // קול נשי אנרגטי וברור - מצוין לילדים
       input: word,
-      speed: 0.9
+      speed: 0.85 // קצת יותר איטי לילדים
     }),
   })
 
@@ -61,20 +61,28 @@ async function speakWithOpenAI(word: string): Promise<void> {
 
 export async function speakWord(word: string): Promise<void> {
   try {
-    // אם הוגדר להשתמש ב-TTS של הדפדפן, או אם אין OpenAI Key
-    if (USE_BROWSER_TTS || !OPENAI_API_KEY) {
+    // אם הוגדר מפורשות להשתמש ב-TTS של הדפדפן
+    if (USE_BROWSER_TTS) {
       console.log('Using browser TTS (free)')
       await speakWithBrowserAPI(word)
-    } else {
-      // נסה OpenAI, אם נכשל - חזור ל-Browser TTS
+      return
+    }
+    
+    // נסה OpenAI קודם (אם יש API key)
+    if (OPENAI_API_KEY) {
       try {
-        console.log('Using OpenAI TTS')
+        console.log('Using OpenAI TTS with voice: nova')
         await speakWithOpenAI(word)
+        return
       } catch (error) {
         console.warn('OpenAI TTS failed, falling back to browser TTS:', error)
-        await speakWithBrowserAPI(word)
       }
     }
+    
+    // fallback לדפדפן
+    console.log('Using browser TTS as fallback')
+    await speakWithBrowserAPI(word)
+    
   } catch (error) {
     console.error('Error playing TTS:', error)
     throw error

@@ -16,7 +16,7 @@ export interface Profile {
 
 export interface Category {
   id: number
-  name: 'Nouns' | 'Verbs' | 'Prepositions' | 'Adjectives'
+  name: 'Nouns' | 'Verbs' | 'Prepositions' | 'Adjectives' | 'Pronouns' | 'Vocabulary' | 'Am/Is/Are' | 'Have/Has'
   displayName: string
   order: number
 }
