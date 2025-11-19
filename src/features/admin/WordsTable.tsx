@@ -54,6 +54,7 @@ export default function WordsTable() {
       he: '',
       altEn: [],
       altHe: [],
+      translation: null,
       displayOrder: words.length,
       active: true,
       createdAt: new Date().toISOString()
@@ -174,6 +175,17 @@ export default function WordsTable() {
                   value={editing.he}
                   onChange={e => setEditing({ ...editing, he: e.target.value })}
                 />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">תרגום מלא (לעברית):</label>
+                <Input
+                  value={editing.translation || ''}
+                  onChange={e => setEditing({ ...editing, translation: e.target.value || null })}
+                  placeholder="תרגום המשפט המלא (למשחקי השלמה)"
+                />
+                <p className="text-xs text-muted mt-1">
+                  💡 שדה זה משמש להצגת תרגום מלא במשחקי Am/Is/Are ו-Have/Has
+                </p>
               </div>
               <div>
                 <label className="block text-sm mb-1">קטגוריה:</label>

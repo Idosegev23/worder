@@ -60,6 +60,9 @@ export default function GameScreen() {
           setCategoryName(currentCat.name)
         }
         
+        // מציאת המילה הראשונה שעוד לא נענתה עליה נכון
+        const userProgress = await getUserProgress(user.id)
+        
         // בדיקה אם כל המילים נענו נכון
         const allCorrect = activeWords.every(word => 
           userProgress.some(p => p.wordId === word.id && p.isCorrect)
