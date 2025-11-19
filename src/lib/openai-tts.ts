@@ -37,10 +37,10 @@ async function speakWithOpenAI(word: string): Promise<void> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'tts-1',
-      voice: 'nova', // קול נשי אנרגטי וברור - מצוין לילדים
+      model: 'gpt-4o-mini-tts',
+      voice: 'coral', // קול חדש ואיכותי
       input: word,
-      speed: 0.85 // קצת יותר איטי לילדים
+      instructions: "Speak clearly and slowly, suitable for children learning English.", // הוראות למודל החדש
     }),
   })
 
@@ -71,7 +71,7 @@ export async function speakWord(word: string): Promise<void> {
     // נסה OpenAI קודם (אם יש API key)
     if (OPENAI_API_KEY) {
       try {
-        console.log('Using OpenAI TTS with voice: nova')
+        console.log('Using OpenAI TTS with model: gpt-4o-mini-tts, voice: coral')
         await speakWithOpenAI(word)
         return
       } catch (error) {
