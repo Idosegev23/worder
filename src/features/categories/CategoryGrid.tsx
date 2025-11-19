@@ -190,14 +190,14 @@ export default function CategoryGrid() {
           </div>
         )}
 
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <div>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent text-center sm:text-right">
               בחר קטגוריה
             </h1>
             {user && (
-              <div className="flex items-center gap-4 mt-2">
-                <p className="text-muted text-lg">שלום, {user.firstName}! 👋</p>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 justify-center sm:justify-start">
+                <p className="text-muted text-base sm:text-lg">שלום, {user.firstName}! 👋</p>
                 {achievements.length > 0 && (
                   <div className="flex items-center gap-2 bg-gold/20 px-3 py-1 rounded-full">
                     <span>🏆</span>
@@ -213,10 +213,10 @@ export default function CategoryGrid() {
               </div>
             )}
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3 justify-center">
             <button
               onClick={() => setShowProfile(true)}
-              className="bg-gradient-to-r from-accent to-secondary text-white px-4 py-2 rounded-lg hover:scale-105 transition-transform text-sm font-semibold shadow-lg"
+              className="bg-gradient-to-r from-accent to-secondary text-white px-4 py-2 rounded-lg hover:scale-105 transition-transform text-sm font-semibold shadow-lg whitespace-nowrap"
             >
               👤 האזור האישי
             </button>
@@ -225,7 +225,7 @@ export default function CategoryGrid() {
                 logout()
                 window.location.href = '/'
               }}
-              className="text-secondary hover:underline text-sm font-semibold"
+              className="text-secondary hover:underline text-sm font-semibold whitespace-nowrap"
             >
               יציאה
             </button>
@@ -282,23 +282,37 @@ export default function CategoryGrid() {
                   </div>
                   
                   <div className="flex items-center justify-between mb-3">
-                    <div className="text-sm text-muted font-semibold">
-                      {c.completed ? '🎉 הושלם!' : `התקדמות: ${c.progress}%`}
+                    <div className="text-sm text-muted font-semibold flex-1">
+                      {c.completed ? (
+                        <span className="text-accent font-bold">🎉 הושלם!</span>
+                      ) : (
+                        <span>התקדמות: {c.progress}%</span>
+                      )}
                     </div>
                     
                     {!c.completed && c.progress > 0 && (
-                      <div className="text-primary text-xs font-bold">
+                      <div className="text-primary text-xs font-bold bg-primary/10 px-2 py-1 rounded-full whitespace-nowrap">
                         בדרך! 🚀
                       </div>
                     )}
                   </div>
                   
                   {!c.completed && (
-                    <div className="w-full bg-primary/10 h-3 rounded-full overflow-hidden">
+                    <div className="w-full bg-gray-200 h-4 rounded-full overflow-hidden border border-gray-300/50 relative">
+                      {/* רקע מפוספס לבר */}
+                      <div className="absolute inset-0 opacity-10 bg-[length:10px_10px] bg-[linear-gradient(45deg,rgba(0,0,0,.1)_25%,transparent_25%,transparent_50%,rgba(0,0,0,.1)_50%,rgba(0,0,0,.1)_75%,transparent_75%,transparent)]" />
+                      
                       <div 
-                        className="bg-gradient-to-r from-primary to-secondary h-full rounded-full transition-all duration-500"
-                        style={{ width: `${c.progress}%` }}
-                      />
+                        className="h-full rounded-full transition-all duration-1000 ease-out relative"
+                        style={{ 
+                          width: `${Math.max(c.progress, 5)}%`, // מינימום 5% שיראו משהו
+                          background: 'linear-gradient(90deg, #FFD700 0%, #FFA500 100%)',
+                          boxShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
+                        }}
+                      >
+                        {/* אפקט ברק */}
+                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                      </div>
                     </div>
                   )}
                   

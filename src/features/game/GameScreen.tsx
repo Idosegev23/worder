@@ -26,6 +26,7 @@ export default function GameScreen() {
   const [audioPlayed, setAudioPlayed] = useState(false)
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
   const [categoryName, setCategoryName] = useState<string>('')
+  const [wasCompletedInitially, setWasCompletedInitially] = useState(false) // האם הקטגוריה כבר הושלמה בעבר?
 
   const currentWord = words[currentIndex]
   
@@ -59,26 +60,36 @@ export default function GameScreen() {
           setCategoryName(currentCat.name)
         }
         
-        // מציאת המילה הראשונה שעוד לא נענתה עליה נכון
-        const userProgress = await getUserProgress(user.id)
+        // בדיקה אם כל המילים נענו נכון
+        const allCorrect = activeWords.every(word => 
+          userProgress.some(p => p.wordId === word.id && p.isCorrect)
+        )
         
+        if (allCorrect) {
+          setWasCompletedInitially(true)
+          console.log('Category was already completed! Starting practice mode.')
+        }
+
         let firstUnansweredIndex = 0
-        for (let i = 0; i < activeWords.length; i++) {
-          const hasCorrectAnswer = userProgress.some(
-            p => p.wordId === activeWords[i].id && p.isCorrect
-          )
-          
-          if (!hasCorrectAnswer) {
-            firstUnansweredIndex = i
-            console.log(`Found unanswered word at index ${i}:`, activeWords[i].en)
-            break
+        // אם הכל הושלם, מתחילים מהתחלה (0). אחרת, מחפשים את הראשונה שלא נענתה
+        if (!allCorrect) {
+          for (let i = 0; i < activeWords.length; i++) {
+            const hasCorrectAnswer = userProgress.some(
+              p => p.wordId === activeWords[i].id && p.isCorrect
+            )
+            
+            if (!hasCorrectAnswer) {
+              firstUnansweredIndex = i
+              break
+            }
           }
-          
-          // אם כל המילים נענו, נתחיל מההתחלה (חזרה על הקטגוריה)
-          if (i === activeWords.length - 1 && hasCorrectAnswer) {
-            firstUnansweredIndex = 0
-            console.log('All words answered correctly, starting from beginning')
-          }
+        } else {
+          // אם הכל הושלם, אנחנו רוצים להתחיל מהמילה הראשונה *בסבב הנוכחי* שלא ענינו עליה *עכשיו*
+          // אבל ה-DB שומר היסטוריה מלאה.
+          // הפתרון: במצב תרגול חוזר, אנחנו פשוט מתחילים מ-0 ועוברים אחד אחד.
+          // המשתמש יוכל להמשיך מאותה נקודה רק אם נשמור state לוקלי או שנשתמש בלוגיקה מתוחכמת יותר.
+          // כרגע: מתחיל מ-0.
+          firstUnansweredIndex = 0
         }
         
         console.log('Starting from index:', firstUnansweredIndex)
@@ -138,14 +149,38 @@ export default function GameScreen() {
     const categoryCompleted = await checkIfCategoryCompleted()
     
     if (categoryCompleted) {
-      // סיימנו את הקטגוריה! עובר למתנות
-      console.log('✅ Category completed! Going to rewards...')
-      nav('/rewards')
+      // אם הקטגוריה הושלמה עכשיו, אבל כבר הייתה מושלמת בעבר -> רק תרגול חוזר
+      if (wasCompletedInitially) {
+        console.log('✅ Practice completed!')
+        // קונפטי ואז חזרה
+        triggerCelebration(document.getElementById('game-card') || undefined)
+        play('correct')
+        
+        setTimeout(() => {
+          alert('כל הכבוד! סיימת סבב תרגול נוסף! ⭐')
+          nav('/categories')
+        }, 2000)
+      } else {
+        // סיום ראשון -> פרסים!
+        console.log('✅ Category completed first time! Going to rewards...')
+        nav('/rewards')
+      }
     } else if (currentIndex < words.length - 1) {
       setCurrentIndex(currentIndex + 1)
     } else {
-      // הגענו לסוף הרשימה אבל עדיין יש מילים שלא סיימנו
-      // חוזרים למילה הראשונה שלא סיימנו
+      // הגענו לסוף הרשימה
+      // אם היינו במצב תרגול חוזר (wasCompletedInitially), אז סיימנו את הסבב
+      if (wasCompletedInitially) {
+        triggerCelebration(document.getElementById('game-card') || undefined)
+        play('correct')
+        setTimeout(() => {
+          alert('כל הכבוד! סיימת סבב תרגול נוסף! ⭐')
+          nav('/categories')
+        }, 2000)
+        return
+      }
+
+      // אחרת (מצב רגיל), חוזרים למילה הראשונה שלא סיימנו
       const allProgress = await getUserProgress(user.id)
       let nextIndex = 0
       for (let i = 0; i < words.length; i++) {
@@ -299,35 +334,29 @@ export default function GameScreen() {
         {/* סרגל התקדמות גלובלי */}
         <GlobalProgress />
         
-        <Card className="w-full max-w-xl mx-auto shadow-2xl relative overflow-hidden min-h-[600px] flex flex-col" id="game-card">
+        <Card className="w-full max-w-xl mx-auto shadow-2xl relative overflow-hidden min-h-[500px] sm:min-h-[600px] flex flex-col border-4 border-white/50" id="game-card">
           {/* התקדמות */}
-          <div className="flex justify-between items-center mb-6 relative z-10">
-            <div className="flex items-center gap-4">
-              <span className="text-muted text-sm">
-                מילה {currentIndex + 1} / {words.length}
+          <div className="flex justify-between items-center mb-4 sm:mb-6 relative z-10 bg-white/10 p-2 sm:p-3 rounded-xl backdrop-blur-sm">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="text-primary font-bold text-base sm:text-lg">
+                {currentIndex + 1} / {words.length}
               </span>
               
               {/* הצגת רצף נוכחי */}
               {streak > 0 && (
-                <div className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-red-500 text-white px-3 py-1 rounded-full animate-pulse">
-                  <span className="text-lg">🔥</span>
-                  <span className="font-bold">{streak}</span>
-                </div>
-              )}
-              
-              {/* בונוס רצף */}
-              {streak >= 5 && (
-                <div className="text-gold text-xs font-bold animate-bounce">
-                  +{streak >= 10 ? '3' : '2'} כוכבים!
+                <div className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-red-500 text-white px-2 sm:px-3 py-1 rounded-full animate-pulse shadow-lg">
+                  <span className="text-base sm:text-lg">🔥</span>
+                  <span className="font-bold text-sm sm:text-base">{streak}</span>
                 </div>
               )}
             </div>
             
             <button
               onClick={() => nav('/categories')}
-              className="text-secondary hover:underline text-sm"
+              className="flex items-center gap-1 sm:gap-2 text-secondary hover:bg-secondary/10 px-2 sm:px-3 py-1 rounded-lg transition-colors font-bold text-sm sm:text-base"
             >
-              חזרה
+              <span className="hidden sm:inline">חזרה</span>
+              <span>↩️</span>
             </button>
           </div>
 
@@ -348,41 +377,29 @@ export default function GameScreen() {
 
         {/* המילה באנגלית + כפתור השמעה */}
         <div className="text-center mb-8 flex-1 flex flex-col justify-center relative z-10">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="word-text text-4xl font-bold break-words max-w-[80%]">
+          <div className="flex items-center justify-center gap-4 mb-4 flex-wrap">
+            <div className="word-text text-3xl sm:text-4xl font-bold break-words max-w-[90%] sm:max-w-[80%]">
               {currentWord.en}
             </div>
-            {!isChoiceGame && (
-              <button
-                onClick={handlePlayAudio}
-                disabled={isPlayingAudio}
-                className={`p-4 rounded-full transition-all ${
-                  isPlayingAudio 
-                    ? 'bg-primary/50 animate-pulse' 
-                    : audioPlayed 
-                    ? 'bg-accent text-white hover:scale-110'
-                    : 'bg-sky text-white hover:scale-110'
-                }`}
-                title="השמע את המילה"
-              >
-                <span className="text-3xl">{isPlayingAudio ? '🔊' : '🔉'}</span>
-              </button>
-            )}
+            <button
+              onClick={handlePlayAudio}
+              disabled={isPlayingAudio}
+              className={`p-3 sm:p-4 rounded-full transition-all ${
+                isPlayingAudio 
+                  ? 'bg-primary/50 animate-pulse' 
+                  : audioPlayed 
+                  ? 'bg-accent text-white hover:scale-110'
+                  : 'bg-sky text-white hover:scale-110'
+              }`}
+              title="השמע את המילה"
+            >
+              <span className="text-2xl sm:text-3xl">{isPlayingAudio ? '🔊' : '🔉'}</span>
+            </button>
           </div>
-          {/* תרגום למשפטי Have/Has */}
-          {categoryName === 'Have/Has' && (
-            <div className="text-lg text-secondary font-semibold mt-2 animate-fade-in">
-              {/* כאן נוסיף תרגום ידני או מהדאטה אם קיים */}
-              {/* כרגע נציג הסבר כללי אם אין תרגום ספציפי */}
-              משמעות: {
-                currentWord.en.includes('sport') ? 'אני עושה ספורט אחרי בית הספר' :
-                currentWord.en.includes('breakfast') ? 'את/ה אוכל/ת ארוחת בוקר לפני הכיתה' :
-                currentWord.en.includes('bike') ? 'יש לו אופניים מהירים' :
-                currentWord.en.includes('home') ? (currentWord.en.includes('We') ? 'יש לנו בית' : 'יש לה בית גדול עם גינה') :
-                currentWord.en.includes('books') ? 'יש להם הרבה ספרים בחדר' :
-                currentWord.en.includes('face') ? 'יש לזה פרצוף מצחיק כשמסתכלים על זה' :
-                ''
-              }
+          {/* תרגום למשפטים (אם יש תרגום במסד נתונים) */}
+          {currentWord.translation && (categoryName === 'Have/Has' || categoryName === 'Am/Is/Are') && (
+            <div className="text-lg text-secondary font-semibold mt-2 animate-fade-in bg-secondary/10 px-4 py-2 rounded-lg">
+              <span className="text-primary">💬</span> {currentWord.translation}
             </div>
           )}
 
@@ -399,10 +416,12 @@ export default function GameScreen() {
         </div>
 
         {/* שדה תשובה או כפתורי בחירה */}
-        <div className="space-y-4">
+        <div className="space-y-4 relative z-10">
           {isChoiceGame ? (
             // כפתורי בחירה
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-3 sm:gap-4 ${
+              categoryName === 'Am/Is/Are' ? 'grid-cols-3' : 'grid-cols-2'
+            }`}>
               {choiceOptions.map((option) => (
                 <button
                   key={option}
@@ -416,7 +435,7 @@ export default function GameScreen() {
                     checkAnswerWithOption(option);
                   }}
                   disabled={feedback !== null}
-                  className={`py-6 px-8 rounded-xl text-2xl font-bold transition-all transform hover:scale-105 ${
+                  className={`py-4 sm:py-6 px-4 sm:px-8 rounded-xl text-xl sm:text-2xl font-bold transition-all transform hover:scale-105 ${
                     feedback === 'correct' && answer === option
                       ? 'bg-accent text-white shadow-lg scale-110 ring-4 ring-green-300' // נבחר ונכון
                       : feedback === 'wrong' && answer === option

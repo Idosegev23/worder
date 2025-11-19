@@ -144,8 +144,8 @@ export default function RewardChooser() {
       fireConfetti()
     }, 600)
 
-    // הגרלה: 70% הטבה, 30% מעפן
-    const isBenefit = Math.random() < 0.7
+    // הגרלה: 40% הטבה, 60% מעפן
+    const isBenefit = Math.random() < 0.4
     
     let prizeResult: PrizeResult
     

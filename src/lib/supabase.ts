@@ -84,6 +84,7 @@ interface WordDB {
   he: string
   alt_en?: string[]
   alt_he?: string[]
+  translation?: string | null
   display_order?: number
   active: boolean
   created_at: string
@@ -105,6 +106,7 @@ export interface Word {
   he: string
   altEn?: string[]
   altHe?: string[]
+  translation?: string | null
   displayOrder?: number
   active: boolean
   createdAt: string
@@ -129,6 +131,7 @@ function dbToWord(db: WordDB): Word {
     he: db.he,
     altEn: db.alt_en,
     altHe: db.alt_he,
+    translation: db.translation,
     displayOrder: db.display_order,
     active: db.active,
     createdAt: db.created_at
