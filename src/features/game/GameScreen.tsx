@@ -299,9 +299,9 @@ export default function GameScreen() {
         {/* סרגל התקדמות גלובלי */}
         <GlobalProgress />
         
-        <Card className="w-full max-w-xl mx-auto shadow-2xl" id="game-card">
+        <Card className="w-full max-w-xl mx-auto shadow-2xl relative overflow-hidden min-h-[600px] flex flex-col" id="game-card">
           {/* התקדמות */}
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-6 relative z-10">
             <div className="flex items-center gap-4">
               <span className="text-muted text-sm">
                 מילה {currentIndex + 1} / {words.length}
@@ -331,10 +331,25 @@ export default function GameScreen() {
             </button>
           </div>
 
+        {/* כותרת הסבר למשחק */}
+        <div className="text-center mb-4 relative z-10">
+          <h2 className="text-2xl font-bold text-primary">
+            {categoryName === 'Am/Is/Are' ? 'השלימו את המילה החסרה (Am / Is / Are)' :
+             categoryName === 'Have/Has' ? 'השלימו את המילה החסרה (Have / Has)' :
+             categoryName === 'Pronouns' ? 'תרגמו את כינוי הגוף' :
+             'תרגמו את המילה לעברית'}
+          </h2>
+          {(categoryName === 'Am/Is/Are' || categoryName === 'Have/Has') && (
+            <p className="text-muted text-sm mt-1">
+              בחרו את האפשרות המתאימה למשפט
+            </p>
+          )}
+        </div>
+
         {/* המילה באנגלית + כפתור השמעה */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 flex-1 flex flex-col justify-center relative z-10">
           <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="word-text text-4xl font-bold">
+            <div className="word-text text-4xl font-bold break-words max-w-[80%]">
               {currentWord.en}
             </div>
             {!isChoiceGame && (
@@ -354,6 +369,23 @@ export default function GameScreen() {
               </button>
             )}
           </div>
+          {/* תרגום למשפטי Have/Has */}
+          {categoryName === 'Have/Has' && (
+            <div className="text-lg text-secondary font-semibold mt-2 animate-fade-in">
+              {/* כאן נוסיף תרגום ידני או מהדאטה אם קיים */}
+              {/* כרגע נציג הסבר כללי אם אין תרגום ספציפי */}
+              משמעות: {
+                currentWord.en.includes('sport') ? 'אני עושה ספורט אחרי בית הספר' :
+                currentWord.en.includes('breakfast') ? 'את/ה אוכל/ת ארוחת בוקר לפני הכיתה' :
+                currentWord.en.includes('bike') ? 'יש לו אופניים מהירים' :
+                currentWord.en.includes('home') ? (currentWord.en.includes('We') ? 'יש לנו בית' : 'יש לה בית גדול עם גינה') :
+                currentWord.en.includes('books') ? 'יש להם הרבה ספרים בחדר' :
+                currentWord.en.includes('face') ? 'יש לזה פרצוף מצחיק כשמסתכלים על זה' :
+                ''
+              }
+            </div>
+          )}
+
           {attempts > 0 && !isChoiceGame && (
             <div className="text-sm text-muted">
               ניסיון {attempts} מתוך 2
