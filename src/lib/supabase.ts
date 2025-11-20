@@ -85,6 +85,7 @@ interface WordDB {
   alt_en?: string[]
   alt_he?: string[]
   translation?: string | null
+  sentence_type?: string
   display_order?: number
   active: boolean
   created_at: string

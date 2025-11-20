@@ -36,7 +36,6 @@ export default function GameScreen() {
   // זיהוי סוג המשפט לפי השדה sentenceType
   const sentenceType = currentWord?.sentenceType || 'positive'
   const isNegativeSentence = sentenceType === 'negative'
-  const isQuestionSentence = sentenceType === 'question'
   
   // בחירת אפשרויות כפתורים בהתאם לסוג המשפט
   const choiceOptions = categoryName === 'Am/Is/Are'
