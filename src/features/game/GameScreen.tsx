@@ -364,10 +364,10 @@ export default function GameScreen() {
             
             <button
               onClick={() => nav('/categories')}
-              className="flex items-center gap-1 sm:gap-2 text-secondary hover:bg-secondary/10 px-2 sm:px-3 py-1 rounded-lg transition-colors font-bold text-sm sm:text-base"
+              className="flex items-center gap-2 bg-secondary/20 hover:bg-secondary/30 text-secondary px-3 sm:px-4 py-2 rounded-lg transition-all font-bold text-sm sm:text-base shadow-md hover:shadow-lg active:scale-95"
             >
-              <span className="hidden sm:inline">חזרה</span>
               <span>↩️</span>
+              <span>חזרה</span>
             </button>
           </div>
 
