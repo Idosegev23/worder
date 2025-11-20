@@ -132,6 +132,7 @@ function dbToWord(db: WordDB): Word {
     altEn: db.alt_en,
     altHe: db.alt_he,
     translation: db.translation,
+    sentenceType: (db.sentence_type || 'positive') as 'positive' | 'negative' | 'question',
     displayOrder: db.display_order,
     active: db.active,
     createdAt: db.created_at

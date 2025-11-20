@@ -33,9 +33,10 @@ export default function GameScreen() {
   // זיהוי אם זה משחק בחירה (כפתורים) או הקלדה
   const isChoiceGame = categoryName === 'Am/Is/Are' || categoryName === 'Have/Has'
   
-  // זיהוי סוג המשפט (חיובי, שלילה, שאלה) לפי התוכן
-  const isNegativeSentence = currentWord?.en.includes('not') || false
-  const isQuestionSentence = currentWord?.en.includes('?') || false
+  // זיהוי סוג המשפט לפי השדה sentenceType
+  const sentenceType = currentWord?.sentenceType || 'positive'
+  const isNegativeSentence = sentenceType === 'negative'
+  const isQuestionSentence = sentenceType === 'question'
   
   // בחירת אפשרויות כפתורים בהתאם לסוג המשפט
   const choiceOptions = categoryName === 'Am/Is/Are'
