@@ -574,20 +574,20 @@ export async function getUnclaimedBenefitsCount(userId: string) {
   return data?.length || 0
 }
 
-/** Claim big prize (marks 5 benefits as claimed) */
+/** Claim big prize (marks 10 benefits as claimed) */
 export async function claimBigPrize(userId: string) {
-  // Get first 5 unclaimed benefits
+  // Get first 10 unclaimed benefits
   const { data: benefits, error: fetchError } = await supabase
     .from('worder_user_benefits')
     .select('id')
     .eq('user_id', userId)
     .eq('claimed', false)
     .order('received_at', { ascending: true })
-    .limit(5)
+    .limit(10)
   
   if (fetchError) throw fetchError
   
-  if (!benefits || benefits.length < 5) {
+  if (!benefits || benefits.length < 10) {
     throw new Error('Not enough benefits to claim big prize')
   }
   

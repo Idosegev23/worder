@@ -151,15 +151,15 @@ export default function UserProfile() {
                 {/* מד התקדמות */}
                 <div className="mb-6">
                   <p className="text-2xl font-bold text-primary mb-4">
-                    {unclaimedCount} / 5 הטבות
+                    {unclaimedCount} / 10 הטבות
                   </p>
                   
                   {/* אייקונים חזותיים */}
-                  <div className="flex justify-center gap-4 mb-6">
-                    {[1, 2, 3, 4, 5].map((i) => (
+                  <div className="flex justify-center gap-4 mb-6 flex-wrap">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                       <div
                         key={i}
-                        className={`text-6xl transition-all ${
+                        className={`text-5xl transition-all ${
                           i <= unclaimedCount 
                             ? 'scale-110 animate-pulse' 
                             : 'opacity-30 grayscale'
@@ -174,18 +174,18 @@ export default function UserProfile() {
                   <div className="w-full bg-surface rounded-full h-8 overflow-hidden border-2 border-gold">
                     <div 
                       className="h-full bg-gradient-to-r from-gold via-yellow-300 to-gold transition-all duration-1000 flex items-center justify-center text-white font-bold"
-                      style={{ width: `${(unclaimedCount / 5) * 100}%` }}
+                      style={{ width: `${(unclaimedCount / 10) * 100}%` }}
                     >
-                      {unclaimedCount > 0 && `${Math.round((unclaimedCount / 5) * 100)}%`}
+                      {unclaimedCount > 0 && `${Math.round((unclaimedCount / 10) * 100)}%`}
                     </div>
                   </div>
                 </div>
 
                 {/* כפתור קבלת פרס גדול */}
-                {unclaimedCount >= 5 ? (
+                {unclaimedCount >= 10 ? (
                   <div className="bg-gradient-to-r from-gold via-yellow-300 to-gold p-6 rounded-xl border-4 border-yellow-500 animate-pulse">
                     <p className="text-2xl font-bold text-orange-700 mb-4">
-                      🎉 יש לך 5 הטבות! 🎉
+                      🎉 יש לך 10 הטבות! 🎉
                     </p>
                     <Button
                       className="w-full max-w-md mx-auto text-2xl py-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
@@ -201,7 +201,7 @@ export default function UserProfile() {
                 ) : (
                   <div className="bg-sky/20 p-4 rounded-xl">
                     <p className="text-muted">
-                      צבור עוד {5 - unclaimedCount} הטבות כדי לקבל פרס גדול! 💪
+                      צבור עוד {10 - unclaimedCount} הטבות כדי לקבל פרס גדול! 💪
                     </p>
                   </div>
                 )}

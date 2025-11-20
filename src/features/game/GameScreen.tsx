@@ -32,8 +32,16 @@ export default function GameScreen() {
   
   // זיהוי אם זה משחק בחירה (כפתורים) או הקלדה
   const isChoiceGame = categoryName === 'Am/Is/Are' || categoryName === 'Have/Has'
-  const choiceOptions = categoryName === 'Am/Is/Are' 
-    ? ['am', 'is', 'are'] 
+  
+  // זיהוי סוג המשפט (חיובי, שלילה, שאלה) לפי התוכן
+  const isNegativeSentence = currentWord?.en.includes('not') || false
+  const isQuestionSentence = currentWord?.en.includes('?') || false
+  
+  // בחירת אפשרויות כפתורים בהתאם לסוג המשפט
+  const choiceOptions = categoryName === 'Am/Is/Are'
+    ? isNegativeSentence
+      ? ['am not', 'is not', 'are not']  // משפטי שלילה
+      : ['am', 'is', 'are']               // משפטים חיוביים או שאלות
     : categoryName === 'Have/Has' 
     ? ['have', 'has'] 
     : []
@@ -423,7 +431,7 @@ export default function GameScreen() {
           {isChoiceGame ? (
             // כפתורי בחירה
             <div className={`grid gap-3 sm:gap-4 ${
-              categoryName === 'Am/Is/Are' ? 'grid-cols-3' : 'grid-cols-2'
+              isNegativeSentence ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-3'
             }`}>
               {choiceOptions.map((option) => (
                 <button
