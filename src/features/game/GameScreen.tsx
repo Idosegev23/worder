@@ -36,6 +36,7 @@ export default function GameScreen() {
   // זיהוי סוג המשפט לפי השדה sentenceType
   const sentenceType = currentWord?.sentenceType || 'positive'
   const isNegativeSentence = sentenceType === 'negative'
+  const isQuestionSentence = sentenceType === 'question'
   
   // בחירת אפשרויות כפתורים בהתאם לסוג המשפט
   const choiceOptions = categoryName === 'Am/Is/Are'
@@ -43,7 +44,11 @@ export default function GameScreen() {
       ? ['am not', 'is not', 'are not']  // משפטי שלילה
       : ['am', 'is', 'are']               // משפטים חיוביים או שאלות
     : categoryName === 'Have/Has' 
-    ? ['have', 'has'] 
+    ? isNegativeSentence
+      ? ["don't have", "doesn't have"]  // משפטי שלילה Have/Has
+      : isQuestionSentence
+      ? ['do', 'does']                   // שאלות Have/Has
+      : ['have', 'has']                  // משפטים חיוביים Have/Has
     : []
 
   useEffect(() => {
@@ -373,11 +378,22 @@ export default function GameScreen() {
 
         {/* כותרת הסבר למשחק */}
         <div className="text-center mb-4 relative z-10">
-          <h2 className="text-2xl font-bold text-primary">
-            {categoryName === 'Am/Is/Are' ? 'השלימו את המילה החסרה (Am / Is / Are)' :
-             categoryName === 'Have/Has' ? 'השלימו את המילה החסרה (Have / Has)' :
-             categoryName === 'Pronouns' ? 'תרגמו את כינוי הגוף' :
-             'תרגמו את המילה לעברית'}
+          <h2 className="text-xl sm:text-2xl font-bold text-primary">
+            {categoryName === 'Am/Is/Are' 
+              ? isNegativeSentence 
+                ? 'השלימו במשפט שלילה (Am not / Is not / Are not)'
+                : isQuestionSentence
+                ? 'השלימו את מילת השאלה (Am / Is / Are)'
+                : 'השלימו את המילה (Am / Is / Are)'
+             : categoryName === 'Have/Has' 
+              ? isNegativeSentence
+                ? 'השלימו במשפט שלילה (Don\'t have / Doesn\'t have)'
+                : isQuestionSentence
+                ? 'השלימו את מילת השאלה (Do / Does)'
+                : 'השלימו את המילה (Have / Has)'
+             : categoryName === 'Pronouns' 
+              ? 'תרגמו את כינוי הגוף'
+             : 'תרגמו את המילה לעברית'}
           </h2>
           {(categoryName === 'Am/Is/Are' || categoryName === 'Have/Has') && (
             <p className="text-muted text-sm mt-1">
@@ -431,7 +447,15 @@ export default function GameScreen() {
           {isChoiceGame ? (
             // כפתורי בחירה
             <div className={`grid gap-3 sm:gap-4 ${
-              isNegativeSentence ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-3'
+              categoryName === 'Am/Is/Are'
+                ? isNegativeSentence 
+                  ? 'grid-cols-1 sm:grid-cols-3'  // Am not / Is not / Are not
+                  : 'grid-cols-3'                  // Am / Is / Are
+                : categoryName === 'Have/Has'
+                ? isNegativeSentence
+                  ? 'grid-cols-1 sm:grid-cols-2'  // Don't have / Doesn't have
+                  : 'grid-cols-2'                  // Have/Has או Do/Does
+                : 'grid-cols-2'
             }`}>
               {choiceOptions.map((option) => (
                 <button
