@@ -107,6 +107,7 @@ export interface Word {
   altEn?: string[]
   altHe?: string[]
   translation?: string | null
+  sentenceType?: 'positive' | 'negative' | 'question'
   displayOrder?: number
   active: boolean
   createdAt: string
