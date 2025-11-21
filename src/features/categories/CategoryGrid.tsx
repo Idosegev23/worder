@@ -329,7 +329,7 @@ export default function CategoryGrid() {
                     </div>
                   )}
                   
-                  <div className="text-sm uppercase tracking-[0.3em] text-white/60 mb-1">
+                  <div className="text-sm uppercase tracking-[0.3em] text-white/80 mb-1">
                     {c.displayName}
                   </div>
                   
@@ -338,9 +338,9 @@ export default function CategoryGrid() {
                   </div>
                   
                   <div className="flex flex-col gap-2 mb-4">
-                    <div className="text-sm text-white/80 font-semibold">
+                    <div className="text-sm text-white font-semibold">
                       {c.completed ? (
-                        <span className="text-accent font-bold flex items-center gap-1">
+                        <span className="text-white font-bold flex items-center gap-1">
                           🎉 הושלם!
                         </span>
                       ) : (
@@ -349,7 +349,7 @@ export default function CategoryGrid() {
                     </div>
                     
                     {!c.completed && c.progress > 0 && (
-                      <span className="self-start text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full animate-pulse">
+                      <span className="self-start text-xs font-semibold text-white bg-white/10 px-3 py-1 rounded-full animate-pulse">
                         בדרך ליעד 🚀
                       </span>
                     )}
@@ -407,25 +407,25 @@ export default function CategoryGrid() {
                           </div>
                         )}
                         
-                        <div className="text-secondary text-sm mb-2 font-semibold">
+                        <div className="text-white/80 text-sm mb-2 font-semibold">
                           {c.displayName}
                         </div>
                         
-                        <div className="text-3xl font-bold mb-3 text-primary">
+                        <div className="text-3xl font-bold mb-3 text-white">
                           {c.name}
                         </div>
                         
                         <div className="flex items-center justify-between mb-3">
-                          <div className="text-sm text-muted font-semibold flex-1">
+                          <div className="text-sm text-white font-semibold flex-1">
                             {c.completed ? (
-                              <span className="text-accent font-bold">🎉 הושלם!</span>
+                              <span className="text-white font-bold">🎉 הושלם!</span>
                             ) : (
                               <span>התקדמות: {c.progress}%</span>
                             )}
                           </div>
                           
                           {!c.completed && c.progress > 0 && (
-                            <div className="text-primary text-xs font-bold bg-primary/10 px-2 py-1 rounded-full whitespace-nowrap">
+                            <div className="text-white text-xs font-bold bg-white/10 px-2 py-1 rounded-full whitespace-nowrap">
                               בדרך! 🚀
                             </div>
                           )}
