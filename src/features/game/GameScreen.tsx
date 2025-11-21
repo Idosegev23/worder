@@ -309,8 +309,8 @@ export default function GameScreen() {
         {!isLoading && !currentWord && (
           <Card className="w-full max-w-xl mx-auto shadow-2xl p-6 text-center">
             <div className="text-2xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold mb-2">לא נמצאו מילים בקטגוריה זו</h2>
-            <p className="text-muted mb-4">נסי לבחור קטגוריה אחרת</p>
+            <h2 className="text-xl font-bold mb-2 text-white">לא נמצאו מילים בקטגוריה זו</h2>
+            <p className="text-white mb-4">נסי לבחור קטגוריה אחרת</p>
             <Button onClick={() => nav('/categories')}>חזרה לקטגוריות</Button>
           </Card>
         )}
@@ -321,7 +321,7 @@ export default function GameScreen() {
             {/* התקדמות */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative z-10 bg-white/5 p-3 rounded-2xl border border-white/10">
             <div className="flex items-center justify-between sm:justify-start gap-3">
-              <span className="text-primary font-bold text-base sm:text-lg tracking-wide">
+              <span className="text-white font-bold text-base sm:text-lg tracking-wide">
                 {currentIndex + 1} / {activeWords.length}
               </span>
               {isRetryRound && (
@@ -340,7 +340,7 @@ export default function GameScreen() {
             
             <button
               onClick={() => nav('/categories')}
-              className="flex items-center justify-center gap-2 bg-secondary/20 hover:bg-secondary/30 text-secondary px-3 py-2 rounded-xl transition-all font-bold text-sm sm:text-base shadow-md hover:shadow-lg active:scale-95 w-full sm:w-auto"
+              className="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-xl transition-all font-bold text-sm sm:text-base shadow-md hover:shadow-lg active:scale-95 w-full sm:w-auto"
             >
               <span className="text-base sm:text-xl">↩️</span>
               <span>חזרה לקטגוריות</span>
@@ -349,7 +349,7 @@ export default function GameScreen() {
 
         {/* כותרת הסבר למשחק */}
         <div className="text-center mb-3 sm:mb-4 relative z-10 px-2">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-primary leading-tight">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white leading-tight">
             {categoryName?.includes('Am/Is/Are')
               ? isNegativeSentence 
                 ? 'השלימו במשפט שלילה'
@@ -392,13 +392,13 @@ export default function GameScreen() {
           </div>
           {/* תרגום/משפט דוגמה למשפטים (אם יש תרגום במסד נתונים) */}
           {currentWord.translation && (
-            <div className="text-sm sm:text-base md:text-lg text-secondary font-semibold mt-2 animate-fade-in bg-secondary/10 px-3 py-2 rounded-lg mx-2 italic">
+            <div className="text-sm sm:text-base md:text-lg text-white font-semibold mt-2 animate-fade-in bg-white/10 px-3 py-2 rounded-lg mx-2 italic">
               "{currentWord.translation}"
             </div>
           )}
 
           {attempts > 0 && !isChoiceGame && !isMeitarCategory && (
-            <div className="text-xs sm:text-sm text-muted mt-2">
+            <div className="text-xs sm:text-sm text-white/80 mt-2">
               ניסיון {attempts} מתוך 2
             </div>
           )}
@@ -474,7 +474,7 @@ export default function GameScreen() {
                 {currentWord.he}
               </div>
               {currentWord.altHe && currentWord.altHe.length > 0 && (
-                <div className="text-xs sm:text-sm text-muted mt-2">
+                <div className="text-xs sm:text-sm text-white/80 mt-2">
                   תשובות נוספות: {currentWord.altHe.join(', ')}
                 </div>
               )}
