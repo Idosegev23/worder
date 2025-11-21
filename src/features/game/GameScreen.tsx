@@ -31,7 +31,7 @@ export default function GameScreen() {
   const currentWord = words[currentIndex]
   
   // זיהוי אם זה משחק בחירה (כפתורים) או הקלדה
-  const isChoiceGame = categoryName === 'Am/Is/Are' || categoryName === 'Have/Has'
+  const isChoiceGame = categoryName?.includes('Am/Is/Are') || categoryName === 'Have/Has'
   
   // זיהוי אם זה קטגוריה של מיתר
   const isMeitarCategory = categoryName?.startsWith('Meitar')
@@ -56,10 +56,10 @@ export default function GameScreen() {
   ]
   
   // בחירת אפשרויות כפתורים בהתאם לסוג המשפט
-  const choiceOptions = categoryName === 'Am/Is/Are'
+  const choiceOptions = categoryName?.includes('Am/Is/Are')
     ? isNegativeSentence
       ? ['am not', 'is not', 'are not']  // משפטי שלילה
-      : ['am', 'is', 'are']               // משפטים חיוביים או שאלות
+      : ['am', 'is', 'are']               // משפטים חיוביים
     : categoryName === 'Have/Has' 
     ? isNegativeSentence
       ? ["don't have", "doesn't have"]  // משפטי שלילה Have/Has
@@ -404,12 +404,10 @@ export default function GameScreen() {
         {/* כותרת הסבר למשחק */}
         <div className="text-center mb-3 sm:mb-4 relative z-10 px-2">
           <h2 className="text-base sm:text-xl md:text-2xl font-bold text-primary leading-tight">
-            {categoryName === 'Am/Is/Are' 
+            {categoryName?.includes('Am/Is/Are')
               ? isNegativeSentence 
                 ? 'השלימו במשפט שלילה'
-                : isQuestionSentence
-                ? 'השלימו את מילת השאלה'
-                : 'השלימו את המילה'
+                : 'השלימו את המילה החסרה'
              : categoryName === 'Have/Has' 
               ? isNegativeSentence
                 ? 'השלימו במשפט שלילה'
@@ -465,7 +463,7 @@ export default function GameScreen() {
           {isChoiceGame ? (
             // כפתורי בחירה
             <div className={`grid gap-2 sm:gap-3 ${
-              categoryName === 'Am/Is/Are'
+              categoryName?.includes('Am/Is/Are')
                 ? isNegativeSentence 
                   ? 'grid-cols-1'                  // Am not / Is not / Are not (mobile: 1 col)
                   : 'grid-cols-3'                  // Am / Is / Are
