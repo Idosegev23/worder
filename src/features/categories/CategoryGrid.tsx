@@ -177,7 +177,7 @@ export default function CategoryGrid() {
         
         // שמירת כל הקטגוריות (כולל ישנות) למשתמשים רגילים
         if (!isMeitar) {
-          const oldGames = ['Nouns', 'Verbs', 'Prepositions', 'Adjectives']
+          const oldGames = ['Nouns', 'Verbs', 'Prepositions', 'Adjectives', 'Pronouns', 'Vocabulary']
           const newGamesCats = catsWithProgress.filter(c => !oldGames.includes(c.name))
           
           setAllCats(catsWithProgress)
@@ -270,7 +270,7 @@ export default function CategoryGrid() {
             >
               <span>{showOldGames ? '🔼' : '🔽'}</span>
               <span>משחקים ישנים</span>
-              <span className="text-sm text-muted">(4 קטגוריות)</span>
+              <span className="text-sm text-muted">(6 קטגוריות)</span>
             </button>
           </div>
         )}
@@ -376,7 +376,7 @@ export default function CategoryGrid() {
             <h2 className="text-2xl font-bold mb-4 text-center text-muted">משחקים ישנים 📚</h2>
             <div className="grid md:grid-cols-2 gap-6">
               {allCats
-                .filter(c => ['Nouns', 'Verbs', 'Prepositions', 'Adjectives'].includes(c.name))
+                .filter(c => ['Nouns', 'Verbs', 'Prepositions', 'Adjectives', 'Pronouns', 'Vocabulary'].includes(c.name))
                 .map((c, index) => (
                   <Link key={c.id} to={`/play/${c.id}`}>
                     <div 
