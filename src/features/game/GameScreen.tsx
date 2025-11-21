@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Word, getWordsByCategory, getUserProgress, saveProgress } from '../../lib/supabase'
 import { useAuth } from '../../store/useAuth'
 import { useGame } from '../../store/useGame'
-import { triggerCelebration, triggerFunnyEffect } from '../../lib/useEffectEngine'
+import { triggerCelebration } from '../../lib/useEffectEngine'
 import { play } from '../../lib/sounds'
 import { speakWord } from '../../lib/openai-tts'
 import { Card } from '../../shared/ui/Card'
@@ -21,7 +21,6 @@ export default function GameScreen() {
   const [activeWords, setActiveWords] = useState<Word[]>([]) // מילים לסיבוב הנוכחי
   const [retryQueue, setRetryQueue] = useState<Word[]>([]) // מילים לסיבוב הבא (טעויות)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isRetryRound, setIsRetryRound] = useState(false)
   const [answer, setAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | 'show-answer' | null>(null)
   const [attempts, setAttempts] = useState(0)
