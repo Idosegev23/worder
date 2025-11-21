@@ -365,7 +365,7 @@ export default function GameScreen() {
         {/* המילה באנגלית + כפתור השמעה */}
         <div className="text-center mb-4 sm:mb-6 flex-1 flex flex-col justify-center relative z-10 px-2 gap-3">
           <div className="flex items-center justify-center gap-3 flex-wrap">
-            <div className="word-text text-3xl sm:text-4xl font-black break-words max-w-full leading-tight text-white">
+            <div className="word-text text-3xl sm:text-4xl font-black break-words max-w-full leading-tight text-white" dir="ltr">
               {currentWord.en}
             </div>
             {/* כפתור השמעה - רק למשחקי תרגום (לא השלמת משפטים) */}
