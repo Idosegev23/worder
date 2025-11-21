@@ -33,10 +33,27 @@ export default function GameScreen() {
   // זיהוי אם זה משחק בחירה (כפתורים) או הקלדה
   const isChoiceGame = categoryName === 'Am/Is/Are' || categoryName === 'Have/Has'
   
+  // זיהוי אם זה קטגוריה של מיתר
+  const isMeitarCategory = categoryName?.startsWith('Meitar')
+  
   // זיהוי סוג המשפט לפי השדה sentenceType
   const sentenceType = currentWord?.sentenceType || 'positive'
   const isNegativeSentence = sentenceType === 'negative'
   const isQuestionSentence = sentenceType === 'question'
+  
+  // פרגונים מגוונים למיתר
+  const meitarPraises = [
+    '🌟 מדהים מיתר! אני כל כך גאה בך! 🎉',
+    '✨ יאללה מיתר! את פשוט מושלמת! 💪',
+    '🎊 וואו מיתר! זה פשוט מעולה! 🌈',
+    '🏆 כל הכבוד מיתר! את מלכה! 👑',
+    '🎯 פצצצצה מיתר! ממש ממש טוב! 🚀',
+    '💫 בול עין מיתר! זה היה מהמם! ⭐',
+    '🎪 חזק חזק מיתר! ממשיכים ככה! 💥',
+    '🌺 אלופה מיתר! זה היה מושלם! 🎨',
+    '🎸 רוקנרול מיתר! ממש מדהימה! 🎭',
+    '🦄 מדהימה מיתר! את פשוט הכי! 🌟'
+  ]
   
   // בחירת אפשרויות כפתורים בהתאם לסוג המשפט
   const choiceOptions = categoryName === 'Am/Is/Are'
@@ -251,12 +268,12 @@ export default function GameScreen() {
         unlockAchievement('streak_20', 'רצף של 20! 🚀', 'ענית נכון על 20 מילים ברצף! מדהים!', '🚀')
       }
 
-      // אפקט חגיגי
+      // אפקט חגיגי עם זיקוקים
       await triggerCelebration(document.getElementById('game-card') || undefined)
 
       setTimeout(async () => {
         await moveToNextWord()
-      }, 3000)
+      }, isMeitarCategory ? 4000 : 3000) // יותר זמן למיתר ליהנות מהפרגון
     } else {
       // תשובה שגויה!
       const newWrongAnswers = [...wrongAnswers, selectedAnswer]
@@ -265,9 +282,12 @@ export default function GameScreen() {
       play('wrong')
       resetStreak()
 
-      // במשחקי בחירה - תמיד מראים טעות מיד, אין "ניסיון שני" באותו אופן
-      if (isChoiceGame || currentAttempts >= 2) {
-        setFeedback(isChoiceGame ? 'wrong' : 'show-answer')
+      // במשחקי מיתר - תמיד מראים תשובה אחרי טעות אחת!
+      // במשחקים אחרים - לוגיקה רגילה
+      const shouldShowAnswer = isMeitarCategory || isChoiceGame || currentAttempts >= 2
+      
+      if (shouldShowAnswer) {
+        setFeedback((isMeitarCategory || isChoiceGame) && currentAttempts === 1 ? 'show-answer' : (currentAttempts >= 2 ? 'show-answer' : 'wrong'))
         
         // שמירת התקדמות ב-DB
         await saveProgress({
@@ -280,9 +300,14 @@ export default function GameScreen() {
           audioPlayed: audioPlayed
         })
 
-        // במשחקי בחירה - מחכים קצת ואז מנקים את הפידבק כדי שיוכל לנסות שוב
-        // אלא אם כן הגענו למקסימום ניסיונות (2) ואז מראים תשובה
-        if (isChoiceGame && currentAttempts < 2) {
+        // למיתר - מראים מיד את התשובה אחרי טעות אחת
+        if (isMeitarCategory && currentAttempts === 1) {
+            setFeedback('show-answer')
+            setTimeout(async () => {
+              await moveToNextWord()
+            }, 5000) // יותר זמן למיתר לראות את התשובה הנכונה
+        } else if (isChoiceGame && currentAttempts < 2 && !isMeitarCategory) {
+            // במשחקי בחירה (לא מיתר) - מחכים קצת ואז מנקים את הפידבק כדי שיוכל לנסות שוב
             await triggerFunnyEffect(document.getElementById('game-card') || undefined)
             setTimeout(() => {
                 setFeedback(null)
@@ -419,13 +444,13 @@ export default function GameScreen() {
             </button>
           </div>
           {/* תרגום למשפטים (אם יש תרגום במסד נתונים) */}
-          {currentWord.translation && (categoryName === 'Have/Has' || categoryName === 'Am/Is/Are') && (
+          {currentWord.translation && (
             <div className="text-sm sm:text-base md:text-lg text-secondary font-semibold mt-2 animate-fade-in bg-secondary/10 px-3 py-2 rounded-lg mx-2">
               <span className="text-primary">💬</span> {currentWord.translation}
             </div>
           )}
 
-          {attempts > 0 && !isChoiceGame && (
+          {attempts > 0 && !isChoiceGame && !isMeitarCategory && (
             <div className="text-xs sm:text-sm text-muted mt-2">
               ניסיון {attempts} מתוך 2
             </div>
@@ -490,8 +515,11 @@ export default function GameScreen() {
 
         {/* פידבק */}
         {feedback === 'correct' && (
-          <div className="text-accent text-center text-3xl font-bold animate-pulse bg-accent/20 py-4 rounded-xl">
-            🎉 תשובה נכונה! כל הכבוד! ⭐
+          <div className="text-accent text-center text-xl sm:text-2xl md:text-3xl font-bold animate-pulse bg-gradient-to-r from-accent/20 via-gold/20 to-accent/20 py-4 sm:py-6 rounded-xl border-2 border-accent/30">
+            {isMeitarCategory 
+              ? meitarPraises[Math.floor(Math.random() * meitarPraises.length)]
+              : '🎉 תשובה נכונה! כל הכבוד! ⭐'
+            }
           </div>
         )}
         {feedback === 'wrong' && (
@@ -500,20 +528,27 @@ export default function GameScreen() {
           </div>
         )}
         {feedback === 'show-answer' && (
-          <div className="bg-gradient-to-r from-blue-100 to-purple-100 py-6 px-4 rounded-xl border-2 border-blue-300">
+          <div className="bg-gradient-to-r from-blue-100 to-purple-100 py-4 sm:py-6 px-3 sm:px-4 rounded-xl border-2 border-blue-300">
             <div className="text-center mb-3">
-              <div className="text-2xl font-bold text-blue-700 mb-2">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-blue-700 mb-2">
                 💡 התשובה הנכונה היא:
               </div>
-              <div className="text-4xl font-bold text-purple-600 mb-2">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-600 mb-2">
                 {currentWord.he}
               </div>
               {currentWord.altHe && currentWord.altHe.length > 0 && (
-                <div className="text-sm text-muted mt-2">
+                <div className="text-xs sm:text-sm text-muted mt-2">
                   תשובות נוספות: {currentWord.altHe.join(', ')}
                 </div>
               )}
-              <div className="text-sm text-blue-600 mt-3">
+              {/* משפט להקשר למיתר */}
+              {isMeitarCategory && currentWord.translation && (
+                <div className="text-sm sm:text-base text-blue-700 mt-4 bg-white/50 p-3 rounded-lg">
+                  <span className="font-bold">📖 דוגמה: </span>
+                  <div className="mt-2 text-blue-900 font-semibold">{currentWord.translation}</div>
+                </div>
+              )}
+              <div className="text-xs sm:text-sm text-blue-600 mt-3">
                 עובר למילה הבאה... ✨
               </div>
             </div>
