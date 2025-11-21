@@ -85,3 +85,20 @@ class WordQuestDB extends Dexie {
 
 export const db = new WordQuestDB()
 
+// פונקציה לאיפוס התקדמות משתמש
+export async function resetUserProgress(userId: string): Promise<{
+  progressDeleted: number
+  rewardsDeleted: number
+  benefitsDeleted: number
+}> {
+  const progressDeleted = await db.progress.where('userId').equals(userId).delete()
+  const rewardsDeleted = await db.userRewardChoices.where('userId').equals(userId).delete()
+  const benefitsDeleted = await db.benefits.where('userId').equals(userId).delete()
+  
+  return {
+    progressDeleted,
+    rewardsDeleted,
+    benefitsDeleted
+  }
+}
+

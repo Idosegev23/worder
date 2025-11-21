@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Profile, getAllUsers, updateUser, deleteUser } from '../../lib/supabase'
+import { resetUserProgress } from '../../lib/db'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAdmin } from '../../store/useAdmin'
 import { Card } from '../../shared/ui/Card'
@@ -73,6 +74,19 @@ export default function UsersTable() {
     }
   }
 
+  const handleResetProgress = async (user: Profile) => {
+    if (confirm(`האם לאפס את כל ההתקדמות של ${user.firstName} ${user.lastName}?\n\nפעולה זו תמחק:\n- את כל ההתקדמות במילים\n- את כל הפרסים\n- את כל ההטבות\n\nהפעולה בלתי הפיכה!`)) {
+      try {
+        const result = await resetUserProgress(user.id)
+        alert(`✅ ההתקדמות אופסה בהצלחה!\n\nנמחקו:\n- ${result.progressDeleted} רשומות התקדמות\n- ${result.rewardsDeleted} פרסים\n- ${result.benefitsDeleted} הטבות`)
+        loadData()
+      } catch (error) {
+        console.error('Error resetting progress:', error)
+        alert('❌ שגיאה באיפוס ההתקדמות')
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto">
@@ -120,6 +134,13 @@ export default function UsersTable() {
                         className="text-accent hover:underline text-sm"
                       >
                         סיסמה
+                      </button>
+                      <button
+                        onClick={() => handleResetProgress(user)}
+                        className="text-orange-500 hover:underline text-sm font-bold"
+                        title="איפוס התקדמות"
+                      >
+                        🔄 איפוס
                       </button>
                       {user.role !== 'admin' && (
                         <button
