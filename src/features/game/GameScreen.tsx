@@ -305,9 +305,21 @@ export default function GameScreen() {
         {/* סרגל התקדמות גלובלי */}
         <GlobalProgress />
         
-        <Card className="w-full max-w-xl mx-auto shadow-2xl relative overflow-hidden min-h-[520px] sm:min-h-[600px] flex flex-col border border-white/30 bg-white/5 p-4 sm:p-6 gap-4" id="game-card">
-          {/* התקדמות */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative z-10 bg-white/5 p-3 rounded-2xl border border-white/10">
+        {/* אם אין מילה נוכחית - הצג הודעה */}
+        {!isLoading && !currentWord && (
+          <Card className="w-full max-w-xl mx-auto shadow-2xl p-6 text-center">
+            <div className="text-2xl mb-4">⚠️</div>
+            <h2 className="text-xl font-bold mb-2">לא נמצאו מילים בקטגוריה זו</h2>
+            <p className="text-muted mb-4">נסי לבחור קטגוריה אחרת</p>
+            <Button onClick={() => nav('/categories')}>חזרה לקטגוריות</Button>
+          </Card>
+        )}
+        
+        {/* רק אם יש מילה נוכחית - הצג את המשחק */}
+        {currentWord && (
+          <Card className="w-full max-w-xl mx-auto shadow-2xl relative overflow-hidden min-h-[520px] sm:min-h-[600px] flex flex-col border border-white/30 bg-white/5 p-4 sm:p-6 gap-4" id="game-card">
+            {/* התקדמות */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative z-10 bg-white/5 p-3 rounded-2xl border border-white/10">
             <div className="flex items-center justify-between sm:justify-start gap-3">
               <span className="text-primary font-bold text-base sm:text-lg tracking-wide">
                 {currentIndex + 1} / {activeWords.length}
@@ -486,6 +498,7 @@ export default function GameScreen() {
           )}
         </div>
       </Card>
+        )}
       </div>
     </div>
   )
