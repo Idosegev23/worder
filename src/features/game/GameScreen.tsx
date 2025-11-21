@@ -428,20 +428,23 @@ export default function GameScreen() {
             <div className="word-text text-2xl sm:text-3xl md:text-4xl font-bold break-words max-w-full leading-tight">
               {currentWord.en}
             </div>
-            <button
-              onClick={handlePlayAudio}
-              disabled={isPlayingAudio}
-              className={`p-2 sm:p-3 rounded-full transition-all flex-shrink-0 ${
-                isPlayingAudio 
-                  ? 'bg-primary/50 animate-pulse' 
-                  : audioPlayed 
-                  ? 'bg-accent text-white hover:scale-110'
-                  : 'bg-sky text-white hover:scale-110'
-              }`}
-              title="השמע את המילה"
-            >
-              <span className="text-xl sm:text-2xl md:text-3xl">{isPlayingAudio ? '🔊' : '🔉'}</span>
-            </button>
+            {/* כפתור השמעה - רק למשחקי תרגום (לא השלמת משפטים) */}
+            {!isChoiceGame && (
+              <button
+                onClick={handlePlayAudio}
+                disabled={isPlayingAudio}
+                className={`p-2 sm:p-3 rounded-full transition-all flex-shrink-0 ${
+                  isPlayingAudio 
+                    ? 'bg-primary/50 animate-pulse' 
+                    : audioPlayed 
+                    ? 'bg-accent text-white hover:scale-110'
+                    : 'bg-sky text-white hover:scale-110'
+                }`}
+                title="השמע את המילה"
+              >
+                <span className="text-xl sm:text-2xl md:text-3xl">{isPlayingAudio ? '🔊' : '🔉'}</span>
+              </button>
+            )}
           </div>
           {/* תרגום למשפטים (אם יש תרגום במסד נתונים) */}
           {currentWord.translation && (
