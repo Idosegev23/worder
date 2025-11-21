@@ -386,7 +386,7 @@ export default function CategoryGrid() {
         {/* משחקים ישנים - רק למשתמשים רגילים */}
         {!isMeitar && showOldGames && (
           <div>
-            <h2 className="text-2xl font-bold mb-4 text-center text-muted">משחקים ישנים 📚</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center text-white">משחקים ישנים 📚</h2>
             <div className="grid md:grid-cols-2 gap-6">
               {allCats
                 .filter(c => ['Nouns', 'Verbs', 'Prepositions', 'Adjectives', 'Pronouns', 'Vocabulary'].includes(c.name))
