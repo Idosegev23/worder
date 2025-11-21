@@ -302,8 +302,16 @@ export default function GameScreen() {
           <div className="flex justify-between items-center mb-3 sm:mb-4 relative z-10 bg-white/10 p-2 rounded-lg sm:rounded-xl backdrop-blur-sm">
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-primary font-bold text-base sm:text-lg">
-                {currentIndex + 1} / {words.length}
+                {currentIndex + 1} / {activeWords.length}
               </span>
+              
+              {/* אינדיקטור סיבוב תיקון */}
+              {isRetryRound && (
+                <div className="flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-blue-400 to-purple-500 text-white px-2 sm:px-3 py-1 rounded-full shadow-lg">
+                  <span className="text-sm sm:text-base">🔄</span>
+                  <span className="font-bold text-xs sm:text-sm">חזרה</span>
+                </div>
+              )}
               
               {/* הצגת רצף נוכחי */}
               {streak > 0 && (
