@@ -62,19 +62,17 @@ export default function GameScreen() {
   const choiceOptions = categoryName?.includes('Am/Is/Are')
     ? isNegativeSentence
       ? ['am not', 'is not', 'are not']  // משפטי שלילה
+      : isQuestionSentence
+      ? ['am', 'is', 'are']               // משפטי שאלה
       : ['am', 'is', 'are']               // משפטים חיוביים
     : categoryName === 'Have/Has' 
-    ? isNegativeSentence
-      ? ["don't have", "doesn't have"]  // משפטי שלילה Have/Has
-      : isQuestionSentence
-      ? ['do', 'does']                   // שאלות Have/Has
-      : ['have', 'has']                  // משפטים חיוביים Have/Has
+    ? ['have', 'has']                     // רק חיובי
     : []
 
   const choiceGridCols = categoryName?.includes('Am/Is/Are')
     ? (isNegativeSentence ? 'sm:grid-cols-1' : 'sm:grid-cols-3')
     : categoryName === 'Have/Has'
-    ? (isNegativeSentence ? 'sm:grid-cols-1' : 'sm:grid-cols-2')
+    ? 'sm:grid-cols-2'
     : 'sm:grid-cols-2'
 
   useEffect(() => {
@@ -353,13 +351,11 @@ export default function GameScreen() {
             {categoryName?.includes('Am/Is/Are')
               ? isNegativeSentence 
                 ? 'השלימו במשפט שלילה'
-                : 'השלימו את המילה החסרה'
-             : categoryName === 'Have/Has' 
-              ? isNegativeSentence
-                ? 'השלימו במשפט שלילה'
                 : isQuestionSentence
                 ? 'השלימו את מילת השאלה'
-                : 'השלימו את המילה'
+                : 'השלימו את המילה החסרה'
+             : categoryName === 'Have/Has' 
+              ? 'השלימו את המילה'
              : categoryName === 'Pronouns' 
               ? 'תרגמו את כינוי הגוף'
              : 'תרגמו את המילה לעברית'}
