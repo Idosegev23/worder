@@ -209,7 +209,7 @@ export default function CategoryGrid() {
   }, [user, nav])
 
   return (
-    <div className="min-h-screen p-6 relative overflow-hidden bg-gradient-to-b from-[#05091A] to-[#0a1640]">
+    <div className="min-h-screen p-4 sm:p-6 relative overflow-hidden bg-gradient-to-b from-[#05091A] to-[#0a1640] text-white">
       {isLoading && <LoadingOverlay fullscreen message="טוען קטגוריות..." />}
       <div className="max-w-4xl mx-auto">
         {!isLoading && loadError && (
@@ -311,14 +311,14 @@ export default function CategoryGrid() {
         )}
 
         {/* משחקים חדשים או משחקים של מיתר */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
           {cats.map((c, index) => (
             <Link key={c.id} to={`/play/${c.id}`}>
               <div 
                 ref={el => cardsRef.current[index] = el}
-                className="transform transition-transform hover:scale-105"
+                className="transform transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded-3xl"
               >
-                <Card className={`cursor-pointer h-full relative shadow-lg hover:shadow-2xl transition-all p-5 sm:p-6 ${
+                <Card className={`cursor-pointer h-full relative shadow-2xl hover:shadow-2xl transition-all p-5 sm:p-6 border border-white/10 bg-white/5 text-white rounded-3xl ${
                   c.completed 
                     ? 'border-4 border-accent bg-gradient-to-br from-accent/10 to-accent/5' 
                     : 'border-2 border-primary/20'
@@ -329,16 +329,16 @@ export default function CategoryGrid() {
                     </div>
                   )}
                   
-                  <div className="text-sm uppercase tracking-widest text-white/60 mb-1">
+                  <div className="text-sm uppercase tracking-[0.3em] text-white/60 mb-1">
                     {c.displayName}
                   </div>
                   
-                  <div className="text-2xl sm:text-3xl font-black mb-4 text-white">
+                  <div className="text-2xl sm:text-3xl font-black mb-4 text-white break-words">
                     {c.name}
                   </div>
                   
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="text-sm text-white/70 font-semibold flex-1">
+                  <div className="flex flex-col gap-2 mb-4">
+                    <div className="text-sm text-white/80 font-semibold">
                       {c.completed ? (
                         <span className="text-accent font-bold flex items-center gap-1">
                           🎉 הושלם!
@@ -349,14 +349,14 @@ export default function CategoryGrid() {
                     </div>
                     
                     {!c.completed && c.progress > 0 && (
-                      <div className="text-primary text-xs font-bold bg-primary/10 px-3 py-1 rounded-full whitespace-nowrap animate-pulse">
-                        בדרך! 🚀
-                      </div>
+                      <span className="self-start text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full animate-pulse">
+                        בדרך ליעד 🚀
+                      </span>
                     )}
                   </div>
                   
                   {!c.completed && (
-                    <div className="w-full bg-white/10 h-5 rounded-full overflow-hidden border border-white/20 relative">
+                    <div className="w-full bg-white/10 h-4 rounded-full overflow-hidden border border-white/20 relative">
                       <div 
                         className="h-full rounded-full transition-all duration-700 ease-out relative"
                         style={{ 

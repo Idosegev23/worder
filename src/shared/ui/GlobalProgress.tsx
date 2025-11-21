@@ -35,17 +35,17 @@ export function GlobalProgress() {
   const wordsLeft = totalWords - completedWords
 
   return (
-    <div className="bg-gradient-to-r from-purple to-pink shadow-lg rounded-2xl p-4 mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-6">
+    <div className="bg-gradient-to-r from-purple via-indigo-500 to-pink shadow-lg rounded-2xl p-4 sm:p-5 mb-6 space-y-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
           {/* כוכבים */}
-          <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-full">
+          <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-full justify-center">
             <span className="text-2xl">⭐</span>
             <span className="text-white font-bold text-xl">{stars}</span>
           </div>
           
           {/* רצף נוכחי */}
-          <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-full">
+          <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-full justify-center">
             <span className="text-2xl">🔥</span>
             <span className="text-white font-bold text-xl">{streak}</span>
             {maxStreak > 0 && (
@@ -54,7 +54,7 @@ export function GlobalProgress() {
           </div>
           
           {/* סך הכל נכונות */}
-          <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-full">
+          <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-full justify-center">
             <span className="text-2xl">✓</span>
             <span className="text-white font-bold text-xl">{totalCorrect}</span>
           </div>
@@ -62,7 +62,7 @@ export function GlobalProgress() {
         
         {/* ספירה לאחור */}
         {wordsLeft > 0 && (
-          <div className="text-white text-sm bg-white/20 backdrop-blur px-4 py-2 rounded-full">
+          <div className="text-white text-sm bg-white/20 backdrop-blur px-4 py-2 rounded-full self-start sm:self-center text-center">
             עוד {wordsLeft} מילים למתנה! 🎁
           </div>
         )}
@@ -70,7 +70,7 @@ export function GlobalProgress() {
       
       {/* סרגל התקדמות */}
       <div className="relative">
-        <div className="w-full bg-white/30 h-4 rounded-full overflow-hidden">
+        <div className="w-full bg-white/30 h-3 sm:h-4 rounded-full overflow-hidden">
           <div 
             className="bg-gradient-to-r from-gold to-yellow-300 h-full rounded-full transition-all duration-500 ease-out flex items-center justify-end px-2"
             style={{ width: `${progressPercent}%` }}
@@ -89,7 +89,7 @@ export function GlobalProgress() {
         )}
       </div>
       
-      <div className="text-white/80 text-xs mt-2 text-center">
+      <div className="text-white/80 text-xs mt-1 text-center">
         {completedWords} / {totalWords} מילים
       </div>
     </div>
