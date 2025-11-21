@@ -607,3 +607,40 @@ export async function claimBigPrize(userId: string) {
   return true
 }
 
+// פונקציה לאיפוס התקדמות משתמש
+export async function resetUserProgress(userId: string): Promise<{
+  progressDeleted: number
+  rewardsDeleted: number
+  benefitsDeleted: number
+}> {
+  // מחיקת התקדמות
+  const { error: progressError, count: progressCount } = await supabase
+    .from('worder_progress')
+    .delete({ count: 'exact' })
+    .eq('user_id', userId)
+  
+  if (progressError) throw progressError
+  
+  // מחיקת בחירות פרסים
+  const { error: rewardsError, count: rewardsCount } = await supabase
+    .from('worder_user_reward_choices')
+    .delete({ count: 'exact' })
+    .eq('user_id', userId)
+  
+  if (rewardsError) throw rewardsError
+  
+  // מחיקת הטבות
+  const { error: benefitsError, count: benefitsCount } = await supabase
+    .from('worder_user_benefits')
+    .delete({ count: 'exact' })
+    .eq('user_id', userId)
+  
+  if (benefitsError) throw benefitsError
+  
+  return {
+    progressDeleted: progressCount || 0,
+    rewardsDeleted: rewardsCount || 0,
+    benefitsDeleted: benefitsCount || 0
+  }
+}
+

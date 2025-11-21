@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Profile, getAllUsers, updateUser, deleteUser } from '../../lib/supabase'
-import { resetUserProgress } from '../../lib/db'
+import { Profile, getAllUsers, updateUser, deleteUser, resetUserProgress } from '../../lib/supabase'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAdmin } from '../../store/useAdmin'
 import { Card } from '../../shared/ui/Card'
@@ -75,10 +74,10 @@ export default function UsersTable() {
   }
 
   const handleResetProgress = async (user: Profile) => {
-    if (confirm(`האם לאפס את כל ההתקדמות של ${user.firstName} ${user.lastName}?\n\nפעולה זו תמחק:\n- את כל ההתקדמות במילים\n- את כל הפרסים\n\nהפעולה בלתי הפיכה!`)) {
+    if (confirm(`האם לאפס את כל ההתקדמות של ${user.firstName} ${user.lastName}?\n\nפעולה זו תמחק:\n- את כל ההתקדמות במילים\n- את כל הפרסים\n- את כל ההטבות\n\nהפעולה בלתי הפיכה!`)) {
       try {
         const result = await resetUserProgress(user.id)
-        alert(`✅ ההתקדמות אופסה בהצלחה!\n\nנמחקו:\n- ${result.progressDeleted} רשומות התקדמות\n- ${result.rewardsDeleted} פרסים`)
+        alert(`✅ ההתקדמות אופסה בהצלחה!\n\nנמחקו:\n- ${result.progressDeleted} רשומות התקדמות\n- ${result.rewardsDeleted} פרסים\n- ${result.benefitsDeleted} הטבות`)
         loadData()
       } catch (error) {
         console.error('Error resetting progress:', error)
