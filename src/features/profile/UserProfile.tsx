@@ -7,6 +7,7 @@ import { Button } from '../../shared/ui/Button'
 import { makeAvatar } from '../../lib/dicebear'
 import { fireConfetti } from '../../lib/confetti'
 import { play } from '../../lib/sounds'
+import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 
 export default function UserProfile() {
   const user = useAuth(s => s.user)
@@ -17,6 +18,7 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) {
@@ -31,12 +33,14 @@ export default function UserProfile() {
     
     try {
       setLoading(true)
+      setLoadError(null)
       const userBenefits = await getUserBenefits(user.id)
       const count = await getUnclaimedBenefitsCount(user.id)
       setBenefits(userBenefits)
       setUnclaimedCount(count)
     } catch (error) {
       console.error('Error loading benefits:', error)
+      setLoadError('לא הצלחנו לטעון את ההטבות כרגע. נסו שוב.')
     } finally {
       setLoading(false)
     }
@@ -103,17 +107,23 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-primary">
-            האזור האישי שלי 👤
-          </h1>
+    <div className="p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-muted mb-1">Profile</p>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-primary">
+              האזור האישי שלי 👤
+            </h1>
+          </div>
+          <p className="text-sm text-muted">
+            עקוב אחרי ההטבות וההתקדמות שלך בזמן אמת.
+          </p>
         </div>
 
         {/* פרטי משתמש */}
         <Card className="mb-6 shadow-2xl">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
             {avatarUrl && (
               <img 
                 src={avatarUrl} 
@@ -127,7 +137,7 @@ export default function UserProfile() {
               </h2>
               <p className="text-muted text-lg mb-3">@{user.username}</p>
               <Button 
-                className="text-sm" 
+                className="text-sm w-full sm:w-auto"
                 onClick={() => nav('/avatar')}
               >
                 ערוך אווטאר
@@ -137,16 +147,21 @@ export default function UserProfile() {
         </Card>
 
         {/* BenefitsTracker */}
-        <Card className="mb-6 shadow-2xl border-4 border-gold">
+        <Card className="mb-6 shadow-2xl border-4 border-gold relative overflow-hidden">
+          {loading && <LoadingOverlay message="טוען הטבות..." />}
           <div className="text-center">
             <div className="text-6xl mb-4">⭐</div>
             <h2 className="text-4xl font-bold text-gold mb-4">
               מעקב הטבות
             </h2>
             
-            {loading ? (
-              <p className="text-muted">טוען...</p>
-            ) : (
+            {loadError && !loading && (
+              <div className="mb-4 rounded-xl bg-red-500/10 border border-red-400/40 text-red-200 py-2 px-4 text-sm">
+                {loadError}
+              </div>
+            )}
+
+            {!loading && (
               <>
                 {/* מד התקדמות */}
                 <div className="mb-6">
@@ -155,7 +170,7 @@ export default function UserProfile() {
                   </p>
                   
                   {/* אייקונים חזותיים */}
-                  <div className="flex justify-center gap-4 mb-6 flex-wrap">
+                  <div className="grid grid-cols-5 sm:grid-cols-10 gap-3 mb-6 justify-items-center">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                       <div
                         key={i}
@@ -231,7 +246,7 @@ export default function UserProfile() {
               {benefits.map((benefit) => (
                 <div
                   key={benefit.id}
-                  className={`flex items-center justify-between p-4 rounded-lg border-2 ${
+                  className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-lg border-2 ${
                     benefit.claimed 
                       ? 'bg-muted/20 border-muted' 
                       : 'bg-accent/10 border-accent'

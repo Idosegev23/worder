@@ -10,6 +10,7 @@ import { Card } from '../../shared/ui/Card'
 import { Input } from '../../shared/ui/Input'
 import { Button } from '../../shared/ui/Button'
 import { GlobalProgress } from '../../shared/ui/GlobalProgress'
+import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 
 export default function GameScreen() {
   const { categoryId } = useParams()
@@ -30,6 +31,8 @@ export default function GameScreen() {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
   const [categoryName, setCategoryName] = useState<string>('')
   const [wasCompletedInitially, setWasCompletedInitially] = useState(false) 
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // שימוש ב-activeWords במקום words
   const currentWord = activeWords[currentIndex]
@@ -69,6 +72,12 @@ export default function GameScreen() {
       : ['have', 'has']                  // משפטים חיוביים Have/Has
     : []
 
+  const choiceGridCols = categoryName?.includes('Am/Is/Are')
+    ? (isNegativeSentence ? 'sm:grid-cols-1' : 'sm:grid-cols-3')
+    : categoryName === 'Have/Has'
+    ? (isNegativeSentence ? 'sm:grid-cols-1' : 'sm:grid-cols-2')
+    : 'sm:grid-cols-2'
+
   useEffect(() => {
     if (!user) {
       nav('/')
@@ -76,6 +85,8 @@ export default function GameScreen() {
     }
     
     const loadWords = async () => {
+      setIsLoading(true)
+      setLoadError(null)
       try {
         console.log('Loading words for category:', categoryId)
         const fetchedWords = await getWordsByCategory(Number(categoryId))
@@ -114,11 +125,14 @@ export default function GameScreen() {
         setCurrentIndex(0)
         setRetryQueue([])
         setIsRetryRound(false)
+        setIsLoading(false)
         
       } catch (error) {
         console.error('Error loading words:', error)
         setWords([])
         setActiveWords([])
+        setLoadError('לא הצלחנו לטעון מילים לקטגוריה הזו. נסו שוב מאוחר יותר.')
+        setIsLoading(false)
       }
     }
     
@@ -262,14 +276,11 @@ export default function GameScreen() {
     checkAnswerWithOption(answer)
   }
 
-  if (words.length === 0) {
+  if (!isLoading && activeWords.length === 0) {
     return (
       <div className="min-h-screen grid place-items-center p-6">
         <Card className="text-center">
-          <p className="text-muted mb-4">טוען מילים...</p>
-          <p className="text-xs text-muted">
-            אם זה לוקח זמן, נסה לרענן את הדף (F5)
-          </p>
+          <p className="text-danger mb-4">{loadError || 'לא נמצאו מילים בקטגוריה הזו.'}</p>
           <Button className="mt-4" onClick={() => nav('/categories')}>
             חזרה לקטגוריות
           </Button>
@@ -292,48 +303,45 @@ export default function GameScreen() {
   }
 
   return (
-    <div className="min-h-screen p-3 sm:p-6">
+    <div className="relative min-h-screen bg-gradient-to-b from-[#070b1e] via-[#0b122d] to-[#05060f] p-3 sm:p-6">
+      {isLoading && <LoadingOverlay fullscreen message="טוען מילים..." />}
       <div className="max-w-4xl mx-auto">
         {/* סרגל התקדמות גלובלי */}
         <GlobalProgress />
         
-        <Card className="w-full max-w-xl mx-auto shadow-2xl relative overflow-hidden min-h-[550px] flex flex-col border-2 sm:border-4 border-white/50" id="game-card">
+        <Card className="w-full max-w-xl mx-auto shadow-2xl relative overflow-hidden min-h-[520px] sm:min-h-[600px] flex flex-col border border-white/30 bg-white/5 p-4 sm:p-6 gap-4" id="game-card">
           {/* התקדמות */}
-          <div className="flex justify-between items-center mb-3 sm:mb-4 relative z-10 bg-white/10 p-2 rounded-lg sm:rounded-xl backdrop-blur-sm">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className="text-primary font-bold text-base sm:text-lg">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative z-10 bg-white/5 p-3 rounded-2xl border border-white/10">
+            <div className="flex items-center justify-between sm:justify-start gap-3">
+              <span className="text-primary font-bold text-base sm:text-lg tracking-wide">
                 {currentIndex + 1} / {activeWords.length}
               </span>
-              
-              {/* אינדיקטור סיבוב תיקון */}
               {isRetryRound && (
-                <div className="flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-blue-400 to-purple-500 text-white px-2 sm:px-3 py-1 rounded-full shadow-lg">
-                  <span className="text-sm sm:text-base">🔄</span>
-                  <span className="font-bold text-xs sm:text-sm">חזרה</span>
+                <div className="flex items-center gap-2 bg-gradient-to-r from-blue-400 to-purple-500 text-white px-3 py-1 rounded-full shadow-lg">
+                  <span className="text-sm">🔄</span>
+                  <span className="text-xs font-semibold">סבב חזרה</span>
                 </div>
               )}
-              
-              {/* הצגת רצף נוכחי */}
               {streak > 0 && (
-                <div className="flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-orange-400 to-red-500 text-white px-2 sm:px-3 py-1 rounded-full animate-pulse shadow-lg">
-                  <span className="text-sm sm:text-base">🔥</span>
-                  <span className="font-bold text-sm sm:text-base">{streak}</span>
+                <div className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-red-500 text-white px-3 py-1 rounded-full animate-pulse shadow-lg">
+                  <span className="text-sm">🔥</span>
+                  <span className="font-bold text-sm">{streak}</span>
                 </div>
               )}
             </div>
             
             <button
               onClick={() => nav('/categories')}
-              className="flex items-center gap-1 sm:gap-2 bg-secondary/20 hover:bg-secondary/30 text-secondary px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all font-bold text-xs sm:text-base shadow-md hover:shadow-lg active:scale-95"
+              className="flex items-center justify-center gap-2 bg-secondary/20 hover:bg-secondary/30 text-secondary px-3 py-2 rounded-xl transition-all font-bold text-sm sm:text-base shadow-md hover:shadow-lg active:scale-95 w-full sm:w-auto"
             >
               <span className="text-base sm:text-xl">↩️</span>
-              <span className="hidden xs:inline">חזרה</span>
+              <span>חזרה לקטגוריות</span>
             </button>
           </div>
 
         {/* כותרת הסבר למשחק */}
         <div className="text-center mb-3 sm:mb-4 relative z-10 px-2">
-          <h2 className="text-base sm:text-xl md:text-2xl font-bold text-primary leading-tight">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-primary leading-tight">
             {categoryName?.includes('Am/Is/Are')
               ? isNegativeSentence 
                 ? 'השלימו במשפט שלילה'
@@ -351,9 +359,9 @@ export default function GameScreen() {
         </div>
 
         {/* המילה באנגלית + כפתור השמעה */}
-        <div className="text-center mb-4 sm:mb-6 flex-1 flex flex-col justify-center relative z-10 px-2">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4 flex-wrap">
-            <div className="word-text text-2xl sm:text-3xl md:text-4xl font-bold break-words max-w-full leading-tight">
+        <div className="text-center mb-4 sm:mb-6 flex-1 flex flex-col justify-center relative z-10 px-2 gap-3">
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <div className="word-text text-3xl sm:text-4xl font-black break-words max-w-full leading-tight">
               {currentWord.en}
             </div>
             {/* כפתור השמעה - רק למשחקי תרגום (לא השלמת משפטים) */}
@@ -392,17 +400,7 @@ export default function GameScreen() {
         <div className="space-y-3 sm:space-y-4 relative z-10 px-2">
           {isChoiceGame ? (
             // כפתורי בחירה
-            <div className={`grid gap-2 sm:gap-3 ${
-              categoryName?.includes('Am/Is/Are')
-                ? isNegativeSentence 
-                  ? 'grid-cols-1'                  // Am not / Is not / Are not (mobile: 1 col)
-                  : 'grid-cols-3'                  // Am / Is / Are
-                : categoryName === 'Have/Has'
-                ? isNegativeSentence
-                  ? 'grid-cols-1'                  // Don't have / Doesn't have (mobile: 1 col)
-                  : 'grid-cols-2'                  // Have/Has או Do/Does
-                : 'grid-cols-2'
-            }`}>
+            <div className={`grid grid-cols-1 gap-2 sm:gap-3 ${choiceGridCols}`}>
               {choiceOptions.map((option) => (
                 <button
                   key={option}
@@ -440,7 +438,7 @@ export default function GameScreen() {
               onChange={e => setAnswer(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && checkAnswer()}
               disabled={feedback !== null}
-              className="text-xl text-center"
+              className="text-xl text-center py-3 rounded-2xl"
             />
           )}
 
@@ -483,7 +481,7 @@ export default function GameScreen() {
 
           {!isChoiceGame && (
             <Button
-              className="w-full submit-btn"
+              className="w-full py-3 text-lg font-semibold rounded-2xl"
               onClick={checkAnswer}
               disabled={!answer.trim() || feedback !== null}
             >

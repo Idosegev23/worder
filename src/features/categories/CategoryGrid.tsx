@@ -9,6 +9,7 @@ import { makeAvatar, AvatarStyle } from '../../lib/dicebear'
 import { gsap } from 'gsap'
 import { GlobalProgress } from '../../shared/ui/GlobalProgress'
 import UserProfile from '../profile/UserProfile'
+import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 
 type CategoryWithProgress = Category & {
   completed: boolean
@@ -36,6 +37,8 @@ export default function CategoryGrid() {
   const { achievements } = useGame()
   const cardsRef = useRef<(HTMLDivElement | null)[]>([])
   const [showAchievement, setShowAchievement] = useState<typeof achievements[0] | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   
   const isMeitar = isMeitarUser(user?.username)
 
@@ -124,6 +127,8 @@ export default function CategoryGrid() {
     if (!user) return
     
     const loadCategoriesWithProgress = async () => {
+      setIsLoading(true)
+      setLoadError(null)
       try {
         const allCategories = await getCategories()
         
@@ -191,8 +196,11 @@ export default function CategoryGrid() {
           completed: c.completed, 
           progress: c.progress 
         })))
+        setIsLoading(false)
       } catch (error) {
         console.error('Error loading categories with progress:', error)
+        setLoadError('לא הצלחנו לטעון קטגוריות. נסו שוב אחרי רענון.')
+        setIsLoading(false)
       }
     }
     
@@ -201,8 +209,14 @@ export default function CategoryGrid() {
   }, [user, nav])
 
   return (
-    <div className="min-h-screen p-6 relative overflow-hidden">
+    <div className="min-h-screen p-6 relative overflow-hidden bg-gradient-to-b from-[#05091A] to-[#0a1640]">
+      {isLoading && <LoadingOverlay fullscreen message="טוען קטגוריות..." />}
       <div className="max-w-4xl mx-auto">
+        {!isLoading && loadError && (
+          <div className="mb-4 rounded-2xl border border-red-400/50 bg-red-500/10 p-4 text-center text-sm text-red-100 shadow-lg">
+            {loadError}
+          </div>
+        )}
         {/* הודעת הישג */}
         {showAchievement && (
           <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
@@ -216,33 +230,32 @@ export default function CategoryGrid() {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent text-center sm:text-right">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between mb-8">
+          <div className="text-center sm:text-right space-y-2">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/60">learning hub</p>
+            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               בחר קטגוריה
             </h1>
             {user && (
-              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 justify-center sm:justify-start">
-                <p className="text-muted text-base sm:text-lg">שלום, {user.firstName}! 👋</p>
+              <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 text-sm text-white/70">
+                <span>שלום, {user.firstName}! 👋</span>
                 {achievements.length > 0 && (
-                  <div className="flex items-center gap-2 bg-gold/20 px-3 py-1 rounded-full">
-                    <span>🏆</span>
-                    <span className="text-sm font-bold">{achievements.length} הישגים</span>
-                  </div>
+                  <span className="flex items-center gap-1 rounded-full bg-gold/15 px-3 py-1 font-semibold">
+                    🏆 {achievements.length} הישגים
+                  </span>
                 )}
                 {benefitsCount > 0 && (
-                  <div className="flex items-center gap-2 bg-accent/20 px-3 py-1 rounded-full">
-                    <span>⭐</span>
-                    <span className="text-sm font-bold">{benefitsCount} הטבות</span>
-                  </div>
+                  <span className="flex items-center gap-1 rounded-full bg-accent/15 px-3 py-1 font-semibold">
+                    ⭐ {benefitsCount} הטבות
+                  </span>
                 )}
               </div>
             )}
           </div>
-          <div className="flex flex-wrap gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button
               onClick={() => setShowProfile(true)}
-              className="bg-gradient-to-r from-accent to-secondary text-white px-4 py-2 rounded-lg hover:scale-105 transition-transform text-sm font-semibold shadow-lg whitespace-nowrap"
+              className="w-full sm:w-auto bg-gradient-to-r from-accent to-secondary text-white px-4 py-3 rounded-2xl font-semibold shadow-lg hover:translate-y-[-2px] transition-transform"
             >
               👤 האזור האישי
             </button>
@@ -251,7 +264,7 @@ export default function CategoryGrid() {
                 logout()
                 window.location.href = '/'
               }}
-              className="text-secondary hover:underline text-sm font-semibold whitespace-nowrap"
+              className="w-full sm:w-auto rounded-2xl border border-white/20 px-4 py-3 text-sm font-semibold text-white/80 hover:text-white"
             >
               יציאה
             </button>
@@ -266,11 +279,13 @@ export default function CategoryGrid() {
           <div className="mb-6">
             <button
               onClick={() => setShowOldGames(!showOldGames)}
-              className="w-full bg-gradient-to-r from-muted/20 to-muted/10 border-2 border-muted/30 text-text px-6 py-4 rounded-xl hover:scale-[1.02] transition-all text-lg font-bold shadow-md flex items-center justify-center gap-3"
+              className="w-full rounded-2xl border border-white/15 bg-white/5 px-6 py-4 text-lg font-semibold tracking-wide text-white shadow-lg backdrop-blur hover:bg-white/10 flex items-center justify-between"
             >
-              <span>{showOldGames ? '🔼' : '🔽'}</span>
-              <span>משחקים ישנים</span>
-              <span className="text-sm text-muted">(6 קטגוריות)</span>
+              <span className="flex items-center gap-2">
+                <span className="text-xl">{showOldGames ? '📚' : '🗂️'}</span>
+                משחקים ישנים
+              </span>
+              <span className="text-sm text-white/60">(6 קטגוריות) {showOldGames ? '▲' : '▼'}</span>
             </button>
           </div>
         )}
@@ -296,14 +311,14 @@ export default function CategoryGrid() {
         )}
 
         {/* משחקים חדשים או משחקים של מיתר */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           {cats.map((c, index) => (
             <Link key={c.id} to={`/play/${c.id}`}>
               <div 
                 ref={el => cardsRef.current[index] = el}
                 className="transform transition-transform hover:scale-105"
               >
-                <Card className={`cursor-pointer h-full relative shadow-lg hover:shadow-2xl transition-all ${
+                <Card className={`cursor-pointer h-full relative shadow-lg hover:shadow-2xl transition-all p-5 sm:p-6 ${
                   c.completed 
                     ? 'border-4 border-accent bg-gradient-to-br from-accent/10 to-accent/5' 
                     : 'border-2 border-primary/20'
@@ -314,51 +329,49 @@ export default function CategoryGrid() {
                     </div>
                   )}
                   
-                  <div className="text-secondary text-sm mb-2 font-semibold">
+                  <div className="text-sm uppercase tracking-widest text-white/60 mb-1">
                     {c.displayName}
                   </div>
                   
-                  <div className="text-3xl font-bold mb-3 text-primary">
+                  <div className="text-2xl sm:text-3xl font-black mb-4 text-white">
                     {c.name}
                   </div>
                   
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-sm text-muted font-semibold flex-1">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="text-sm text-white/70 font-semibold flex-1">
                       {c.completed ? (
-                        <span className="text-accent font-bold">🎉 הושלם!</span>
+                        <span className="text-accent font-bold flex items-center gap-1">
+                          🎉 הושלם!
+                        </span>
                       ) : (
                         <span>התקדמות: {c.progress}%</span>
                       )}
                     </div>
                     
                     {!c.completed && c.progress > 0 && (
-                      <div className="text-primary text-xs font-bold bg-primary/10 px-2 py-1 rounded-full whitespace-nowrap">
+                      <div className="text-primary text-xs font-bold bg-primary/10 px-3 py-1 rounded-full whitespace-nowrap animate-pulse">
                         בדרך! 🚀
                       </div>
                     )}
                   </div>
                   
                   {!c.completed && (
-                    <div className="w-full bg-gray-200 h-4 rounded-full overflow-hidden border border-gray-300/50 relative">
-                      {/* רקע מפוספס לבר */}
-                      <div className="absolute inset-0 opacity-10 bg-[length:10px_10px] bg-[linear-gradient(45deg,rgba(0,0,0,.1)_25%,transparent_25%,transparent_50%,rgba(0,0,0,.1)_50%,rgba(0,0,0,.1)_75%,transparent_75%,transparent)]" />
-                      
+                    <div className="w-full bg-white/10 h-5 rounded-full overflow-hidden border border-white/20 relative">
                       <div 
-                        className="h-full rounded-full transition-all duration-1000 ease-out relative"
+                        className="h-full rounded-full transition-all duration-700 ease-out relative"
                         style={{ 
-                          width: `${Math.max(c.progress, 5)}%`, // מינימום 5% שיראו משהו
-                          background: 'linear-gradient(90deg, #FFD700 0%, #FFA500 100%)',
-                          boxShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
+                          width: `${Math.max(c.progress, 5)}%`,
+                          background: 'linear-gradient(90deg, #5ee7df 0%, #b490ca 100%)',
+                          boxShadow: '0 0 12px rgba(94,231,223,0.5)'
                         }}
                       >
-                        {/* אפקט ברק */}
-                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                        <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle,_white,_transparent_70%)] animate-[pulse_2s_infinite]" />
                       </div>
                     </div>
                   )}
                   
                   {c.completed && (
-                    <div className="mt-2 flex items-center justify-center gap-2 text-gold">
+                    <div className="mt-4 flex items-center justify-center gap-2 text-gold text-2xl">
                       <span>⭐</span>
                       <span>⭐</span>
                       <span>⭐</span>

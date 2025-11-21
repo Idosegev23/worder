@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Card } from '../../shared/ui/Card'
+import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 
 type ErrorStat = {
   word: string
@@ -16,6 +17,7 @@ type ErrorStat = {
 export default function ErrorsTable() {
   const [errors, setErrors] = useState<ErrorStat[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     loadErrors()
@@ -23,6 +25,7 @@ export default function ErrorsTable() {
 
   const loadErrors = async () => {
     try {
+      setErrorMessage(null)
       const { data: allProgress } = await supabase.from('worder_progress').select('*')
       const { data: allWords } = await supabase.from('worder_words').select('*')
       const { data: allCategories } = await supabase.from('worder_categories').select('*')
@@ -107,20 +110,14 @@ export default function ErrorsTable() {
       setLoading(false)
     } catch (error) {
       console.error('Error loading error stats:', error)
+      setErrorMessage('טעינת נתוני הטעויות נכשלה.')
       setLoading(false)
     }
   }
 
-  if (loading) {
-    return (
-      <Card>
-        <p className="text-center text-muted">טוען נתונים...</p>
-      </Card>
-    )
-  }
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
+      {loading && <LoadingOverlay message="טוען ניתוח טעויות..." />}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">ניתוח טעויות ומעקב לימוד</h2>
         <button
@@ -130,6 +127,12 @@ export default function ErrorsTable() {
           🔄 רענן נתונים
         </button>
       </div>
+
+      {errorMessage && !loading && (
+        <Card className="border border-red-400/40 bg-red-500/10 text-red-100">
+          {errorMessage}
+        </Card>
+      )}
 
       <div className="grid gap-4">
         {errors.length === 0 ? (

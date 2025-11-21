@@ -30,8 +30,8 @@ export default function Login() {
         <div className="absolute bottom-20 left-1/2 w-36 h-36 bg-purple rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
       
-      <Card className="w-full max-w-md shadow-2xl relative z-10 border-4 border-white/30">
-        <div className="text-center mb-6">
+      <Card className="w-full max-w-md shadow-2xl relative z-10 border-4 border-white/30 p-6 sm:p-8 space-y-6">
+        <div className="text-center space-y-3">
           <div className="text-6xl mb-4">📚</div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             ברוכים הבאים ל-WordQuest
@@ -52,8 +52,12 @@ export default function Login() {
             onChange={e => setPassword(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleLogin()}
           />
-          {err && <div className="text-danger text-sm">{err}</div>}
-          <Button className="w-full" onClick={handleLogin}>
+          {err && (
+            <div className="rounded-lg border border-danger/40 bg-danger/10 text-danger text-sm px-3 py-2">
+              {err}
+            </div>
+          )}
+          <Button className="w-full py-3 text-lg font-semibold rounded-xl" onClick={handleLogin}>
             התחבר
           </Button>
           <div className="text-sm text-center text-muted mt-4 space-x-2 space-x-reverse">

@@ -4,11 +4,13 @@ import { useAdmin } from '../../store/useAdmin'
 import { exportAll, importAll } from '../../lib/storage'
 import { Card } from '../../shared/ui/Card'
 import { Button } from '../../shared/ui/Button'
+import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 
 export default function BackupRestore() {
   const nav = useNavigate()
   const isAuth = useAdmin(s => s.isAuthenticated)
   const [status, setStatus] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   if (!isAuth) {
     nav('/admin')
@@ -17,6 +19,7 @@ export default function BackupRestore() {
 
   const handleExport = async () => {
     try {
+      setIsLoading(true)
       const blob = await exportAll()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -27,6 +30,8 @@ export default function BackupRestore() {
       setStatus('✓ הגיבוי הורד בהצלחה!')
     } catch (e) {
       setStatus('✗ שגיאה בייצוא')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -35,10 +40,13 @@ export default function BackupRestore() {
     if (!file) return
 
     try {
+      setIsLoading(true)
       await importAll(file)
       setStatus('✓ הנתונים שוחזרו בהצלחה! יש לרענן את הדף.')
     } catch (err) {
       setStatus('✗ שגיאה בייבוא')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -52,7 +60,8 @@ export default function BackupRestore() {
           </Link>
         </div>
 
-        <Card className="space-y-6">
+        <Card className="space-y-6 relative overflow-hidden">
+          {isLoading && <LoadingOverlay message="מבצע פעולה..." />}
           <div>
             <h2 className="text-2xl font-bold mb-3">ייצוא נתונים</h2>
             <p className="text-muted mb-4">

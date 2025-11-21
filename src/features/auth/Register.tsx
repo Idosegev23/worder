@@ -35,8 +35,8 @@ export default function Register() {
         <div className="absolute bottom-20 left-1/2 w-36 h-36 bg-secondary rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
       
-      <Card className="w-full max-w-md shadow-2xl relative z-10 border-4 border-white/30">
-        <div className="text-center mb-6">
+      <Card className="w-full max-w-md shadow-2xl relative z-10 border-4 border-white/30 p-6 sm:p-8 space-y-6">
+        <div className="text-center space-y-3">
           <div className="text-6xl mb-4">🎉</div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             הרשמה
@@ -61,11 +61,15 @@ export default function Register() {
             onChange={e => setPwd(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleRegister()}
           />
-          {err && <div className="text-danger text-sm">{err}</div>}
+          {err && (
+            <div className="rounded-lg border border-danger/40 bg-danger/10 text-danger text-sm px-3 py-2">
+              {err}
+            </div>
+          )}
           <div className="text-xs text-muted mb-2">
             שם המשתמש שלך יהיה: {first && last ? `${first} ${last}` : '...'}
           </div>
-          <Button className="w-full" onClick={handleRegister}>
+          <Button className="w-full py-3 text-lg font-semibold rounded-xl" onClick={handleRegister}>
             צור משתמש
           </Button>
           <div className="text-sm text-center text-muted mt-4">

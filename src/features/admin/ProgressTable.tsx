@@ -6,6 +6,7 @@ import { Card } from '../../shared/ui/Card'
 import { Button } from '../../shared/ui/Button'
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '../../shared/ui/Table'
 import { Modal } from '../../shared/ui/Modal'
+import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 
 type StudentStats = {
   user: Profile
@@ -28,6 +29,9 @@ export default function ProgressTable() {
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null)
   const [userProgress, setUserProgress] = useState<DetailedProgress[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false)
 
   useEffect(() => {
     if (!isAuth) {
@@ -39,6 +43,8 @@ export default function ProgressTable() {
 
   const loadStats = async () => {
     try {
+      setIsLoading(true)
+      setError(null)
       // טעינת כל המשתמשים
       const { data: users } = await supabase
         .from('worder_profiles')
@@ -89,12 +95,15 @@ export default function ProgressTable() {
       setStats(allStats)
     } catch (error) {
       console.error('Error loading stats:', error)
+      setError('טעינת נתוני התלמידים נכשלה.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleViewDetails = async (user: Profile) => {
     setSelectedUser(user)
-    
+    setIsDetailsLoading(true)
     try {
       // טעינת כל ההתקדמות של המשתמש עם המילים
       const { data: progressRecords } = await supabase
@@ -129,6 +138,8 @@ export default function ProgressTable() {
       setIsModalOpen(true)
     } catch (error) {
       console.error('Error loading user details:', error)
+    } finally {
+      setIsDetailsLoading(false)
     }
   }
 
@@ -144,83 +155,152 @@ export default function ProgressTable() {
 
   return (
     <div className="min-h-screen p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">התקדמות תלמידים</h1>
-          <Link to="/admin/dashboard">
-            <Button variant="secondary">חזרה</Button>
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-muted mb-1">מעקב</p>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-primary leading-tight">התקדמות תלמידים</h1>
+          </div>
+          <Link to="/admin/dashboard" className="w-full md:w-auto">
+            <Button variant="secondary" className="w-full md:w-auto justify-center">
+              חזרה לדשבורד
+            </Button>
           </Link>
         </div>
 
         <Card className="mb-6">
-          <div className="text-muted text-sm">
-            סה״כ {stats.length} תלמידים • {stats.reduce((sum, s) => sum + s.totalAttempts, 0)} ניסיונות
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted">
+            <span>סה״כ {stats.length} תלמידים</span>
+            <span>{stats.reduce((sum, s) => sum + s.totalAttempts, 0)} ניסיונות</span>
           </div>
         </Card>
 
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableCell header>תלמיד</TableCell>
-                <TableCell header>שם משתמש</TableCell>
-                <TableCell header>ניסיונות</TableCell>
-                <TableCell header>נכונות</TableCell>
-                <TableCell header>שגיאות</TableCell>
-                <TableCell header>% הצלחה</TableCell>
-                <TableCell header>פעילות אחרונה</TableCell>
-                <TableCell header>פעולות</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {stats.map(stat => (
-                <TableRow key={stat.user.id}>
-                  <TableCell>
-                    {stat.user.firstName} {stat.user.lastName}
-                  </TableCell>
-                  <TableCell>{stat.user.username}</TableCell>
-                  <TableCell>{stat.totalAttempts}</TableCell>
-                  <TableCell>
-                    <span className="text-accent font-medium">{stat.correctAnswers}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-danger font-medium">{stat.wrongAnswers}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`font-bold ${
-                        stat.successRate >= 80
-                          ? 'text-accent'
-                          : stat.successRate >= 60
-                          ? 'text-secondary'
-                          : 'text-danger'
-                      }`}
-                    >
-                      {stat.successRate.toFixed(1)}%
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted">
-                    {formatDate(stat.lastActivity)}
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      onClick={() => handleViewDetails(stat.user)}
-                      className="text-secondary hover:underline text-sm"
-                    >
-                      פירוט מלא
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {stats.length === 0 && (
+        <Card className="relative overflow-hidden">
+          {isLoading && <LoadingOverlay message="טוען סטטיסטיקות..." />}
+          {error && !isLoading && (
+            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+              {error}
+            </div>
+          )}
+          <div className="hidden lg:block">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted py-8">
-                    אין עדיין תלמידים עם פעילות
-                  </TableCell>
+                  <TableCell header>תלמיד</TableCell>
+                  <TableCell header>שם משתמש</TableCell>
+                  <TableCell header>ניסיונות</TableCell>
+                  <TableCell header>נכונות</TableCell>
+                  <TableCell header>שגיאות</TableCell>
+                  <TableCell header>% הצלחה</TableCell>
+                  <TableCell header>פעילות אחרונה</TableCell>
+                  <TableCell header>פעולות</TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {stats.map(stat => (
+                  <TableRow key={stat.user.id}>
+                    <TableCell>
+                      {stat.user.firstName} {stat.user.lastName}
+                    </TableCell>
+                    <TableCell>{stat.user.username}</TableCell>
+                    <TableCell>{stat.totalAttempts}</TableCell>
+                    <TableCell>
+                      <span className="text-accent font-medium">{stat.correctAnswers}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-danger font-medium">{stat.wrongAnswers}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`font-bold ${
+                          stat.successRate >= 80
+                            ? 'text-accent'
+                            : stat.successRate >= 60
+                            ? 'text-secondary'
+                            : 'text-danger'
+                        }`}
+                      >
+                        {stat.successRate.toFixed(1)}%
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted">
+                      {formatDate(stat.lastActivity)}
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => handleViewDetails(stat.user)}
+                        className="text-secondary hover:underline text-sm"
+                      >
+                        פירוט מלא
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {stats.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-muted py-8">
+                      אין עדיין תלמידים עם פעילות
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="lg:hidden space-y-4">
+            {stats.map(stat => (
+              <div key={stat.user.id} className="rounded-2xl border border-white/10 bg-bg/80 p-4 shadow-lg">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase text-muted tracking-widest">תלמיד</p>
+                    <p className="text-lg font-bold text-primary">
+                      {stat.user.firstName} {stat.user.lastName}
+                    </p>
+                    <p className="text-sm text-muted">@{stat.user.username}</p>
+                  </div>
+                  <span
+                    className={`text-lg font-extrabold ${
+                      stat.successRate >= 80
+                        ? 'text-accent'
+                        : stat.successRate >= 60
+                        ? 'text-secondary'
+                        : 'text-danger'
+                    }`}
+                  >
+                    {stat.successRate.toFixed(0)}%
+                  </span>
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
+                  <div>
+                    <p className="text-xs uppercase text-muted">ניסיונות</p>
+                    <p className="text-lg font-bold">{stat.totalAttempts}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-muted">נכונים</p>
+                    <p className="text-lg font-bold text-accent">{stat.correctAnswers}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-muted">שגויים</p>
+                    <p className="text-lg font-bold text-danger">{stat.wrongAnswers}</p>
+                  </div>
+                </div>
+                <div className="mt-3 text-xs text-muted">
+                  פעילות אחרונה: {formatDate(stat.lastActivity)}
+                </div>
+                <button
+                  onClick={() => handleViewDetails(stat.user)}
+                  className="mt-4 w-full rounded-xl border border-secondary/40 py-2 text-sm font-semibold text-secondary"
+                >
+                  פירוט מלא
+                </button>
+              </div>
+            ))}
+            {stats.length === 0 && !isLoading && (
+              <div className="rounded-2xl border border-dashed border-white/20 p-6 text-center text-muted">
+                אין עדיין תלמידים עם פעילות
+              </div>
+            )}
+          </div>
         </Card>
 
         {/* Modal - פירוט התקדמות */}
@@ -229,7 +309,8 @@ export default function ProgressTable() {
           onClose={() => setIsModalOpen(false)}
           title={selectedUser ? `התקדמות: ${selectedUser.firstName} ${selectedUser.lastName}` : ''}
         >
-          <div className="max-h-96 overflow-y-auto">
+          <div className="relative max-h-96 overflow-y-auto">
+            {isDetailsLoading && <LoadingOverlay message="טוען פעילויות..." />}
             <Table>
               <TableHeader>
                 <TableRow>
