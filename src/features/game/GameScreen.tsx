@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Word, getWordsByCategory, getUserProgress, saveProgress } from '../../lib/supabase'
+import { Word, getWordsByCategory, getUserProgress, saveProgress, getCategories } from '../../lib/supabase'
 import { useAuth } from '../../store/useAuth'
 import { useGame } from '../../store/useGame'
 import { triggerCelebration, triggerFunnyEffect } from '../../lib/useEffectEngine'
@@ -92,7 +92,6 @@ export default function GameScreen() {
         
         console.log('Found active words:', fetchedWords)
         
-        const { getCategories } = await import('../../lib/supabase')
         const categories = await getCategories()
         const currentCat = categories.find(c => c.id === Number(categoryId))
         if (currentCat) {
