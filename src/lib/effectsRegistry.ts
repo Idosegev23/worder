@@ -82,14 +82,14 @@ export const celebratoryEffects: Effect[] = [
     safe: true,
     run: async ({ root }) => {
       // קפיצות גבוהות יותר וארוכות יותר!
-      gsap.to(root, {
+      await gsap.to(root, {
         y: -50,
         duration: 0.4,
         yoyo: true,
         repeat: 4,
         ease: 'bounce.out'
       })
-      await sleep(1800)
+      gsap.set(root, { clearProps: 'all' }) // איפוס מלא
     }
   },
   {
@@ -152,7 +152,7 @@ export const celebratoryEffects: Effect[] = [
     safe: true,
     run: async ({ root }) => {
       // זום וסיבוב מטורפים!
-      gsap.to(root, {
+      await gsap.to(root, {
         scale: 1.3,
         rotation: 360,
         duration: 0.8,
@@ -160,7 +160,7 @@ export const celebratoryEffects: Effect[] = [
         repeat: 2,
         ease: 'back.out(2)'
       })
-      await sleep(1800)
+      gsap.set(root, { clearProps: 'all' }) // איפוס מלא
     }
   },
   {
@@ -243,27 +243,22 @@ export const mischievousEffects: Effect[] = [
     safe: true,
     run: async ({ root }) => {
       // פעימה עדינה - ללא רעידה
-      gsap.to(root, { 
+      await gsap.to(root, { 
         scale: 1.03, 
         duration: 0.3, 
         yoyo: true, 
         repeat: 2,
         ease: 'power1.inOut' 
       })
-      await sleep(1000)
+      gsap.set(root, { clearProps: 'all' }) // איפוס מלא
     }
   },
   {
     key: 'runawayBtn',
-    weight: 3,
+    weight: 0, // מבטל את האפקט הזה כי הוא שובר layout
     safe: true,
     run: async () => {
-      const btn = document.querySelector('button[type="submit"], .submit-btn') as HTMLElement
-      if (!btn) return
-      btn.style.position = 'relative'
-      btn.style.left = Math.random() > 0.5 ? '120px' : '-120px'
-      await sleep(800)
-      btn.style.left = '0px'
+      // בוטל
     }
   },
   {
@@ -301,8 +296,8 @@ export const mischievousEffects: Effect[] = [
     weight: 2,
     safe: true,
     run: async ({ root }) => {
-      gsap.to(root, { scale: 1.05, duration: 0.15, yoyo: true, repeat: 1 })
-      await sleep(400)
+      await gsap.to(root, { scale: 1.05, duration: 0.15, yoyo: true, repeat: 1 })
+      gsap.set(root, { clearProps: 'all' })
     }
   },
   {
@@ -310,8 +305,8 @@ export const mischievousEffects: Effect[] = [
     weight: 2,
     safe: true,
     run: async ({ root }) => {
-      gsap.to(root, { y: 40, duration: 0.2, yoyo: true, repeat: 1, ease: 'bounce.out' })
-      await sleep(500)
+      await gsap.to(root, { y: 40, duration: 0.2, yoyo: true, repeat: 1, ease: 'bounce.out' })
+      gsap.set(root, { clearProps: 'all' })
     }
   },
   {
@@ -369,15 +364,10 @@ export const mischievousEffects: Effect[] = [
   },
   {
     key: 'buttonTeleport',
-    weight: 1,
+    weight: 0, // מבטל כי זה שובר layout
     safe: true,
     run: async () => {
-      const btn = document.querySelector('button[type="submit"], .submit-btn') as HTMLElement
-      if (!btn) return
-      const old = btn.style.transform
-      btn.style.transform = 'translateX(140px)'
-      await sleep(700)
-      btn.style.transform = old
+      // בוטל
     }
   },
   {
