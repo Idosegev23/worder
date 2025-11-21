@@ -21,6 +21,7 @@ export default function GameScreen() {
   const [activeWords, setActiveWords] = useState<Word[]>([]) // מילים לסיבוב הנוכחי
   const [retryQueue, setRetryQueue] = useState<Word[]>([]) // מילים לסיבוב הבא (טעויות)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isRetryRound, setIsRetryRound] = useState(false) // האם זה סיבוב תיקון
   const [answer, setAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | 'show-answer' | null>(null)
   const [attempts, setAttempts] = useState(0)
