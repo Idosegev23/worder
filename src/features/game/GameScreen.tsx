@@ -345,23 +345,23 @@ export default function GameScreen() {
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-3 sm:p-6">
       <div className="max-w-4xl mx-auto">
         {/* סרגל התקדמות גלובלי */}
         <GlobalProgress />
         
-        <Card className="w-full max-w-xl mx-auto shadow-2xl relative overflow-hidden min-h-[500px] sm:min-h-[600px] flex flex-col border-4 border-white/50" id="game-card">
+        <Card className="w-full max-w-xl mx-auto shadow-2xl relative overflow-hidden min-h-[550px] flex flex-col border-2 sm:border-4 border-white/50" id="game-card">
           {/* התקדמות */}
-          <div className="flex justify-between items-center mb-4 sm:mb-6 relative z-10 bg-white/10 p-2 sm:p-3 rounded-xl backdrop-blur-sm">
-            <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex justify-between items-center mb-3 sm:mb-4 relative z-10 bg-white/10 p-2 rounded-lg sm:rounded-xl backdrop-blur-sm">
+            <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-primary font-bold text-base sm:text-lg">
                 {currentIndex + 1} / {words.length}
               </span>
               
               {/* הצגת רצף נוכחי */}
               {streak > 0 && (
-                <div className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-red-500 text-white px-2 sm:px-3 py-1 rounded-full animate-pulse shadow-lg">
-                  <span className="text-base sm:text-lg">🔥</span>
+                <div className="flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-orange-400 to-red-500 text-white px-2 sm:px-3 py-1 rounded-full animate-pulse shadow-lg">
+                  <span className="text-sm sm:text-base">🔥</span>
                   <span className="font-bold text-sm sm:text-base">{streak}</span>
                 </div>
               )}
@@ -369,49 +369,44 @@ export default function GameScreen() {
             
             <button
               onClick={() => nav('/categories')}
-              className="flex items-center gap-2 bg-secondary/20 hover:bg-secondary/30 text-secondary px-3 sm:px-4 py-2 rounded-lg transition-all font-bold text-sm sm:text-base shadow-md hover:shadow-lg active:scale-95"
+              className="flex items-center gap-1 sm:gap-2 bg-secondary/20 hover:bg-secondary/30 text-secondary px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all font-bold text-xs sm:text-base shadow-md hover:shadow-lg active:scale-95"
             >
-              <span>↩️</span>
-              <span>חזרה</span>
+              <span className="text-base sm:text-xl">↩️</span>
+              <span className="hidden xs:inline">חזרה</span>
             </button>
           </div>
 
         {/* כותרת הסבר למשחק */}
-        <div className="text-center mb-4 relative z-10">
-          <h2 className="text-xl sm:text-2xl font-bold text-primary">
+        <div className="text-center mb-3 sm:mb-4 relative z-10 px-2">
+          <h2 className="text-base sm:text-xl md:text-2xl font-bold text-primary leading-tight">
             {categoryName === 'Am/Is/Are' 
               ? isNegativeSentence 
-                ? 'השלימו במשפט שלילה (Am not / Is not / Are not)'
+                ? 'השלימו במשפט שלילה'
                 : isQuestionSentence
-                ? 'השלימו את מילת השאלה (Am / Is / Are)'
-                : 'השלימו את המילה (Am / Is / Are)'
+                ? 'השלימו את מילת השאלה'
+                : 'השלימו את המילה'
              : categoryName === 'Have/Has' 
               ? isNegativeSentence
-                ? 'השלימו במשפט שלילה (Don\'t have / Doesn\'t have)'
+                ? 'השלימו במשפט שלילה'
                 : isQuestionSentence
-                ? 'השלימו את מילת השאלה (Do / Does)'
-                : 'השלימו את המילה (Have / Has)'
+                ? 'השלימו את מילת השאלה'
+                : 'השלימו את המילה'
              : categoryName === 'Pronouns' 
               ? 'תרגמו את כינוי הגוף'
              : 'תרגמו את המילה לעברית'}
           </h2>
-          {(categoryName === 'Am/Is/Are' || categoryName === 'Have/Has') && (
-            <p className="text-muted text-sm mt-1">
-              בחרו את האפשרות המתאימה למשפט
-            </p>
-          )}
         </div>
 
         {/* המילה באנגלית + כפתור השמעה */}
-        <div className="text-center mb-8 flex-1 flex flex-col justify-center relative z-10">
-          <div className="flex items-center justify-center gap-4 mb-4 flex-wrap">
-            <div className="word-text text-3xl sm:text-4xl font-bold break-words max-w-[90%] sm:max-w-[80%]">
+        <div className="text-center mb-4 sm:mb-6 flex-1 flex flex-col justify-center relative z-10 px-2">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4 flex-wrap">
+            <div className="word-text text-2xl sm:text-3xl md:text-4xl font-bold break-words max-w-full leading-tight">
               {currentWord.en}
             </div>
             <button
               onClick={handlePlayAudio}
               disabled={isPlayingAudio}
-              className={`p-3 sm:p-4 rounded-full transition-all ${
+              className={`p-2 sm:p-3 rounded-full transition-all flex-shrink-0 ${
                 isPlayingAudio 
                   ? 'bg-primary/50 animate-pulse' 
                   : audioPlayed 
@@ -420,40 +415,35 @@ export default function GameScreen() {
               }`}
               title="השמע את המילה"
             >
-              <span className="text-2xl sm:text-3xl">{isPlayingAudio ? '🔊' : '🔉'}</span>
+              <span className="text-xl sm:text-2xl md:text-3xl">{isPlayingAudio ? '🔊' : '🔉'}</span>
             </button>
           </div>
           {/* תרגום למשפטים (אם יש תרגום במסד נתונים) */}
           {currentWord.translation && (categoryName === 'Have/Has' || categoryName === 'Am/Is/Are') && (
-            <div className="text-lg text-secondary font-semibold mt-2 animate-fade-in bg-secondary/10 px-4 py-2 rounded-lg">
+            <div className="text-sm sm:text-base md:text-lg text-secondary font-semibold mt-2 animate-fade-in bg-secondary/10 px-3 py-2 rounded-lg mx-2">
               <span className="text-primary">💬</span> {currentWord.translation}
             </div>
           )}
 
           {attempts > 0 && !isChoiceGame && (
-            <div className="text-sm text-muted">
+            <div className="text-xs sm:text-sm text-muted mt-2">
               ניסיון {attempts} מתוך 2
-            </div>
-          )}
-          {isChoiceGame && (
-            <div className="text-lg text-muted mt-2">
-              בחר את התשובה הנכונה 👇
             </div>
           )}
         </div>
 
         {/* שדה תשובה או כפתורי בחירה */}
-        <div className="space-y-4 relative z-10">
+        <div className="space-y-3 sm:space-y-4 relative z-10 px-2">
           {isChoiceGame ? (
             // כפתורי בחירה
-            <div className={`grid gap-3 sm:gap-4 ${
+            <div className={`grid gap-2 sm:gap-3 ${
               categoryName === 'Am/Is/Are'
                 ? isNegativeSentence 
-                  ? 'grid-cols-1 sm:grid-cols-3'  // Am not / Is not / Are not
+                  ? 'grid-cols-1'                  // Am not / Is not / Are not (mobile: 1 col)
                   : 'grid-cols-3'                  // Am / Is / Are
                 : categoryName === 'Have/Has'
                 ? isNegativeSentence
-                  ? 'grid-cols-1 sm:grid-cols-2'  // Don't have / Doesn't have
+                  ? 'grid-cols-1'                  // Don't have / Doesn't have (mobile: 1 col)
                   : 'grid-cols-2'                  // Have/Has או Do/Does
                 : 'grid-cols-2'
             }`}>
@@ -470,16 +460,16 @@ export default function GameScreen() {
                     checkAnswerWithOption(option);
                   }}
                   disabled={feedback !== null}
-                  className={`py-4 sm:py-6 px-4 sm:px-8 rounded-xl text-xl sm:text-2xl font-bold transition-all transform hover:scale-105 ${
+                  className={`py-3 sm:py-4 md:py-6 px-3 sm:px-6 md:px-8 rounded-xl text-base sm:text-lg md:text-2xl font-bold transition-all transform hover:scale-105 active:scale-95 ${
                     feedback === 'correct' && answer === option
-                      ? 'bg-accent text-white shadow-lg scale-110 ring-4 ring-green-300' // נבחר ונכון
+                      ? 'bg-accent text-white shadow-lg scale-105 sm:scale-110 ring-4 ring-green-300' // נבחר ונכון
                       : feedback === 'wrong' && answer === option
                       ? 'bg-red-500 text-white shadow-lg scale-95 ring-4 ring-red-300' // נבחר ושגוי
                       : feedback === 'show-answer' && normalizeAnswer(currentWord.he) === option
                       ? 'bg-accent text-white shadow-lg animate-pulse ring-4 ring-blue-300' // התשובה הנכונה שמוצגת
                       : feedback !== null
                       ? 'bg-muted text-white/50 cursor-not-allowed opacity-50' // שאר הכפתורים בזמן פידבק
-                      : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-2xl active:scale-95' // מצב רגיל
+                      : 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-2xl' // מצב רגיל
                   }`}
                 >
                   {option.toUpperCase()}
