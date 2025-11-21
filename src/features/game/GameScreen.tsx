@@ -286,7 +286,7 @@ export default function GameScreen() {
     )
   }
   
-  if (!currentWord) {
+  if (!isLoading && !currentWord) {
     return (
       <div className="min-h-screen grid place-items-center p-6">
         <Card className="text-center">
