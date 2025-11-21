@@ -18,7 +18,10 @@ export default function GameScreen() {
   const { incrementScore, incrementStreak, resetStreak, streak, unlockAchievement } = useGame()
 
   const [words, setWords] = useState<Word[]>([])
+  const [activeWords, setActiveWords] = useState<Word[]>([]) // מילים לסיבוב הנוכחי
+  const [retryQueue, setRetryQueue] = useState<Word[]>([]) // מילים לסיבוב הבא (טעויות)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isRetryRound, setIsRetryRound] = useState(false)
   const [answer, setAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | 'show-answer' | null>(null)
   const [attempts, setAttempts] = useState(0)
@@ -26,9 +29,10 @@ export default function GameScreen() {
   const [audioPlayed, setAudioPlayed] = useState(false)
   const [isPlayingAudio, setIsPlayingAudio] = useState(false)
   const [categoryName, setCategoryName] = useState<string>('')
-  const [wasCompletedInitially, setWasCompletedInitially] = useState(false) // האם הקטגוריה כבר הושלמה בעבר?
+  const [wasCompletedInitially, setWasCompletedInitially] = useState(false) 
 
-  const currentWord = words[currentIndex]
+  // שימוש ב-activeWords במקום words
+  const currentWord = activeWords[currentIndex]
   
   // זיהוי אם זה משחק בחירה (כפתורים) או הקלדה
   const isChoiceGame = categoryName?.includes('Am/Is/Are') || categoryName === 'Have/Has'
@@ -41,18 +45,15 @@ export default function GameScreen() {
   const isNegativeSentence = sentenceType === 'negative'
   const isQuestionSentence = sentenceType === 'question'
   
-  // פרגונים מגוונים למיתר
+  // פרגונים מגוונים למיתר (מהריפוזיטורי החדש)
   const meitarPraises = [
-    '🌟 מדהים מיתר! אני כל כך גאה בך! 🎉',
-    '✨ יאללה מיתר! את פשוט מושלמת! 💪',
-    '🎊 וואו מיתר! זה פשוט מעולה! 🌈',
-    '🏆 כל הכבוד מיתר! את מלכה! 👑',
-    '🎯 פצצצצה מיתר! ממש ממש טוב! 🚀',
-    '💫 בול עין מיתר! זה היה מהמם! ⭐',
-    '🎪 חזק חזק מיתר! ממשיכים ככה! 💥',
-    '🌺 אלופה מיתר! זה היה מושלם! 🎨',
-    '🎸 רוקנרול מיתר! ממש מדהימה! 🎭',
-    '🦄 מדהימה מיתר! את פשוט הכי! 🌟'
+    "🎉 מדהים! מיתר גאונית!",
+    "⭐ כל הכבוד! תשובה מושלמת מיתר!",
+    "🌟 יפה מאוד! מיתר על זה!",
+    "💫 מעולה! מיתר המשיכי ככה!",
+    "✨ וואו! איזו תשובה נכונה מיתר!",
+    "🎊 פנטסטי! מיתר יודעת את זה מצוין!",
+    "🏆 מצוין! מיתר זה היה מושלם!",
   ]
   
   // בחירת אפשרויות כפתורים בהתאם לסוג המשפט
@@ -77,12 +78,11 @@ export default function GameScreen() {
     const loadWords = async () => {
       try {
         console.log('Loading words for category:', categoryId)
-        const activeWords = await getWordsByCategory(Number(categoryId))
+        const fetchedWords = await getWordsByCategory(Number(categoryId))
         
-        console.log('Found active words:', activeWords)
-        setWords(activeWords)
+        console.log('Found active words:', fetchedWords)
+        setWords(fetchedWords)
         
-        // טעינת שם הקטגוריה
         const { getCategories } = await import('../../lib/supabase')
         const categories = await getCategories()
         const currentCat = categories.find(c => c.id === Number(categoryId))
@@ -90,46 +90,35 @@ export default function GameScreen() {
           setCategoryName(currentCat.name)
         }
         
-        // מציאת המילה הראשונה שעוד לא נענתה עליה נכון
         const userProgress = await getUserProgress(user.id)
         
-        // בדיקה אם כל המילים נענו נכון
-        const allCorrect = activeWords.every(word => 
+        // סינון מילים שכבר נענו נכון (אלא אם זה תרגול חוזר)
+        const allCorrect = fetchedWords.every(word => 
           userProgress.some(p => p.wordId === word.id && p.isCorrect)
         )
         
+        let initialWords = fetchedWords
         if (allCorrect) {
           setWasCompletedInitially(true)
           console.log('Category was already completed! Starting practice mode.')
-        }
-
-        let firstUnansweredIndex = 0
-        // אם הכל הושלם, מתחילים מהתחלה (0). אחרת, מחפשים את הראשונה שלא נענתה
-        if (!allCorrect) {
-          for (let i = 0; i < activeWords.length; i++) {
-            const hasCorrectAnswer = userProgress.some(
-              p => p.wordId === activeWords[i].id && p.isCorrect
-            )
-            
-            if (!hasCorrectAnswer) {
-              firstUnansweredIndex = i
-              break
-            }
-          }
         } else {
-          // אם הכל הושלם, אנחנו רוצים להתחיל מהמילה הראשונה *בסבב הנוכחי* שלא ענינו עליה *עכשיו*
-          // אבל ה-DB שומר היסטוריה מלאה.
-          // הפתרון: במצב תרגול חוזר, אנחנו פשוט מתחילים מ-0 ועוברים אחד אחד.
-          // המשתמש יוכל להמשיך מאותה נקודה רק אם נשמור state לוקלי או שנשתמש בלוגיקה מתוחכמת יותר.
-          // כרגע: מתחיל מ-0.
-          firstUnansweredIndex = 0
+          const uncompletedWords = fetchedWords.filter(word => 
+            !userProgress.some(p => p.wordId === word.id && p.isCorrect)
+          )
+          if (uncompletedWords.length > 0) {
+            initialWords = uncompletedWords
+          }
         }
         
-        console.log('Starting from index:', firstUnansweredIndex)
-        setCurrentIndex(firstUnansweredIndex)
+        setActiveWords(initialWords)
+        setCurrentIndex(0)
+        setRetryQueue([])
+        setIsRetryRound(false)
+        
       } catch (error) {
         console.error('Error loading words:', error)
         setWords([])
+        setActiveWords([])
       }
     }
     
@@ -152,23 +141,6 @@ export default function GameScreen() {
     }
   }
 
-  const checkIfCategoryCompleted = async () => {
-    if (!user) return false
-    
-    // בדיקה אם סיימנו את כל המילים בקטגוריה
-    const allProgress = await getUserProgress(user.id)
-    
-    const completedWordsInCategory = new Set<number>()
-    words.forEach(word => {
-      const hasCorrect = allProgress.some(p => p.wordId === word.id && p.isCorrect)
-      if (hasCorrect) {
-        completedWordsInCategory.add(word.id)
-      }
-    })
-    
-    return completedWordsInCategory.size === words.length
-  }
-
   const moveToNextWord = async () => {
     if (!user) return
     
@@ -178,52 +150,35 @@ export default function GameScreen() {
     setWrongAnswers([])
     setAudioPlayed(false)
     
-    // בדיקה אם סיימנו את כל המילים בקטגוריה
-    const categoryCompleted = await checkIfCategoryCompleted()
-    
-    if (categoryCompleted) {
-      // אם הקטגוריה הושלמה עכשיו, אבל כבר הייתה מושלמת בעבר -> רק תרגול חוזר
-      if (wasCompletedInitially) {
-        console.log('✅ Practice completed!')
-        // קונפטי ואז חזרה
+    // בדיקה אם הגענו לסוף הרשימה הנוכחית
+    if (currentIndex < activeWords.length - 1) {
+      setCurrentIndex(currentIndex + 1)
+    } else {
+      // סיימנו את הרשימה הנוכחית. בדיקה אם יש מילים לתיקון
+      if (retryQueue.length > 0) {
+        console.log('Starting retry round with words:', retryQueue)
+        setActiveWords(retryQueue)
+        setRetryQueue([]) // מנקים את התור לסיבוב הבא
+        setCurrentIndex(0)
+        setIsRetryRound(true)
+        
+        // הודעה למשתמש שמתחיל סבב תיקון
+        alert('כל הכבוד! עכשיו נחזור על המילים שצריך לחזק 💪')
+      } else {
+        // סיימנו הכל!
+        console.log('✅ All done!')
         triggerCelebration(document.getElementById('game-card') || undefined)
         play('correct')
         
         setTimeout(() => {
-          alert('כל הכבוד! סיימת סבב תרגול נוסף! ⭐')
-          nav('/categories')
+          if (wasCompletedInitially) {
+            alert('כל הכבוד! סיימת סבב תרגול נוסף! ⭐')
+            nav('/categories')
+          } else {
+            nav('/rewards')
+          }
         }, 2000)
-      } else {
-        // סיום ראשון -> פרסים!
-        console.log('✅ Category completed first time! Going to rewards...')
-        nav('/rewards')
       }
-    } else if (currentIndex < words.length - 1) {
-      setCurrentIndex(currentIndex + 1)
-    } else {
-      // הגענו לסוף הרשימה
-      // אם היינו במצב תרגול חוזר (wasCompletedInitially), אז סיימנו את הסבב
-      if (wasCompletedInitially) {
-        triggerCelebration(document.getElementById('game-card') || undefined)
-        play('correct')
-        setTimeout(() => {
-          alert('כל הכבוד! סיימת סבב תרגול נוסף! ⭐')
-          nav('/categories')
-        }, 2000)
-        return
-      }
-
-      // אחרת (מצב רגיל), חוזרים למילה הראשונה שלא סיימנו
-      const allProgress = await getUserProgress(user.id)
-      let nextIndex = 0
-      for (let i = 0; i < words.length; i++) {
-        const hasCorrect = allProgress.some(p => p.wordId === words[i].id && p.isCorrect)
-        if (!hasCorrect) {
-          nextIndex = i
-          break
-        }
-      }
-      setCurrentIndex(nextIndex)
     }
   }
 
@@ -258,81 +213,43 @@ export default function GameScreen() {
 
       // בדיקת הישגים
       const newStreak = streak + 1
-      if (newStreak === 5) {
-        unlockAchievement('streak_5', 'רצף של 5! 🔥', 'ענית נכון על 5 מילים ברצף!', '🔥')
-      }
-      if (newStreak === 10) {
-        unlockAchievement('streak_10', 'רצף של 10! ⚡', 'ענית נכון על 10 מילים ברצף!', '⚡')
-      }
-      if (newStreak === 20) {
-        unlockAchievement('streak_20', 'רצף של 20! 🚀', 'ענית נכון על 20 מילים ברצף! מדהים!', '🚀')
-      }
+      if (newStreak === 5) unlockAchievement('streak_5', 'רצף של 5! 🔥', 'ענית נכון על 5 מילים ברצף!', '🔥')
+      if (newStreak === 10) unlockAchievement('streak_10', 'רצף של 10! ⚡', 'ענית נכון על 10 מילים ברצף!', '⚡')
+      if (newStreak === 20) unlockAchievement('streak_20', 'רצף של 20! 🚀', 'ענית נכון על 20 מילים ברצף! מדהים!', '🚀')
 
-      // אפקט חגיגי עם זיקוקים
+      // אפקט חגיגי
       await triggerCelebration(document.getElementById('game-card') || undefined)
 
       setTimeout(async () => {
         await moveToNextWord()
-      }, isMeitarCategory ? 4000 : 3000) // יותר זמן למיתר ליהנות מהפרגון
+      }, isMeitarCategory ? 3000 : 2000)
     } else {
       // תשובה שגויה!
-      const newWrongAnswers = [...wrongAnswers, selectedAnswer]
-      setWrongAnswers(newWrongAnswers)
-      
       play('wrong')
       resetStreak()
-
-      // במשחקי מיתר - תמיד מראים תשובה אחרי טעות אחת!
-      // במשחקים אחרים - לוגיקה רגילה
-      const shouldShowAnswer = isMeitarCategory || isChoiceGame || currentAttempts >= 2
       
-      if (shouldShowAnswer) {
-        setFeedback((isMeitarCategory || isChoiceGame) && currentAttempts === 1 ? 'show-answer' : (currentAttempts >= 2 ? 'show-answer' : 'wrong'))
-        
-        // שמירת התקדמות ב-DB
-        await saveProgress({
-          userId: user!.id,
-          wordId: currentWord.id,
-          isCorrect: false,
-          attempts: currentAttempts,
-          lastAnswer: selectedAnswer,
-          wrongAnswers: newWrongAnswers,
-          audioPlayed: audioPlayed
-        })
-
-        // למיתר - מראים מיד את התשובה אחרי טעות אחת
-        if (isMeitarCategory && currentAttempts === 1) {
-            setFeedback('show-answer')
-            setTimeout(async () => {
-              await moveToNextWord()
-            }, 5000) // יותר זמן למיתר לראות את התשובה הנכונה
-        } else if (isChoiceGame && currentAttempts < 2 && !isMeitarCategory) {
-            // במשחקי בחירה (לא מיתר) - מחכים קצת ואז מנקים את הפידבק כדי שיוכל לנסות שוב
-            await triggerFunnyEffect(document.getElementById('game-card') || undefined)
-            setTimeout(() => {
-                setFeedback(null)
-                setAnswer('') // ניקוי כדי לאפשר בחירה חדשה
-            }, 1500)
-        } else {
-            // אם זה לא משחק בחירה או שזה ניסיון שני במשחק בחירה
-            if (isChoiceGame) setFeedback('show-answer') // מראה את התשובה הנכונה
-            
-            setTimeout(async () => {
-              await moveToNextWord()
-            }, 4000)
-        }
-      } else {
-        // ניסיון ראשון במשחק הקלדה - תן לו לנסות שוב
-        setFeedback('wrong')
-        
-        // אפקט עדין
-        await triggerFunnyEffect(document.getElementById('game-card') || undefined)
-
-        setTimeout(() => {
-          setFeedback(null)
-          setAnswer('') // ניקוי התשובה
-        }, 2000)
+      // הוספה לתור לתיקון (אם המילה עדיין לא שם)
+      if (!retryQueue.some(w => w.id === currentWord.id)) {
+        setRetryQueue(prev => [...prev, currentWord])
       }
+
+      setFeedback('show-answer')
+      
+      // שמירת התקדמות (טעות)
+      await saveProgress({
+        userId: user!.id,
+        wordId: currentWord.id,
+        isCorrect: false,
+        attempts: currentAttempts,
+        lastAnswer: selectedAnswer,
+        wrongAnswers: [...wrongAnswers, selectedAnswer],
+        audioPlayed: audioPlayed
+      })
+
+      // הצגת התשובה לזמן מה ואז מעבר הלאה
+      setTimeout(async () => {
+        await moveToNextWord()
+      }, 4000)
     }
   }
 
@@ -444,10 +361,10 @@ export default function GameScreen() {
               </button>
             )}
           </div>
-          {/* תרגום למשפטים (אם יש תרגום במסד נתונים) */}
+          {/* תרגום/משפט דוגמה למשפטים (אם יש תרגום במסד נתונים) */}
           {currentWord.translation && (
-            <div className="text-sm sm:text-base md:text-lg text-secondary font-semibold mt-2 animate-fade-in bg-secondary/10 px-3 py-2 rounded-lg mx-2">
-              <span className="text-primary">💬</span> {currentWord.translation}
+            <div className="text-sm sm:text-base md:text-lg text-secondary font-semibold mt-2 animate-fade-in bg-secondary/10 px-3 py-2 rounded-lg mx-2 italic">
+              "{currentWord.translation}"
             </div>
           )}
 
@@ -542,13 +459,8 @@ export default function GameScreen() {
                   תשובות נוספות: {currentWord.altHe.join(', ')}
                 </div>
               )}
-              {/* משפט להקשר למיתר */}
-              {isMeitarCategory && currentWord.translation && (
-                <div className="text-sm sm:text-base text-blue-700 mt-4 bg-white/50 p-3 rounded-lg">
-                  <span className="font-bold">📖 דוגמה: </span>
-                  <div className="mt-2 text-blue-900 font-semibold">{currentWord.translation}</div>
-                </div>
-              )}
+              {/* משפט להקשר למיתר - הוסר כי הוא מוצג למעלה */}
+              
               <div className="text-xs sm:text-sm text-blue-600 mt-3">
                 עובר למילה הבאה... ✨
               </div>
