@@ -277,8 +277,8 @@ export const mischievousEffects: Effect[] = [
     safe: true,
     run: async ({ root }) => {
       // דהייה עדינה
-      gsap.to(root, { opacity: 0.6, duration: 0.3, yoyo: true, repeat: 1 })
-      await sleep(700)
+      await gsap.to(root, { opacity: 0.6, duration: 0.3, yoyo: true, repeat: 1 })
+      gsap.set(root, { clearProps: 'all' }) // איפוס מלא
     }
   },
   {
@@ -360,6 +360,7 @@ export const mischievousEffects: Effect[] = [
       root.style.filter = 'blur(2px)'
       await sleep(250)
       root.style.filter = ''
+      gsap.set(root, { clearProps: 'all' }) // איפוס מלא
     }
   },
   {

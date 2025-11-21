@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Word, getWordsByCategory, getUserProgress, saveProgress } from '../../lib/supabase'
 import { useAuth } from '../../store/useAuth'
 import { useGame } from '../../store/useGame'
-import { triggerCelebration } from '../../lib/useEffectEngine'
+import { triggerCelebration, triggerFunnyEffect } from '../../lib/useEffectEngine'
 import { play } from '../../lib/sounds'
 import { speakWord } from '../../lib/openai-tts'
 import { Card } from '../../shared/ui/Card'
@@ -233,6 +233,11 @@ export default function GameScreen() {
       }
 
       setFeedback('show-answer')
+      
+      // אפקט שובב (רק אם זה לא מיתר)
+      if (!isMeitarCategory) {
+        await triggerFunnyEffect(document.getElementById('game-card') || undefined)
+      }
       
       // שמירת התקדמות (טעות)
       await saveProgress({
