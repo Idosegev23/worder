@@ -18,7 +18,6 @@ export default function GameScreen() {
   const user = useAuth(s => s.user)
   const { incrementScore, incrementStreak, resetStreak, streak, unlockAchievement } = useGame()
 
-  const [words, setWords] = useState<Word[]>([])
   const [activeWords, setActiveWords] = useState<Word[]>([]) // מילים לסיבוב הנוכחי
   const [retryQueue, setRetryQueue] = useState<Word[]>([]) // מילים לסיבוב הבא (טעויות)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -92,7 +91,6 @@ export default function GameScreen() {
         const fetchedWords = await getWordsByCategory(Number(categoryId))
         
         console.log('Found active words:', fetchedWords)
-        setWords(fetchedWords)
         
         const { getCategories } = await import('../../lib/supabase')
         const categories = await getCategories()
@@ -129,7 +127,6 @@ export default function GameScreen() {
         
       } catch (error) {
         console.error('Error loading words:', error)
-        setWords([])
         setActiveWords([])
         setLoadError('לא הצלחנו לטעון מילים לקטגוריה הזו. נסו שוב מאוחר יותר.')
         setIsLoading(false)
