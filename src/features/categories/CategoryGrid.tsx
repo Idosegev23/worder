@@ -178,7 +178,6 @@ export default function CategoryGrid() {
         // שמירת כל הקטגוריות (כולל ישנות) למשתמשים רגילים
         if (!isMeitar) {
           const oldGames = ['Nouns', 'Verbs', 'Prepositions', 'Adjectives']
-          const oldGamesCats = catsWithProgress.filter(c => oldGames.includes(c.name))
           const newGamesCats = catsWithProgress.filter(c => !oldGames.includes(c.name))
           
           setAllCats(catsWithProgress)
