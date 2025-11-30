@@ -5,6 +5,7 @@ import { useAuth } from '../../store/useAuth'
 import { useGame } from '../../store/useGame'
 import { triggerCelebration } from '../../lib/useEffectEngine'
 import { play } from '../../lib/sounds'
+import { speakWord } from '../../lib/openai-tts'
 import { Card } from '../../shared/ui/Card'
 import { Input } from '../../shared/ui/Input'
 import { Button } from '../../shared/ui/Button'
@@ -67,20 +68,16 @@ export default function MichelGameScreen() {
     }
   }
 
-  // השמעת המילה בעברית
+  // השמעת המילה בעברית - OpenAI TTS (קול אנושי)
   const handlePlayAudio = async () => {
     if (!currentWord || isPlayingAudio) return
     setIsPlayingAudio(true)
     setAudioPlayed(true)
     
     try {
-      // השמעה באמצעות Web Speech API (עברית)
-      const utterance = new SpeechSynthesisUtterance(currentWord.he)
-      utterance.lang = 'he-IL'
-      utterance.rate = 0.8 // קצב איטי יותר
-      utterance.onend = () => setIsPlayingAudio(false)
-      utterance.onerror = () => setIsPlayingAudio(false)
-      window.speechSynthesis.speak(utterance)
+      // השמעה באמצעות OpenAI TTS - קול אנושי
+      await speakWord(currentWord.he)
+      setIsPlayingAudio(false)
     } catch (err) {
       console.error('TTS error:', err)
       setIsPlayingAudio(false)

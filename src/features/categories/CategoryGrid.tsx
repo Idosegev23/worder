@@ -26,8 +26,7 @@ function isMeitarUser(username?: string): boolean {
 // פונקציה לזיהוי מישל
 function isMichelUser(username?: string): boolean {
   if (!username) return false
-  const lower = username.toLowerCase()
-  return lower.includes('michel') || lower.includes('מישל')
+  return username === 'מישל מישמיש'
 }
 
 export default function CategoryGrid() {
