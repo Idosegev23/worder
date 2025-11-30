@@ -112,12 +112,13 @@ export default function RecordingsTable() {
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8">
+      <div className="max-w-5xl mx-auto">
         {/* כותרת */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-black text-white mb-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/60">ממשק אדמין</p>
+            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               הקלטות מישל 🎤
             </h1>
             <p className="text-white/70">
@@ -125,66 +126,71 @@ export default function RecordingsTable() {
             </p>
           </div>
           <Link to="/admin/dashboard">
-            <Button variant="secondary" className="w-full sm:w-auto">
-              חזרה לדשבורד
-            </Button>
+            <button className="rounded-2xl border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all">
+              ← חזרה לדשבורד
+            </button>
           </Link>
         </div>
 
-        {/* טבלה */}
-        <Card>
+        {/* רשימת הקלטות */}
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
           {recordings.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-xl text-white/70">אין הקלטות עדיין</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {recordings.map((recording) => (
+              {recordings.map((recording, index) => (
                 <div
                   key={recording.id}
-                  className="bg-white/5 hover:bg-white/10 transition-colors p-4 rounded-xl border border-white/10"
+                  className="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-all"
                 >
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    {/* פרטי ההקלטה */}
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-primary">
-                          {recording.user_name}
+                    {/* מספר ופרטי ההקלטה */}
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <span className="bg-primary text-white text-sm font-bold px-3 py-1 rounded-full">
+                          #{index + 1}
                         </span>
-                        <span className="text-xs text-white/50">
-                          {formatDate(recording.created_at)}
+                        <span className="text-sm font-semibold text-gray-700">
+                          👤 {recording.user_name}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          📅 {formatDate(recording.created_at)}
                         </span>
                       </div>
-                      <p className="text-white font-medium" dir="rtl">
-                        {recording.sentence}
-                      </p>
+                      <div className="bg-gray-100 p-4 rounded-lg">
+                        <p className="text-lg font-bold text-gray-800 leading-relaxed" dir="rtl">
+                          📝 {recording.sentence}
+                        </p>
+                      </div>
                     </div>
 
                     {/* כפתורים */}
-                    <div className="flex gap-2">
-                      <Button
+                    <div className="flex gap-3">
+                      <button
                         onClick={() => playRecording(recording)}
-                        className={`${
+                        className={`px-5 py-3 rounded-xl font-semibold transition-all ${
                           playingId === recording.id
-                            ? 'bg-green-600 hover:bg-green-700'
-                            : 'bg-blue-500 hover:bg-blue-600'
+                            ? 'bg-green-500 text-white animate-pulse'
+                            : 'bg-blue-500 hover:bg-blue-600 text-white'
                         }`}
                       >
-                        {playingId === recording.id ? '⏸️ עצור' : '▶️ השמע'}
-                      </Button>
-                      <Button
+                        {playingId === recording.id ? '🔊 מנגן...' : '▶️ השמע'}
+                      </button>
+                      <button
                         onClick={() => deleteRecording(recording.id)}
-                        className="bg-red-500 hover:bg-red-600"
+                        className="px-4 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-all"
                       >
                         🗑️
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   )
