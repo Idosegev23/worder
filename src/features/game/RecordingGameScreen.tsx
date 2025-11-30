@@ -164,14 +164,16 @@ export default function RecordingGameScreen() {
     try {
       // העלאה ל-Supabase Storage
       const fileName = `${user.id}/${currentWord.id}_${Date.now()}.webm`
-      const { error: uploadError } = await supabase.storage
+      const { data: _uploadData, error: uploadError } = await supabase.storage
         .from('recordings')
         .upload(fileName, audioBlob, {
           contentType: 'audio/webm',
           upsert: false
         })
 
+      // וידוא שההעלאה הצליחה
       if (uploadError) throw uploadError
+      if (!_uploadData) throw new Error('Upload failed - no data returned')
 
       // קבלת URL ציבורי
       const { data: urlData } = supabase.storage
