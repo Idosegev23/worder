@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Word, getWordsByCategory } from '../../lib/supabase'
 import { useAuth } from '../../store/useAuth'
 import { supabase } from '../../lib/supabase'
-import { speakWord } from '../../lib/openai-tts'
 import { Card } from '../../shared/ui/Card'
 import { Button } from '../../shared/ui/Button'
 import { GlobalProgress } from '../../shared/ui/GlobalProgress'
@@ -33,9 +32,6 @@ export default function RecordingGameScreen() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [hasSubmitted, setHasSubmitted] = useState(false)
-  
-  // TTS
-  const [isSpeaking, setIsSpeaking] = useState(false)
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -67,21 +63,6 @@ export default function RecordingGameScreen() {
       setLoadError('שגיאה בטעינת המשפטים')
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  // השמעת המשפט בעברית - OpenAI TTS (קול אנושי)
-  const handleSpeak = async () => {
-    if (!currentWord || isSpeaking) return
-    setIsSpeaking(true)
-    
-    try {
-      // השמעה באמצעות OpenAI TTS - קול אנושי
-      await speakWord(currentWord.he)
-      setIsSpeaking(false)
-    } catch (err) {
-      console.error('TTS error:', err)
-      setIsSpeaking(false)
     }
   }
 
@@ -272,35 +253,20 @@ export default function RecordingGameScreen() {
         {/* כרטיס המשחק */}
         <Card className="relative min-h-[520px] sm:min-h-[600px] flex flex-col">
           {/* הוראות */}
-          <div className="text-center mb-6 bg-gradient-to-r from-primary/20 to-secondary/20 p-4 rounded-xl">
+          <div className="text-center mb-6 bg-gradient-to-r from-primary/30 to-secondary/30 p-4 rounded-xl border border-white/20">
             <p className="text-lg font-bold text-white mb-2">
-              📢 הוראה ברורה
+              📢 הוראה
             </p>
-            <p className="text-base text-white/90">
-              האזיני לקטע השמיעה והקליטי את מה ששמעת
+            <p className="text-base text-white">
+              קראי את המשפט והקליטי אותו
             </p>
           </div>
 
           {/* המשפט */}
-          <div className="text-center mb-6 bg-white/10 p-6 rounded-2xl">
-            <p className="text-2xl sm:text-3xl font-bold text-white leading-relaxed" dir="rtl">
+          <div className="text-center mb-6 bg-gradient-to-r from-blue-900/50 to-purple-900/50 p-6 rounded-2xl border border-white/20">
+            <p className="text-2xl sm:text-3xl font-bold text-yellow-300 leading-relaxed" dir="rtl">
               {currentWord.he}
             </p>
-          </div>
-
-          {/* כפתור השמעה */}
-          <div className="text-center mb-6">
-            <button
-              onClick={handleSpeak}
-              disabled={isSpeaking}
-              className={`px-8 py-4 rounded-2xl text-xl font-bold transition-all ${
-                isSpeaking
-                  ? 'bg-primary/50 animate-pulse'
-                  : 'bg-gradient-to-r from-primary to-secondary text-white hover:scale-105 shadow-lg'
-              }`}
-            >
-              {isSpeaking ? '🔊 מנגן...' : '🔉 האזיני למשפט'}
-            </button>
           </div>
 
           {/* כפתורי הקלטה */}

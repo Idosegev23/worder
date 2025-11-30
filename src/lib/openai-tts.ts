@@ -30,6 +30,9 @@ async function speakWithOpenAI(word: string): Promise<void> {
     throw new Error('OpenAI API Key not configured')
   }
 
+  // זיהוי אם הטקסט בעברית
+  const isHebrew = /[\u0590-\u05FF]/.test(word)
+
   const response = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
     headers: {
@@ -40,7 +43,10 @@ async function speakWithOpenAI(word: string): Promise<void> {
       model: 'gpt-4o-mini-tts',
       voice: 'coral', // קול חדש ואיכותי
       input: word,
-      instructions: "Speak clearly and slowly, suitable for children learning English.", // הוראות למודל החדש
+      speed: 1.1, // קצב מהיר יותר
+      instructions: isHebrew 
+        ? "Speak clearly in Hebrew at a normal pace." 
+        : "Speak clearly at a normal pace, suitable for children learning English.",
     }),
   })
 
