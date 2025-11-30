@@ -209,48 +209,51 @@ export default function MichelGameScreen() {
       
       <div className="max-w-4xl mx-auto">
         {/* כותרת */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
-          <div className="text-center sm:text-right">
-            <h1 className="text-2xl sm:text-3xl font-black text-white mb-1">
-              משחק מיוחד למישל 🎨
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+          <div className="text-center sm:text-right space-y-2">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/60">משחק מיוחד</p>
+            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              מה יש בתמונה? 🎨
             </h1>
             <p className="text-sm text-white/70">
               מילה {currentIndex + 1} מתוך {words.length}
             </p>
           </div>
-          <Button
+          <button
             onClick={() => nav('/categories')}
-            className="w-full sm:w-auto"
+            className="rounded-2xl border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all"
           >
             ← חזרה
-          </Button>
+          </button>
         </div>
 
         {/* כרטיס המשחק */}
-        <Card className="relative min-h-[520px] sm:min-h-[600px] flex flex-col">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 sm:p-8">
           {/* התמונה */}
-          <div className="flex-1 flex items-center justify-center mb-6">
-            <img
-              src={imagePath}
-              alt="תמונה"
-              className="max-w-full max-h-[300px] sm:max-h-[400px] rounded-2xl shadow-2xl object-contain"
-              onError={(e) => {
-                e.currentTarget.src = '/images/placeholder.png'
-              }}
-            />
+          <div className="flex items-center justify-center mb-8">
+            <div className="bg-white rounded-2xl p-4 shadow-2xl">
+              <img
+                src={imagePath}
+                alt="תמונה"
+                className="max-w-full max-h-[250px] sm:max-h-[300px] rounded-xl object-contain"
+                onError={(e) => {
+                  e.currentTarget.src = '/images/placeholder.png'
+                }}
+              />
+            </div>
           </div>
 
           {/* כפתור השמעה */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-8">
             <button
               onClick={handlePlayAudio}
               disabled={isPlayingAudio}
-              className={`px-8 py-4 rounded-2xl text-xl font-bold transition-all ${
+              className={`px-10 py-5 rounded-2xl text-xl font-bold transition-all shadow-lg ${
                 isPlayingAudio
                   ? 'bg-primary/50 animate-pulse'
                   : audioPlayed
-                  ? 'bg-accent text-white hover:scale-105'
-                  : 'bg-gradient-to-r from-primary to-secondary text-white hover:scale-105 shadow-lg'
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:scale-105'
+                  : 'bg-gradient-to-r from-primary to-secondary text-white hover:scale-105 hover:shadow-xl'
               }`}
             >
               {isPlayingAudio ? '🔊 מנגן...' : '🔉 מה יש בתמונה?'}
@@ -258,47 +261,67 @@ export default function MichelGameScreen() {
           </div>
 
           {/* שדה כתיבה */}
-          <div className="space-y-4">
+          <div className="space-y-4 mb-6">
             <label className="block text-center text-lg font-semibold text-white">
               כתבי את המילה בעברית:
             </label>
-            <Input
-              ref={inputRef}
-              type="text"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={!!feedback}
-              placeholder="הקלידי כאן..."
-              className="text-center text-2xl font-bold"
-              dir="rtl"
-              autoFocus
-            />
+            <div className="bg-white rounded-2xl p-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={!!feedback}
+                placeholder="הקלידי כאן..."
+                className="w-full text-center text-2xl font-bold p-4 rounded-xl bg-gray-50 text-gray-800 border-2 border-transparent focus:border-primary focus:outline-none transition-all"
+                dir="rtl"
+                autoFocus
+              />
+            </div>
           </div>
 
           {/* כפתור בדיקה */}
-          <div className="mt-6">
-            <Button
-              onClick={checkAnswer}
-              disabled={!answer.trim() || !!feedback}
-              className="w-full text-xl py-4"
-            >
-              {feedback === 'correct' ? '✅ נכון!' : feedback === 'wrong' ? '❌ לא נכון' : 'בדקי'}
-            </Button>
-          </div>
+          <button
+            onClick={checkAnswer}
+            disabled={!answer.trim() || !!feedback}
+            className={`w-full py-5 text-xl font-bold rounded-2xl transition-all shadow-lg ${
+              feedback === 'correct'
+                ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                : feedback === 'wrong'
+                ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
+                : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:shadow-xl hover:scale-[1.02] disabled:opacity-50'
+            }`}
+          >
+            {feedback === 'correct' ? '✅ נכון!' : feedback === 'wrong' ? '❌ לא נכון' : 'בדקי'}
+          </button>
 
           {/* פידבק */}
           {feedback === 'correct' && (
-            <div className="mt-4 text-center text-2xl font-bold text-green-400 animate-bounce">
-              🎉 כל הכבוד מישל! 🌟
+            <div className="mt-6 text-center py-4">
+              <div className="text-3xl font-bold text-green-400 animate-bounce">
+                🎉 כל הכבוד מישל! 🌟
+              </div>
             </div>
           )}
           {feedback === 'wrong' && attempts < 2 && (
-            <div className="mt-4 text-center text-xl font-semibold text-yellow-400">
-              נסי שוב! 💪
+            <div className="mt-6 text-center py-4">
+              <div className="text-2xl font-bold text-yellow-400">
+                נסי שוב! 💪
+              </div>
             </div>
           )}
-        </Card>
+
+          {/* Progress bar */}
+          <div className="mt-8">
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
+                style={{ width: `${((currentIndex + 1) / words.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
