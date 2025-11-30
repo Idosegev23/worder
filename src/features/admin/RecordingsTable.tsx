@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Card } from '../../shared/ui/Card'
-import { Button } from '../../shared/ui/Button'
 import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 
 interface Recording {
