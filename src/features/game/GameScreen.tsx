@@ -11,8 +11,43 @@ import { Input } from '../../shared/ui/Input'
 import { Button } from '../../shared/ui/Button'
 import { GlobalProgress } from '../../shared/ui/GlobalProgress'
 import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
+import MichelGameScreen from './MichelGameScreen'
 
 export default function GameScreen() {
+  const { categoryId } = useParams()
+  const [isMichelCategory, setIsMichelCategory] = useState<boolean | null>(null)
+
+  // בדיקה אם זו קטגוריה של מישל
+  useEffect(() => {
+    const checkCategory = async () => {
+      if (!categoryId) return
+      try {
+        const categories = await getCategories()
+        const currentCat = categories.find(c => c.id === Number(categoryId))
+        setIsMichelCategory(currentCat?.name === 'למישל מישמיש')
+      } catch (err) {
+        console.error('Error checking category:', err)
+        setIsMichelCategory(false)
+      }
+    }
+    checkCategory()
+  }, [categoryId])
+
+  // אם זו קטגוריה של מישל - הצג את המסך המיוחד
+  if (isMichelCategory === true) {
+    return <MichelGameScreen />
+  }
+
+  // אם עדיין בודק - הצג טעינה
+  if (isMichelCategory === null) {
+    return <LoadingOverlay fullscreen message="טוען..." />
+  }
+
+  // אחרת - המשך עם המשחק הרגיל
+  return <RegularGameScreen />
+}
+
+function RegularGameScreen() {
   const { categoryId } = useParams()
   const nav = useNavigate()
   const user = useAuth(s => s.user)

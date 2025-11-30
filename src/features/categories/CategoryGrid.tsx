@@ -23,6 +23,13 @@ function isMeitarUser(username?: string): boolean {
   return lower.includes('meitar') || lower.includes('מיתר')
 }
 
+// פונקציה לזיהוי מישל
+function isMichelUser(username?: string): boolean {
+  if (!username) return false
+  const lower = username.toLowerCase()
+  return lower.includes('michel') || lower.includes('מישל')
+}
+
 export default function CategoryGrid() {
   const [cats, setCats] = useState<CategoryWithProgress[]>([])
   const [allCats, setAllCats] = useState<CategoryWithProgress[]>([])
@@ -41,6 +48,7 @@ export default function CategoryGrid() {
   const [loadError, setLoadError] = useState<string | null>(null)
   
   const isMeitar = isMeitarUser(user?.username)
+  const isMichel = isMichelUser(user?.username)
 
   // טעינת אווטר
   useEffect(() => {
@@ -135,7 +143,9 @@ export default function CategoryGrid() {
         // סינון קטגוריות לפי משתמש
         const filteredCategories = isMeitar
           ? allCategories.filter(cat => cat.name.startsWith('Meitar'))
-          : allCategories.filter(cat => !cat.name.startsWith('Meitar'))
+          : isMichel
+          ? allCategories.filter(cat => cat.name === 'למישל מישמיש')
+          : allCategories.filter(cat => !cat.name.startsWith('Meitar') && cat.name !== 'למישל מישמיש')
         
         // קבלת כל ההתקדמות של המשתמש פעם אחת
         const userProgress = await getUserProgress(user.id)
