@@ -263,8 +263,8 @@ export default function RecordingGameScreen() {
           </div>
 
           {/* המשפט */}
-          <div className="text-center mb-6 bg-gradient-to-r from-blue-900/50 to-purple-900/50 p-6 rounded-2xl border border-white/20">
-            <p className="text-2xl sm:text-3xl font-bold text-yellow-300 leading-relaxed" dir="rtl">
+          <div className="text-center mb-6 p-6">
+            <p className="text-2xl sm:text-3xl font-bold text-black leading-relaxed" dir="rtl">
               {currentWord.he}
             </p>
           </div>
