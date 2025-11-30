@@ -73,7 +73,6 @@ export default function ErrorsTable() {
             stat.wrongAnswers.push(...p.wrong_answers)
             
             // שמירת המשתמש שטעה
-            const userName = userMap.get(p.user_id) || 'לא ידוע'
             const existing = stat.failedUsers.get(p.user_id)
             if (existing) {
               existing.attempts++
