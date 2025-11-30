@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Card } from '../../shared/ui/Card'
 import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 
 type ErrorStat = {
@@ -145,119 +145,149 @@ export default function ErrorsTable() {
     }
   }
 
+  const errorsWithMistakes = errors.filter(e => e.wrongAttempts > 0)
+
   return (
-    <div className="space-y-4 relative">
-      {loading && <LoadingOverlay message="טוען ניתוח טעויות..." />}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white">ניתוח טעויות ומעקב לימוד</h2>
-          <p className="text-white/60 text-sm mt-1">צפייה בטעויות נפוצות ומי טעה בכל מילה</p>
+    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8">
+      <div className="max-w-5xl mx-auto">
+        {loading && <LoadingOverlay fullscreen message="טוען ניתוח טעויות..." />}
+        
+        {/* כותרת */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/60">ממשק אדמין</p>
+            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              ניתוח טעויות 📊
+            </h1>
+            <p className="text-white/60">צפייה בטעויות נפוצות ומי טעה בכל מילה</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={loadErrors}
+              className="px-5 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+            >
+              🔄 רענן
+            </button>
+            <Link to="/admin/dashboard">
+              <button className="rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all">
+                ← חזרה
+              </button>
+            </Link>
+          </div>
         </div>
-        <button
-          onClick={loadErrors}
-          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          🔄 רענן נתונים
-        </button>
-      </div>
 
-      {errorMessage && !loading && (
-        <Card className="border border-red-400/40 bg-red-500/10 text-red-100">
-          {errorMessage}
-        </Card>
-      )}
-
-      <div className="grid gap-4">
-        {errors.length === 0 ? (
-          <Card>
-            <p className="text-center text-white/60">אין עדיין נתוני טעויות</p>
-          </Card>
-        ) : (
-          errors.filter(e => e.wrongAttempts > 0).map((error, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow bg-white/5 border border-white/10">
-              <div className="space-y-4">
-                {/* כותרת */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-xl font-bold text-primary">
-                      {error.word} → {error.hebrewWord}
-                    </h3>
-                    <p className="text-sm text-white/60">{error.category}</p>
-                  </div>
-                  <div className="text-left bg-red-500/20 px-4 py-2 rounded-xl">
-                    <div className="text-2xl font-bold text-red-400">
-                      {error.wrongAttempts}
-                    </div>
-                    <div className="text-xs text-red-300">טעויות</div>
-                  </div>
-                </div>
-
-                {/* סטטיסטיקות */}
-                <div className="grid grid-cols-3 gap-4 py-3 border-t border-b border-white/10">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-white">{error.totalAttempts}</div>
-                    <div className="text-xs text-white/60">סה"כ ניסיונות</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-green-400">{error.usersWhoListened}</div>
-                    <div className="text-xs text-white/60">שמעו הקראה 🔉</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-orange-400">{error.usersWhoDidntListen}</div>
-                    <div className="text-xs text-white/60">לא שמעו 🔇</div>
-                  </div>
-                </div>
-
-                {/* משתמשים שטעו */}
-                {error.usersWhoFailed.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold mb-2 text-white">👥 מי טעה:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {error.usersWhoFailed.map((user, i) => (
-                        <div
-                          key={i}
-                          className="bg-red-500/20 border border-red-400/40 px-3 py-2 rounded-lg"
-                          title={`תשובה אחרונה: "${user.lastAnswer}"`}
-                        >
-                          <span className="font-medium text-white">{user.name}</span>
-                          <span className="text-xs text-red-300 mr-2">({user.attempts} טעויות)</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* טעויות נפוצות */}
-                {error.commonErrors.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold mb-2 text-white">❌ תשובות שגויות נפוצות:</h4>
-                    <div className="space-y-1">
-                      {error.commonErrors.map((err, i) => (
-                        <div
-                          key={i}
-                          className="flex justify-between items-center bg-red-500/10 border border-red-400/30 px-3 py-2 rounded"
-                        >
-                          <span className="font-medium text-red-300">"{err.answer}"</span>
-                          <span className="text-sm text-white/60">{err.count} פעמים</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* המלצות */}
-                {error.usersWhoDidntListen > error.usersWhoListened && (
-                  <div className="bg-orange-500/20 border border-orange-400/40 rounded p-3">
-                    <p className="text-sm text-orange-200">
-                      💡 <strong>המלצה:</strong> רוב התלמידים לא שמעו את ההקראה. 
-                      כדאי לעודד שימוש בכפתור ההשמעה!
-                    </p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))
+        {errorMessage && !loading && (
+          <div className="mb-6 rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-red-100">
+            {errorMessage}
+          </div>
         )}
+
+        {/* סיכום */}
+        {errorsWithMistakes.length > 0 && (
+          <div className="mb-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-4">
+            <p className="text-white/80 text-center">
+              נמצאו <span className="text-red-400 font-bold text-xl">{errorsWithMistakes.length}</span> מילים עם טעויות
+            </p>
+          </div>
+        )}
+
+        {/* רשימת טעויות */}
+        <div className="space-y-4">
+          {errorsWithMistakes.length === 0 ? (
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-12 text-center">
+              <p className="text-2xl mb-2">🎉</p>
+              <p className="text-white/60 text-lg">אין עדיין נתוני טעויות</p>
+            </div>
+          ) : (
+            errorsWithMistakes.map((error, index) => (
+              <div 
+                key={index} 
+                className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-5 hover:bg-white/10 transition-colors"
+              >
+                <div className="space-y-4">
+                  {/* כותרת */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-xl font-bold text-primary">
+                        {error.word} → {error.hebrewWord}
+                      </h3>
+                      <p className="text-sm text-white/60">{error.category}</p>
+                    </div>
+                    <div className="text-center bg-red-500/20 px-4 py-2 rounded-xl border border-red-400/30">
+                      <div className="text-2xl font-bold text-red-400">
+                        {error.wrongAttempts}
+                      </div>
+                      <div className="text-xs text-red-300">טעויות</div>
+                    </div>
+                  </div>
+
+                  {/* סטטיסטיקות */}
+                  <div className="grid grid-cols-3 gap-4 py-3 border-t border-b border-white/10">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-white">{error.totalAttempts}</div>
+                      <div className="text-xs text-white/60">סה"כ ניסיונות</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-green-400">{error.usersWhoListened}</div>
+                      <div className="text-xs text-white/60">שמעו הקראה 🔉</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-orange-400">{error.usersWhoDidntListen}</div>
+                      <div className="text-xs text-white/60">לא שמעו 🔇</div>
+                    </div>
+                  </div>
+
+                  {/* משתמשים שטעו */}
+                  {error.usersWhoFailed.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 text-white">👥 מי טעה:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {error.usersWhoFailed.map((user, i) => (
+                          <div
+                            key={i}
+                            className="bg-red-500/20 border border-red-400/40 px-3 py-2 rounded-lg"
+                            title={`תשובה אחרונה: "${user.lastAnswer}"`}
+                          >
+                            <span className="font-medium text-white">{user.name}</span>
+                            <span className="text-xs text-red-300 mr-2">({user.attempts} טעויות)</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* טעויות נפוצות */}
+                  {error.commonErrors.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 text-white">❌ תשובות שגויות נפוצות:</h4>
+                      <div className="space-y-1">
+                        {error.commonErrors.map((err, i) => (
+                          <div
+                            key={i}
+                            className="flex justify-between items-center bg-red-500/10 border border-red-400/30 px-3 py-2 rounded-lg"
+                          >
+                            <span className="font-medium text-red-300">"{err.answer}"</span>
+                            <span className="text-sm text-white/60">{err.count} פעמים</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* המלצות */}
+                  {error.usersWhoDidntListen > error.usersWhoListened && (
+                    <div className="bg-orange-500/20 border border-orange-400/40 rounded-lg p-3">
+                      <p className="text-sm text-orange-200">
+                        💡 <strong>המלצה:</strong> רוב התלמידים לא שמעו את ההקראה. 
+                        כדאי לעודד שימוש בכפתור ההשמעה!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   )
