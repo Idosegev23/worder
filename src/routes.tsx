@@ -15,6 +15,8 @@ import BackupRestore from './features/admin/BackupRestore'
 import ProgressTable from './features/admin/ProgressTable'
 import ErrorsTable from './features/admin/ErrorsTable'
 import RecordingsTable from './features/admin/RecordingsTable'
+import LeaderboardTable from './features/admin/LeaderboardTable'
+import CategoriesTable from './features/admin/CategoriesTable'
 
 export default function RoutesView() {
   return useRoutes([
@@ -34,6 +36,8 @@ export default function RoutesView() {
     { path: '/admin/progress', element: <ProgressTable /> },
     { path: '/admin/errors', element: <ErrorsTable /> },
     { path: '/admin/recordings', element: <RecordingsTable /> },
+    { path: '/admin/leaderboard', element: <LeaderboardTable /> },
+    { path: '/admin/categories', element: <CategoriesTable /> },
   ])
 }
 
