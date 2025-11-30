@@ -241,11 +241,13 @@ export default function CategoryGrid() {
 
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between mb-8">
           <div className="text-center sm:text-right space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">learning hub</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-white/60">
+              {isMichel ? 'משחקים מיוחדים' : 'learning hub'}
+            </p>
             <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              בחר קטגוריה
+              {isMichel ? `שלום ${user?.firstName}! 🎨` : 'בחר קטגוריה'}
             </h1>
-            {user && (
+            {user && !isMichel && (
               <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 text-sm text-white/70">
                 <span>שלום, {user.firstName}! 👋</span>
                 {achievements.length > 0 && (
@@ -262,12 +264,14 @@ export default function CategoryGrid() {
             )}
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <button
-              onClick={() => setShowProfile(true)}
-              className="w-full sm:w-auto bg-gradient-to-r from-accent to-secondary text-white px-4 py-3 rounded-2xl font-semibold shadow-lg hover:translate-y-[-2px] transition-transform"
-            >
-              👤 האזור האישי
-            </button>
+            {!isMichel && (
+              <button
+                onClick={() => setShowProfile(true)}
+                className="w-full sm:w-auto bg-gradient-to-r from-accent to-secondary text-white px-4 py-3 rounded-2xl font-semibold shadow-lg hover:translate-y-[-2px] transition-transform"
+              >
+                👤 האזור האישי
+              </button>
+            )}
             <button
               onClick={() => {
                 logout()
@@ -280,11 +284,11 @@ export default function CategoryGrid() {
           </div>
         </div>
 
-        {/* סרגל התקדמות גלובלי */}
-        <GlobalProgress />
+        {/* סרגל התקדמות גלובלי - לא למישל */}
+        {!isMichel && <GlobalProgress />}
         
-        {/* כפתור משחקים ישנים - רק למשתמשים רגילים */}
-        {!isMeitar && allCats.length > 0 && (
+        {/* כפתור משחקים ישנים - רק למשתמשים רגילים (לא מיתר ולא מישל) */}
+        {!isMeitar && !isMichel && allCats.length > 0 && (
           <div className="mb-6">
             <button
               onClick={() => setShowOldGames(!showOldGames)}
