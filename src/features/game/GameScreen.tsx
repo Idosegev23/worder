@@ -26,9 +26,9 @@ export default function GameScreen() {
         const categories = await getCategories()
         const currentCat = categories.find(c => c.id === Number(categoryId))
         
-        if (currentCat?.name === 'למישל מישמיש') {
+        if (currentCat?.name === 'כתיבת מילים') {
           setCategoryType('michel')
-        } else if (currentCat?.name === 'הקלטות למישל') {
+        } else if (currentCat?.name === 'הקלטה של משפטים') {
           setCategoryType('recording')
         } else {
           setCategoryType('regular')

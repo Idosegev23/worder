@@ -143,8 +143,8 @@ export default function CategoryGrid() {
         const filteredCategories = isMeitar
           ? allCategories.filter(cat => cat.name.startsWith('Meitar'))
           : isMichel
-          ? allCategories.filter(cat => cat.name === 'למישל מישמיש' || cat.name === 'הקלטות למישל')
-          : allCategories.filter(cat => !cat.name.startsWith('Meitar') && cat.name !== 'למישל מישמיש' && cat.name !== 'הקלטות למישל')
+          ? allCategories.filter(cat => cat.name === 'כתיבת מילים' || cat.name === 'הקלטה של משפטים')
+          : allCategories.filter(cat => !cat.name.startsWith('Meitar') && cat.name !== 'כתיבת מילים' && cat.name !== 'הקלטה של משפטים')
         
         // קבלת כל ההתקדמות של המשתמש פעם אחת
         const userProgress = await getUserProgress(user.id)
