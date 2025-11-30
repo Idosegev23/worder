@@ -9,7 +9,7 @@ import { speakWord } from '../../lib/openai-tts'
 import { Card } from '../../shared/ui/Card'
 import { Input } from '../../shared/ui/Input'
 import { Button } from '../../shared/ui/Button'
-import { GlobalProgress } from '../../shared/ui/GlobalProgress'
+// אין GlobalProgress למישל - לא רלוונטי
 import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 
 /**
@@ -204,8 +204,8 @@ export default function MichelGameScreen() {
   const imagePath = `/images/${currentWord.en}`
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8 relative">
-      <GlobalProgress />
+    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8 relative">
+      {/* אין GlobalProgress למישל - לא רלוונטי */}
       
       <div className="max-w-4xl mx-auto">
         {/* כותרת */}
