@@ -49,7 +49,7 @@ export default function MichelGameScreen() {
     setLoadError(null)
     try {
       const allWords = await getWordsByCategory(parseInt(categoryId))
-      const progress = await getUserProgress(user.id, parseInt(categoryId))
+      const progress = await getUserProgress(user.id)
       const correctIds = new Set(progress.filter(p => p.isCorrect).map(p => p.wordId))
       const remaining = allWords.filter(w => !correctIds.has(w.id))
       
@@ -102,7 +102,7 @@ export default function MichelGameScreen() {
       setFeedback('correct')
       play('correct')
       triggerCelebration()
-      incrementScore(10)
+      incrementScore()
       incrementStreak()
 
       // שמירת התקדמות

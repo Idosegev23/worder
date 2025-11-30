@@ -71,7 +71,7 @@ function profileToDb(profile: Partial<Profile>): Partial<ProfileDB> {
 // Internal DB types (snake_case for Supabase)
 interface CategoryDB {
   id: number
-  name: 'Nouns' | 'Verbs' | 'Prepositions' | 'Adjectives' | 'Pronouns' | 'Vocabulary' | 'Am/Is/Are' | 'Have/Has'
+  name: string // שם הקטגוריה - יכול להיות כל טקסט
   display_name: string
   display_order: number
   created_at: string
@@ -94,7 +94,7 @@ interface WordDB {
 // Exported types (camelCase for app compatibility)
 export interface Category {
   id: number
-  name: 'Nouns' | 'Verbs' | 'Prepositions' | 'Adjectives' | 'Pronouns' | 'Vocabulary' | 'Am/Is/Are' | 'Have/Has'
+  name: string // שם הקטגוריה - יכול להיות כל טקסט
   displayName: string
   displayOrder: number
   createdAt: string
