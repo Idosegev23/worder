@@ -22,6 +22,7 @@ export default function AdminDashboard() {
     { to: '/admin/users', title: 'ניהול משתמשים', emoji: '👥' },
     { to: '/admin/progress', title: 'התקדמות תלמידים', emoji: '📊' },
     { to: '/admin/errors', title: 'ניתוח טעויות', emoji: '🔍', highlight: true },
+    { to: '/admin/recordings', title: 'הקלטות מישל', emoji: '🎤' },
     { to: '/admin/rewards', title: 'ניהול מתנות', emoji: '🎁' },
     { to: '/admin/backup', title: 'גיבוי ושחזור', emoji: '💾' }
   ]

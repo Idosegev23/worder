@@ -12,34 +12,47 @@ import { Button } from '../../shared/ui/Button'
 import { GlobalProgress } from '../../shared/ui/GlobalProgress'
 import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 import MichelGameScreen from './MichelGameScreen'
+import RecordingGameScreen from './RecordingGameScreen'
 
 export default function GameScreen() {
   const { categoryId } = useParams()
-  const [isMichelCategory, setIsMichelCategory] = useState<boolean | null>(null)
+  const [categoryType, setCategoryType] = useState<'michel' | 'recording' | 'regular' | null>(null)
 
-  // בדיקה אם זו קטגוריה של מישל
+  // בדיקה איזה סוג קטגוריה זו
   useEffect(() => {
     const checkCategory = async () => {
       if (!categoryId) return
       try {
         const categories = await getCategories()
         const currentCat = categories.find(c => c.id === Number(categoryId))
-        setIsMichelCategory(currentCat?.name === 'למישל מישמיש')
+        
+        if (currentCat?.name === 'למישל מישמיש') {
+          setCategoryType('michel')
+        } else if (currentCat?.name === 'הקלטות למישל') {
+          setCategoryType('recording')
+        } else {
+          setCategoryType('regular')
+        }
       } catch (err) {
         console.error('Error checking category:', err)
-        setIsMichelCategory(false)
+        setCategoryType('regular')
       }
     }
     checkCategory()
   }, [categoryId])
 
   // אם זו קטגוריה של מישל - הצג את המסך המיוחד
-  if (isMichelCategory === true) {
+  if (categoryType === 'michel') {
     return <MichelGameScreen />
   }
 
+  // אם זו קטגוריית הקלטות - הצג את מסך ההקלטות
+  if (categoryType === 'recording') {
+    return <RecordingGameScreen />
+  }
+
   // אם עדיין בודק - הצג טעינה
-  if (isMichelCategory === null) {
+  if (categoryType === null) {
     return <LoadingOverlay fullscreen message="טוען..." />
   }
 
