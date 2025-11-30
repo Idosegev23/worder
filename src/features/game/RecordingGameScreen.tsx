@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Word, getWordsByCategory } from '../../lib/supabase'
 import { useAuth } from '../../store/useAuth'
 import { supabase } from '../../lib/supabase'
+import { speakWord } from '../../lib/openai-tts'
 import { Card } from '../../shared/ui/Card'
 import { Button } from '../../shared/ui/Button'
 import { GlobalProgress } from '../../shared/ui/GlobalProgress'
@@ -69,17 +70,19 @@ export default function RecordingGameScreen() {
     }
   }
 
-  // השמעת המשפט בעברית (TTS)
-  const handleSpeak = () => {
+  // השמעת המשפט בעברית - OpenAI TTS (קול אנושי)
+  const handleSpeak = async () => {
     if (!currentWord || isSpeaking) return
     setIsSpeaking(true)
     
-    const utterance = new SpeechSynthesisUtterance(currentWord.he)
-    utterance.lang = 'he-IL'
-    utterance.rate = 0.7 // קצב איטי יותר לבהירות
-    utterance.onend = () => setIsSpeaking(false)
-    utterance.onerror = () => setIsSpeaking(false)
-    window.speechSynthesis.speak(utterance)
+    try {
+      // השמעה באמצעות OpenAI TTS - קול אנושי
+      await speakWord(currentWord.he)
+      setIsSpeaking(false)
+    } catch (err) {
+      console.error('TTS error:', err)
+      setIsSpeaking(false)
+    }
   }
 
   // התחלת הקלטה
