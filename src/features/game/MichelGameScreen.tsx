@@ -7,7 +7,6 @@ import { triggerCelebration } from '../../lib/useEffectEngine'
 import { play } from '../../lib/sounds'
 import { speakWord } from '../../lib/openai-tts'
 import { Card } from '../../shared/ui/Card'
-import { Input } from '../../shared/ui/Input'
 import { Button } from '../../shared/ui/Button'
 // אין GlobalProgress למישל - לא רלוונטי
 import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
