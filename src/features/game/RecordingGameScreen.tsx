@@ -228,110 +228,121 @@ export default function RecordingGameScreen() {
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8 relative">
+    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8 relative">
       <GlobalProgress />
       
       <div className="max-w-4xl mx-auto">
         {/* כותרת */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
-          <div className="text-center sm:text-right">
-            <h1 className="text-2xl sm:text-3xl font-black text-white mb-1">
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+          <div className="text-center sm:text-right space-y-2">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/60">משחק מיוחד</p>
+            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               הקלטת משפטים 🎤
             </h1>
             <p className="text-sm text-white/70">
               משפט {currentIndex + 1} מתוך {words.length}
             </p>
           </div>
-          <Button
+          <button
             onClick={() => nav('/categories')}
-            className="w-full sm:w-auto"
+            className="rounded-2xl border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all"
           >
             ← חזרה
-          </Button>
+          </button>
         </div>
 
         {/* כרטיס המשחק */}
-        <Card className="relative min-h-[520px] sm:min-h-[600px] flex flex-col">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 sm:p-8">
           {/* הוראות */}
-          <div className="text-center mb-6 bg-gradient-to-r from-primary/30 to-secondary/30 p-4 rounded-xl border border-white/20">
-            <p className="text-lg font-bold text-white mb-2">
-              📢 הוראה
-            </p>
-            <p className="text-base text-white">
-              קראי את המשפט והקליטי אותו
-            </p>
+          <div className="text-center mb-8">
+            <div className="inline-block bg-gradient-to-r from-primary/20 to-secondary/20 px-6 py-3 rounded-full border border-white/10 mb-4">
+              <span className="text-white font-semibold">📢 קראי את המשפט והקליטי אותו</span>
+            </div>
           </div>
 
           {/* המשפט */}
-          <div className="text-center mb-6 p-6">
-            <p className="text-2xl sm:text-3xl font-bold text-black leading-relaxed" dir="rtl">
+          <div className="text-center mb-10 py-8 px-4 bg-white rounded-2xl shadow-lg">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 leading-relaxed" dir="rtl">
               {currentWord.he}
             </p>
           </div>
 
           {/* כפתורי הקלטה */}
-          <div className="space-y-4 flex-1">
+          <div className="space-y-6">
             {!audioBlob && !hasSubmitted && (
               <div className="text-center">
                 {!isRecording ? (
-                  <Button
+                  <button
                     onClick={startRecording}
-                    className="w-full sm:w-auto text-xl py-4 px-8 bg-red-500 hover:bg-red-600"
+                    className="px-10 py-5 text-xl font-bold rounded-2xl bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all"
                   >
                     🎤 התחילי הקלטה
-                  </Button>
+                  </button>
                 ) : (
-                  <Button
+                  <button
                     onClick={stopRecording}
-                    className="w-full sm:w-auto text-xl py-4 px-8 bg-red-600 hover:bg-red-700 animate-pulse"
+                    className="px-10 py-5 text-xl font-bold rounded-2xl bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg animate-pulse"
                   >
                     ⏹️ עצרי הקלטה
-                  </Button>
+                  </button>
                 )}
               </div>
             )}
 
             {/* נגן ההקלטה */}
             {audioBlob && !hasSubmitted && (
-              <div className="space-y-4">
-                <div className="bg-white/10 p-4 rounded-xl text-center">
-                  <p className="text-white font-semibold mb-4">
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-6 rounded-2xl border border-green-500/30 text-center">
+                  <p className="text-white text-xl font-bold mb-6">
                     ההקלטה שלך מוכנה! 🎉
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
                       onClick={playRecording}
                       disabled={isPlaying}
-                      className="bg-blue-500 hover:bg-blue-600"
+                      className="px-6 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-all disabled:opacity-50"
                     >
                       {isPlaying ? '▶️ מנגן...' : '▶️ שמעי את ההקלטה'}
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                       onClick={deleteRecording}
-                      className="bg-gray-500 hover:bg-gray-600"
+                      className="px-6 py-3 rounded-xl bg-gray-600 hover:bg-gray-700 text-white font-semibold transition-all"
                     >
                       🗑️ מחקי והקליטי שוב
-                    </Button>
+                    </button>
                   </div>
                 </div>
 
-                <Button
+                <button
                   onClick={submitRecording}
                   disabled={isUploading}
-                  className="w-full text-xl py-4 bg-green-500 hover:bg-green-600"
+                  className="w-full py-5 text-xl font-bold rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50"
                 >
                   {isUploading ? '⏳ שולח...' : '✅ שלחי את ההקלטה'}
-                </Button>
+                </button>
               </div>
             )}
 
             {hasSubmitted && (
-              <div className="text-center text-2xl font-bold text-green-400 animate-bounce">
-                🎉 נשלח בהצלחה! עוברים למשפט הבא... 🌟
+              <div className="text-center py-8">
+                <div className="text-3xl font-bold text-green-400 animate-bounce">
+                  🎉 נשלח בהצלחה! 🌟
+                </div>
+                <p className="text-white/70 mt-2">עוברים למשפט הבא...</p>
               </div>
             )}
           </div>
-        </Card>
+
+          {/* Progress bar */}
+          <div className="mt-8">
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
+                style={{ width: `${((currentIndex + 1) / words.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
