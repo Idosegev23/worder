@@ -66,8 +66,11 @@ export default function RecordingGameScreen() {
     }
   }
 
-  // בדיקת פורמט נתמך להקלטה
+  const [isConverting, setIsConverting] = useState(false)
+
+  // בדיקת פורמט נתמך להקלטה - מעדיפים WAV כי קל להמיר
   const getSupportedMimeType = (): string => {
+    // נעדיף פורמטים שקל להמיר מהם
     const types = [
       'audio/webm;codecs=opus',
       'audio/webm',
@@ -81,6 +84,83 @@ export default function RecordingGameScreen() {
       }
     }
     return 'audio/webm' // default
+  }
+
+  // המרת AudioBuffer ל-WAV
+  const audioBufferToWav = (buffer: AudioBuffer): Blob => {
+    const numChannels = buffer.numberOfChannels
+    const sampleRate = buffer.sampleRate
+    const format = 1 // PCM
+    const bitDepth = 16
+    
+    const bytesPerSample = bitDepth / 8
+    const blockAlign = numChannels * bytesPerSample
+    
+    const dataLength = buffer.length * blockAlign
+    const bufferLength = 44 + dataLength
+    
+    const arrayBuffer = new ArrayBuffer(bufferLength)
+    const view = new DataView(arrayBuffer)
+    
+    // WAV header
+    const writeString = (offset: number, str: string) => {
+      for (let i = 0; i < str.length; i++) {
+        view.setUint8(offset + i, str.charCodeAt(i))
+      }
+    }
+    
+    writeString(0, 'RIFF')
+    view.setUint32(4, bufferLength - 8, true)
+    writeString(8, 'WAVE')
+    writeString(12, 'fmt ')
+    view.setUint32(16, 16, true)
+    view.setUint16(20, format, true)
+    view.setUint16(22, numChannels, true)
+    view.setUint32(24, sampleRate, true)
+    view.setUint32(28, sampleRate * blockAlign, true)
+    view.setUint16(32, blockAlign, true)
+    view.setUint16(34, bitDepth, true)
+    writeString(36, 'data')
+    view.setUint32(40, dataLength, true)
+    
+    // Write audio data
+    const channelData = []
+    for (let i = 0; i < numChannels; i++) {
+      channelData.push(buffer.getChannelData(i))
+    }
+    
+    let offset = 44
+    for (let i = 0; i < buffer.length; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        const sample = Math.max(-1, Math.min(1, channelData[ch][i]))
+        const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF
+        view.setInt16(offset, intSample, true)
+        offset += 2
+      }
+    }
+    
+    return new Blob([arrayBuffer], { type: 'audio/wav' })
+  }
+
+  // המרת Blob לפורמט WAV (תואם לכל המכשירים)
+  const convertToWav = async (blob: Blob): Promise<Blob> => {
+    console.log('Converting to WAV...')
+    
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const arrayBuffer = await blob.arrayBuffer()
+    
+    try {
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+      const wavBlob = audioBufferToWav(audioBuffer)
+      console.log(`Converted: ${blob.size} bytes -> ${wavBlob.size} bytes WAV`)
+      return wavBlob
+    } catch (error) {
+      console.error('Conversion error:', error)
+      // אם ההמרה נכשלה, נחזיר את המקור
+      return blob
+    } finally {
+      audioContext.close()
+    }
   }
 
   // התחלת הקלטה
@@ -102,11 +182,25 @@ export default function RecordingGameScreen() {
         }
       }
 
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: mimeType })
-        setAudioBlob(blob)
-        const url = URL.createObjectURL(blob)
-        setAudioUrl(url)
+      mediaRecorder.onstop = async () => {
+        const originalBlob = new Blob(audioChunksRef.current, { type: mimeType })
+        console.log(`Original recording: ${originalBlob.size} bytes, type: ${mimeType}`)
+        
+        // המרה ל-WAV ברקע
+        setIsConverting(true)
+        try {
+          const wavBlob = await convertToWav(originalBlob)
+          setAudioBlob(wavBlob)
+          const url = URL.createObjectURL(wavBlob)
+          setAudioUrl(url)
+        } catch (err) {
+          console.error('Conversion failed, using original:', err)
+          setAudioBlob(originalBlob)
+          const url = URL.createObjectURL(originalBlob)
+          setAudioUrl(url)
+        } finally {
+          setIsConverting(false)
+        }
         
         // עצירת הזרם
         stream.getTracks().forEach(track => track.stop())
@@ -298,7 +392,7 @@ export default function RecordingGameScreen() {
 
           {/* כפתורי הקלטה */}
           <div className="space-y-6">
-            {!audioBlob && !hasSubmitted && (
+            {!audioBlob && !hasSubmitted && !isConverting && (
               <div className="text-center">
                 {!isRecording ? (
                   <button
@@ -315,6 +409,15 @@ export default function RecordingGameScreen() {
                     ⏹️ עצרי הקלטה
                   </button>
                 )}
+              </div>
+            )}
+
+            {/* מצב המרה */}
+            {isConverting && (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mb-4"></div>
+                <p className="text-white text-lg font-semibold">מעבד את ההקלטה...</p>
+                <p className="text-white/60 text-sm mt-2">זה יקח רק שנייה 🎵</p>
               </div>
             )}
 
