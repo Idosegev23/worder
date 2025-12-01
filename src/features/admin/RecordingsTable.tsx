@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
@@ -58,21 +58,104 @@ export default function RecordingsTable() {
     }
   }
 
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [debugLogs, setDebugLogs] = useState<string[]>([])
+  const [showDebug, setShowDebug] = useState(false)
+
+  const addLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString('he-IL')
+    const logEntry = `[${timestamp}] ${message}`
+    console.log(logEntry)
+    setDebugLogs(prev => [...prev.slice(-50), logEntry]) // שמור 50 לוגים אחרונים
+  }
+
   const playRecording = (recording: Recording) => {
+    addLog(`🎵 ניסיון השמעה: ${recording.audio_url}`)
+    addLog(`📋 פרטי הקלטה: ID=${recording.id}, משתמש=${recording.user_name}`)
+    
+    // אם כבר מנגן את אותה הקלטה - עצור
     if (playingId === recording.id) {
-      // עצירת נגינה
+      addLog('⏹️ עצירת השמעה (אותה הקלטה)')
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
       setPlayingId(null)
       return
     }
 
-    setPlayingId(recording.id)
-    const audio = new Audio(recording.audio_url)
-    audio.onended = () => setPlayingId(null)
-    audio.onerror = () => {
-      setPlayingId(null)
-      alert('שגיאה בהשמעת ההקלטה')
+    // עצור הקלטה קודמת אם יש
+    if (audioRef.current) {
+      addLog('⏹️ עצירת הקלטה קודמת')
+      audioRef.current.pause()
+      audioRef.current = null
     }
-    audio.play()
+
+    setPlayingId(recording.id)
+    
+    const audio = new Audio()
+    audioRef.current = audio
+    
+    // הגדרות לתאימות מובייל
+    audio.preload = 'auto'
+    
+    addLog(`🔧 יצירת Audio element`)
+    addLog(`🔗 URL: ${recording.audio_url}`)
+    
+    audio.onloadstart = () => addLog('📥 התחלת טעינה (loadstart)')
+    audio.onloadedmetadata = () => addLog(`📊 מטאדאטה נטענה: duration=${audio.duration}s`)
+    audio.onloadeddata = () => addLog('✅ נתונים נטענו (loadeddata)')
+    
+    audio.oncanplay = () => {
+      addLog('▶️ ניתן להשמיע (canplay)')
+    }
+    
+    audio.oncanplaythrough = () => {
+      addLog('▶️ ניתן להשמיע עד הסוף (canplaythrough)')
+      audio.play().then(() => {
+        addLog('🎶 השמעה התחילה בהצלחה!')
+      }).catch(err => {
+        addLog(`❌ שגיאת play(): ${err.name} - ${err.message}`)
+        setPlayingId(null)
+        alert(`שגיאה בהשמעה: ${err.message}`)
+      })
+    }
+    
+    audio.onplaying = () => addLog('🎶 מנגן (playing)')
+    
+    audio.onended = () => {
+      addLog('✅ השמעה הסתיימה')
+      setPlayingId(null)
+      audioRef.current = null
+    }
+    
+    audio.onerror = () => {
+      const errorCode = audio.error?.code
+      const errorMessage = audio.error?.message || 'Unknown error'
+      const errorTypes: Record<number, string> = {
+        1: 'MEDIA_ERR_ABORTED - טעינה בוטלה',
+        2: 'MEDIA_ERR_NETWORK - שגיאת רשת',
+        3: 'MEDIA_ERR_DECODE - שגיאת פענוח (פורמט לא נתמך)',
+        4: 'MEDIA_ERR_SRC_NOT_SUPPORTED - מקור לא נתמך'
+      }
+      const errorType = errorCode ? errorTypes[errorCode] : 'Unknown'
+      
+      addLog(`❌ שגיאת Audio: code=${errorCode}, type=${errorType}`)
+      addLog(`❌ הודעה: ${errorMessage}`)
+      addLog(`❌ URL שנכשל: ${recording.audio_url}`)
+      
+      setPlayingId(null)
+      audioRef.current = null
+      alert(`שגיאה: ${errorType}\n\nURL: ${recording.audio_url}`)
+    }
+    
+    audio.onstalled = () => addLog('⚠️ טעינה נתקעה (stalled)')
+    audio.onwaiting = () => addLog('⏳ ממתין לנתונים (waiting)')
+    audio.onsuspend = () => addLog('⏸️ טעינה הושהתה (suspend)')
+    
+    addLog('🔄 מתחיל טעינה...')
+    audio.src = recording.audio_url
+    audio.load()
   }
 
   const deleteRecording = async (id: number) => {
@@ -123,12 +206,57 @@ export default function RecordingsTable() {
               סה"כ {recordings.length} הקלטות
             </p>
           </div>
-          <Link to="/admin/dashboard">
-            <button className="rounded-2xl border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all">
-              ← חזרה לדשבורד
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setShowDebug(!showDebug)}
+              className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition-all ${
+                showDebug 
+                  ? 'border-yellow-400/60 text-yellow-400 bg-yellow-400/10' 
+                  : 'border-white/20 text-white/60 hover:text-white'
+              }`}
+            >
+              🐛 Debug
             </button>
-          </Link>
+            <Link to="/admin/dashboard">
+              <button className="rounded-2xl border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all">
+                ← חזרה
+              </button>
+            </Link>
+          </div>
         </div>
+
+        {/* Debug Panel */}
+        {showDebug && (
+          <div className="mb-6 bg-black/50 rounded-2xl border border-yellow-400/30 p-4 font-mono text-xs">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-yellow-400 font-bold">🐛 Debug Logs</span>
+              <button 
+                onClick={() => setDebugLogs([])}
+                className="text-red-400 hover:text-red-300"
+              >
+                🗑️ נקה
+              </button>
+            </div>
+            <div className="max-h-48 overflow-y-auto space-y-1">
+              {debugLogs.length === 0 ? (
+                <p className="text-white/50">לחץ על "השמע" כדי לראות לוגים...</p>
+              ) : (
+                debugLogs.map((log, i) => (
+                  <div 
+                    key={i} 
+                    className={`text-white/80 ${
+                      log.includes('❌') ? 'text-red-400' : 
+                      log.includes('✅') ? 'text-green-400' : 
+                      log.includes('⚠️') ? 'text-yellow-400' : ''
+                    }`}
+                  >
+                    {log}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
 
         {/* רשימת הקלטות */}
         <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">

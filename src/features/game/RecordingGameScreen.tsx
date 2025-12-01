@@ -66,11 +66,33 @@ export default function RecordingGameScreen() {
     }
   }
 
+  // בדיקת פורמט נתמך להקלטה
+  const getSupportedMimeType = (): string => {
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4',
+      'audio/ogg;codecs=opus',
+      'audio/wav'
+    ]
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type
+      }
+    }
+    return 'audio/webm' // default
+  }
+
   // התחלת הקלטה
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
+      
+      const mimeType = getSupportedMimeType()
+      console.log('Using MIME type:', mimeType)
+      
+      const options: MediaRecorderOptions = { mimeType }
+      const mediaRecorder = new MediaRecorder(stream, options)
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
 
@@ -81,7 +103,7 @@ export default function RecordingGameScreen() {
       }
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const blob = new Blob(audioChunksRef.current, { type: mimeType })
         setAudioBlob(blob)
         const url = URL.createObjectURL(blob)
         setAudioUrl(url)
@@ -143,12 +165,19 @@ export default function RecordingGameScreen() {
     
     setIsUploading(true)
     try {
+      // קבלת סיומת הקובץ לפי סוג ה-MIME
+      const mimeType = audioBlob.type
+      let extension = 'webm'
+      if (mimeType.includes('mp4')) extension = 'mp4'
+      else if (mimeType.includes('ogg')) extension = 'ogg'
+      else if (mimeType.includes('wav')) extension = 'wav'
+      
       // העלאה ל-Supabase Storage
-      const fileName = `${user.id}/${currentWord.id}_${Date.now()}.webm`
+      const fileName = `${user.id}/${currentWord.id}_${Date.now()}.${extension}`
       const { data: _uploadData, error: uploadError } = await supabase.storage
         .from('recordings')
         .upload(fileName, audioBlob, {
-          contentType: 'audio/webm',
+          contentType: mimeType,
           upsert: false
         })
 
