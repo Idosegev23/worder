@@ -318,9 +318,8 @@ export default function RecordingGameScreen() {
     if (currentIndex < words.length - 1) {
       setCurrentIndex(currentIndex + 1)
     } else {
-      // סיום המשחק
-      alert('כל הכבוד מישל! סיימת את כל ההקלטות! 🎉🌟')
-      nav('/categories')
+      // סיום המשחק - מעבר למסך פרסים!
+      nav('/rewards')
     }
   }
 

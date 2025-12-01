@@ -160,9 +160,12 @@ export default function MichelGameScreen() {
     if (currentIndex < words.length - 1) {
       setCurrentIndex(currentIndex + 1)
     } else {
-      // סיום המשחק
-      alert('כל הכבוד מישל! סיימת את כל המילים! 🎉🌟')
-      nav('/categories')
+      // סיום המשחק - מעבר למסך פרסים!
+      triggerCelebration()
+      play('correct')
+      setTimeout(() => {
+        nav('/rewards')
+      }, 1500)
     }
   }
 
