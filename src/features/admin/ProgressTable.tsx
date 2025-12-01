@@ -8,6 +8,16 @@ import { Table, TableHeader, TableBody, TableRow, TableCell } from '../../shared
 import { Modal } from '../../shared/ui/Modal'
 import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
 
+type CategoryProgress = {
+  categoryId: number
+  categoryName: string
+  displayName: string
+  totalWords: number
+  completedWords: number
+  correctWords: number
+  progressPercent: number
+}
+
 type StudentStats = {
   user: Profile
   totalAttempts: number
@@ -15,6 +25,7 @@ type StudentStats = {
   wrongAnswers: number
   successRate: number
   lastActivity: string
+  categoryProgress: CategoryProgress[]
 }
 
 type DetailedProgress = Progress & {
@@ -45,13 +56,35 @@ export default function ProgressTable() {
     try {
       setIsLoading(true)
       setError(null)
+      
       // טעינת כל המשתמשים
       const { data: users } = await supabase
         .from('worder_profiles')
         .select('*')
         .eq('role', 'user')
       
-      if (!users) return
+      // טעינת כל הקטגוריות
+      const { data: categories } = await supabase
+        .from('worder_categories')
+        .select('*')
+        .order('display_order')
+      
+      // טעינת כל המילים
+      const { data: words } = await supabase
+        .from('worder_words')
+        .select('id, category_id')
+      
+      if (!users || !categories || !words) return
+      
+      // ספירת מילים לכל קטגוריה
+      const wordsPerCategory = new Map<number, number>()
+      words.forEach(w => {
+        wordsPerCategory.set(w.category_id, (wordsPerCategory.get(w.category_id) || 0) + 1)
+      })
+      
+      // יצירת מפה של מילה -> קטגוריה
+      const wordToCategory = new Map<number, number>()
+      words.forEach(w => wordToCategory.set(w.id, w.category_id))
       
       // חישוב סטטיסטיקות לכל משתמש
       const statsPromises = users.map(async (user) => {
@@ -69,6 +102,42 @@ export default function ProgressTable() {
           ? records.reduce((max, p) => p.answered_at > max ? p.answered_at : max, records[0].answered_at)
           : user.created_at
 
+        // חישוב התקדמות לכל קטגוריה
+        const categoryStats = new Map<number, { completed: Set<number>; correct: Set<number> }>()
+        
+        records.forEach(p => {
+          const catId = wordToCategory.get(p.word_id)
+          if (!catId) return
+          
+          if (!categoryStats.has(catId)) {
+            categoryStats.set(catId, { completed: new Set(), correct: new Set() })
+          }
+          
+          const stat = categoryStats.get(catId)!
+          stat.completed.add(p.word_id)
+          if (p.is_correct) {
+            stat.correct.add(p.word_id)
+          }
+        })
+
+        const categoryProgress: CategoryProgress[] = categories.map(cat => {
+          const totalWords = wordsPerCategory.get(cat.id) || 0
+          const stat = categoryStats.get(cat.id)
+          const completedWords = stat ? stat.completed.size : 0
+          const correctWords = stat ? stat.correct.size : 0
+          const progressPercent = totalWords > 0 ? Math.round((completedWords / totalWords) * 100) : 0
+          
+          return {
+            categoryId: cat.id,
+            categoryName: cat.name,
+            displayName: cat.display_name,
+            totalWords,
+            completedWords,
+            correctWords,
+            progressPercent
+          }
+        }).filter(cp => cp.totalWords > 0) // רק קטגוריות עם מילים
+
         return {
           user: {
             id: user.id,
@@ -85,7 +154,8 @@ export default function ProgressTable() {
           correctAnswers,
           wrongAnswers,
           successRate,
-          lastActivity
+          lastActivity,
+          categoryProgress
         }
       })
 
@@ -154,154 +224,145 @@ export default function ProgressTable() {
   }
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-muted mb-1">מעקב</p>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-primary leading-tight">התקדמות תלמידים</h1>
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/60">ממשק אדמין</p>
+            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              התקדמות תלמידים 📊
+            </h1>
+            <p className="text-white/60">מעקב מפורט על התקדמות בכל קטגוריה</p>
           </div>
-          <Link to="/admin/dashboard" className="w-full md:w-auto">
-            <Button variant="secondary" className="w-full md:w-auto justify-center">
-              חזרה לדשבורד
-            </Button>
+          <Link to="/admin/dashboard">
+            <button className="rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all">
+              ← חזרה לדשבורד
+            </button>
           </Link>
         </div>
 
-        <Card className="mb-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted">
-            <span>סה״כ {stats.length} תלמידים</span>
-            <span>{stats.reduce((sum, s) => sum + s.totalAttempts, 0)} ניסיונות</span>
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-white/70">
+            <span>סה״כ <span className="text-primary font-bold">{stats.length}</span> תלמידים</span>
+            <span><span className="text-green-400 font-bold">{stats.reduce((sum, s) => sum + s.totalAttempts, 0)}</span> ניסיונות</span>
           </div>
-        </Card>
+        </div>
 
-        <Card className="relative overflow-hidden">
-          {isLoading && <LoadingOverlay message="טוען סטטיסטיקות..." />}
+        <div className="relative">
+          {isLoading && <LoadingOverlay fullscreen message="טוען סטטיסטיקות..." />}
           {error && !isLoading && (
             <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
               {error}
             </div>
           )}
-          <div className="hidden lg:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableCell header>תלמיד</TableCell>
-                  <TableCell header>שם משתמש</TableCell>
-                  <TableCell header>ניסיונות</TableCell>
-                  <TableCell header>נכונות</TableCell>
-                  <TableCell header>שגיאות</TableCell>
-                  <TableCell header>% הצלחה</TableCell>
-                  <TableCell header>פעילות אחרונה</TableCell>
-                  <TableCell header>פעולות</TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stats.map(stat => (
-                  <TableRow key={stat.user.id}>
-                    <TableCell>
-                      {stat.user.firstName} {stat.user.lastName}
-                    </TableCell>
-                    <TableCell>{stat.user.username}</TableCell>
-                    <TableCell>{stat.totalAttempts}</TableCell>
-                    <TableCell>
-                      <span className="text-accent font-medium">{stat.correctAnswers}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-danger font-medium">{stat.wrongAnswers}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`font-bold ${
-                          stat.successRate >= 80
-                            ? 'text-accent'
-                            : stat.successRate >= 60
-                            ? 'text-secondary'
-                            : 'text-danger'
-                        }`}
-                      >
-                        {stat.successRate.toFixed(1)}%
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted">
-                      {formatDate(stat.lastActivity)}
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        onClick={() => handleViewDetails(stat.user)}
-                        className="text-secondary hover:underline text-sm"
-                      >
-                        פירוט מלא
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {stats.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted py-8">
-                      אין עדיין תלמידים עם פעילות
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
 
-          <div className="lg:hidden space-y-4">
+          {/* תצוגת כרטיסים - מובייל ודסקטופ */}
+          <div className="space-y-6">
             {stats.map(stat => (
-              <div key={stat.user.id} className="rounded-2xl border border-white/10 bg-bg/80 p-4 shadow-lg">
-                <div className="flex items-center justify-between gap-3">
+              <div key={stat.user.id} className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+                {/* כותרת - פרטי תלמיד */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-white/10">
                   <div>
-                    <p className="text-xs uppercase text-muted tracking-widest">תלמיד</p>
-                    <p className="text-lg font-bold text-primary">
+                    <p className="text-xl font-bold text-white">
                       {stat.user.firstName} {stat.user.lastName}
                     </p>
-                    <p className="text-sm text-muted">@{stat.user.username}</p>
+                    <p className="text-sm text-white/50">@{stat.user.username}</p>
                   </div>
-                  <span
-                    className={`text-lg font-extrabold ${
-                      stat.successRate >= 80
-                        ? 'text-accent'
-                        : stat.successRate >= 60
-                        ? 'text-secondary'
-                        : 'text-danger'
-                    }`}
-                  >
-                    {stat.successRate.toFixed(0)}%
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-green-400">{stat.correctAnswers}</p>
+                      <p className="text-xs text-white/50">נכונים</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-red-400">{stat.wrongAnswers}</p>
+                      <p className="text-xs text-white/50">שגויים</p>
+                    </div>
+                    <div className="text-center">
+                      <p className={`text-2xl font-bold ${
+                        stat.successRate >= 80 ? 'text-green-400' :
+                        stat.successRate >= 60 ? 'text-yellow-400' : 'text-red-400'
+                      }`}>
+                        {stat.successRate.toFixed(0)}%
+                      </p>
+                      <p className="text-xs text-white/50">הצלחה</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* התקדמות לפי קטגוריה */}
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-white/70 mb-3">📂 התקדמות לפי קטגוריה:</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {stat.categoryProgress.map(cp => (
+                      <div 
+                        key={cp.categoryId}
+                        className={`rounded-xl p-3 border ${
+                          cp.progressPercent === 0 ? 'bg-gray-500/10 border-gray-500/30' :
+                          cp.progressPercent < 50 ? 'bg-red-500/10 border-red-500/30' :
+                          cp.progressPercent < 100 ? 'bg-yellow-500/10 border-yellow-500/30' :
+                          'bg-green-500/10 border-green-500/30'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-sm font-medium text-white truncate flex-1">
+                            {cp.displayName}
+                          </span>
+                          <span className={`text-sm font-bold ${
+                            cp.progressPercent === 0 ? 'text-gray-400' :
+                            cp.progressPercent < 50 ? 'text-red-400' :
+                            cp.progressPercent < 100 ? 'text-yellow-400' :
+                            'text-green-400'
+                          }`}>
+                            {cp.progressPercent}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+                          <div 
+                            className={`h-full transition-all ${
+                              cp.progressPercent === 0 ? 'bg-gray-500' :
+                              cp.progressPercent < 50 ? 'bg-red-500' :
+                              cp.progressPercent < 100 ? 'bg-yellow-500' :
+                              'bg-green-500'
+                            }`}
+                            style={{ width: `${cp.progressPercent}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-xs text-white/50">
+                          <span>{cp.completedWords} / {cp.totalWords} מילים</span>
+                          <span>✓ {cp.correctWords} נכון</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {stat.categoryProgress.length === 0 && (
+                    <p className="text-sm text-white/40 text-center py-4">
+                      עדיין לא התחיל לשחק
+                    </p>
+                  )}
+                </div>
+
+                {/* כותרת תחתונה */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-white/10">
+                  <span className="text-xs text-white/50">
+                    פעילות אחרונה: {formatDate(stat.lastActivity)}
                   </span>
+                  <button
+                    onClick={() => handleViewDetails(stat.user)}
+                    className="px-4 py-2 rounded-xl bg-primary/20 text-primary text-sm font-semibold hover:bg-primary/30 transition-colors"
+                  >
+                    📋 פירוט מילים
+                  </button>
                 </div>
-                <div className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
-                  <div>
-                    <p className="text-xs uppercase text-muted">ניסיונות</p>
-                    <p className="text-lg font-bold">{stat.totalAttempts}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase text-muted">נכונים</p>
-                    <p className="text-lg font-bold text-accent">{stat.correctAnswers}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase text-muted">שגויים</p>
-                    <p className="text-lg font-bold text-danger">{stat.wrongAnswers}</p>
-                  </div>
-                </div>
-                <div className="mt-3 text-xs text-muted">
-                  פעילות אחרונה: {formatDate(stat.lastActivity)}
-                </div>
-                <button
-                  onClick={() => handleViewDetails(stat.user)}
-                  className="mt-4 w-full rounded-xl border border-secondary/40 py-2 text-sm font-semibold text-secondary"
-                >
-                  פירוט מלא
-                </button>
               </div>
             ))}
             {stats.length === 0 && !isLoading && (
-              <div className="rounded-2xl border border-dashed border-white/20 p-6 text-center text-muted">
-                אין עדיין תלמידים עם פעילות
+              <div className="rounded-2xl border border-dashed border-white/20 p-12 text-center">
+                <p className="text-2xl mb-2">📭</p>
+                <p className="text-white/50">אין עדיין תלמידים עם פעילות</p>
               </div>
             )}
           </div>
-        </Card>
+        </div>
 
         {/* Modal - פירוט התקדמות */}
         <Modal
