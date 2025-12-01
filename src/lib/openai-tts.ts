@@ -6,7 +6,7 @@ const USE_BROWSER_TTS = import.meta.env.VITE_USE_BROWSER_TTS === 'true'
 
 // מילון תיקוני הגייה - מילים שה-TTS לא מבטא נכון
 const PRONUNCIATION_FIXES: Record<string, string> = {
-  'שרוכים': 'שְׂרוֹכִים', // עם שין שמאלית (ס)
+  'שרוכים': 'סרוכים', // TTS קורא ש כמו ס, אז נכתוב ס ישירות
 }
 
 // הקראה באמצעות Web Speech API (חינמי!)
