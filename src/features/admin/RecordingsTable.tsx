@@ -12,6 +12,34 @@ interface Recording {
   created_at: string
   user_name?: string
   sentence?: string
+  format?: string
+}
+
+// בדיקה אם פורמט נתמך במכשיר הנוכחי
+const canPlayFormat = (format: string): boolean => {
+  const audio = document.createElement('audio')
+  const mimeTypes: Record<string, string> = {
+    'webm': 'audio/webm',
+    'mp4': 'audio/mp4',
+    'm4a': 'audio/mp4',
+    'ogg': 'audio/ogg',
+    'wav': 'audio/wav',
+    'mp3': 'audio/mpeg'
+  }
+  const mime = mimeTypes[format] || `audio/${format}`
+  return audio.canPlayType(mime) !== ''
+}
+
+// חילוץ פורמט מ-URL
+const getFormatFromUrl = (url: string): string => {
+  const match = url.match(/\.(\w+)(?:\?|$)/)
+  return match ? match[1].toLowerCase() : 'unknown'
+}
+
+// בדיקה אם זה iOS/Safari
+const isIOS = (): boolean => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 }
 
 export default function RecordingsTable() {
@@ -46,7 +74,8 @@ export default function RecordingsTable() {
         duration_seconds: r.duration_seconds,
         created_at: r.created_at,
         user_name: r.user ? `${r.user.first_name} ${r.user.last_name}` : 'לא ידוע',
-        sentence: r.word?.he || 'לא ידוע'
+        sentence: r.word?.he || 'לא ידוע',
+        format: getFormatFromUrl(r.audio_url)
       }))
 
       setRecordings(formattedRecordings)
@@ -70,8 +99,23 @@ export default function RecordingsTable() {
   }
 
   const playRecording = (recording: Recording) => {
+    const format = recording.format || getFormatFromUrl(recording.audio_url)
+    const canPlay = canPlayFormat(format)
+    
     addLog(`🎵 ניסיון השמעה: ${recording.audio_url}`)
     addLog(`📋 פרטי הקלטה: ID=${recording.id}, משתמש=${recording.user_name}`)
+    addLog(`📁 פורמט: ${format}, נתמך: ${canPlay ? 'כן' : 'לא'}`)
+    addLog(`📱 מכשיר: ${isIOS() ? 'iOS/Safari' : 'אחר'}`)
+    
+    if (!canPlay) {
+      addLog(`❌ פורמט ${format} לא נתמך במכשיר זה!`)
+      alert(`⚠️ פורמט ${format.toUpperCase()} לא נתמך במכשיר זה.\n\n${
+        isIOS() 
+          ? 'iOS/Safari לא תומך ב-WebM.\nנסה לשמוע במחשב או באנדרואיד.'
+          : 'נסה לשמוע במכשיר אחר.'
+      }`)
+      return
+    }
     
     // אם כבר מנגן את אותה הקלטה - עצור
     if (playingId === recording.id) {
@@ -225,6 +269,18 @@ export default function RecordingsTable() {
           </div>
         </div>
 
+        {/* אזהרת iOS */}
+        {isIOS() && recordings.some(r => (r.format || 'webm') === 'webm') && (
+          <div className="mb-6 bg-yellow-500/20 border border-yellow-400/40 rounded-2xl p-4">
+            <p className="text-yellow-200 text-sm">
+              ⚠️ <strong>שים לב:</strong> את/ה משתמש/ת ב-iOS/Safari. 
+              חלק מההקלטות (WebM) לא יתנגנו במכשיר זה.
+              <br />
+              לשמיעת כל ההקלטות, השתמש/י במחשב או בטלפון אנדרואיד.
+            </p>
+          </div>
+        )}
+
         {/* Debug Panel */}
         {showDebug && (
           <div className="mb-6 bg-black/50 rounded-2xl border border-yellow-400/30 p-4 font-mono text-xs">
@@ -274,7 +330,7 @@ export default function RecordingsTable() {
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     {/* מספר ופרטי ההקלטה */}
                     <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="bg-primary text-white text-sm font-bold px-3 py-1 rounded-full">
                           #{index + 1}
                         </span>
@@ -284,7 +340,22 @@ export default function RecordingsTable() {
                         <span className="text-xs text-gray-500">
                           📅 {formatDate(recording.created_at)}
                         </span>
+                        {/* תג פורמט */}
+                        <span className={`text-xs px-2 py-1 rounded-full font-mono ${
+                          canPlayFormat(recording.format || 'webm')
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}>
+                          {(recording.format || 'webm').toUpperCase()}
+                          {!canPlayFormat(recording.format || 'webm') && ' ⚠️'}
+                        </span>
                       </div>
+                      {/* אזהרת תאימות */}
+                      {!canPlayFormat(recording.format || 'webm') && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 text-xs text-yellow-800">
+                          ⚠️ פורמט זה לא נתמך במכשיר הנוכחי. נסה לשמוע במחשב או באנדרואיד.
+                        </div>
+                      )}
                       <div className="bg-gray-100 p-4 rounded-lg">
                         <p className="text-lg font-bold text-gray-800 leading-relaxed" dir="rtl">
                           📝 {recording.sentence}
