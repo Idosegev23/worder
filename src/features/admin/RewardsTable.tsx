@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { db, Reward } from '../../lib/db'
+import { Reward, getAllRewards, createReward, updateReward, deleteReward } from '../../lib/supabase'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAdmin } from '../../store/useAdmin'
 import { Card } from '../../shared/ui/Card'
@@ -32,7 +32,7 @@ export default function RewardsTable() {
     try {
       setIsLoading(true)
       setError(null)
-      const all = await db.rewards.toArray()
+      const all = await getAllRewards()
       setRewards(all)
     } catch (error) {
       console.error('Error loading rewards:', error)
@@ -49,35 +49,52 @@ export default function RewardsTable() {
 
   const handleCreate = () => {
     setEditing({
+      id: 0, // יזוהה כחדש
       title: '',
       description: '',
       payload: { type: 'link', url: '#' },
-      active: true
+      active: true,
+      created_at: ''
     })
     setIsModalOpen(true)
   }
 
   const handleSave = async () => {
     if (!editing) return
-    if (editing.id) {
-      await db.rewards.update(editing.id, {
-        title: editing.title,
-        description: editing.description,
-        payload: editing.payload,
-        active: editing.active
-      })
-    } else {
-      await db.rewards.add(editing)
+    try {
+      if (editing.id && editing.id > 0) {
+        await updateReward(editing.id, {
+          title: editing.title,
+          description: editing.description,
+          payload: editing.payload,
+          active: editing.active
+        })
+      } else {
+        await createReward({
+          title: editing.title,
+          description: editing.description,
+          payload: editing.payload,
+          active: editing.active
+        })
+      }
+      setIsModalOpen(false)
+      setEditing(null)
+      loadData()
+    } catch (error) {
+      console.error('Error saving reward:', error)
+      setError('שגיאה בשמירת המתנה')
     }
-    setIsModalOpen(false)
-    setEditing(null)
-    loadData()
   }
 
   const handleDelete = async (id: number) => {
     if (confirm('למחוק מתנה זו?')) {
-      await db.rewards.delete(id)
-      loadData()
+      try {
+        await deleteReward(id)
+        loadData()
+      } catch (error) {
+        console.error('Error deleting reward:', error)
+        setError('שגיאה במחיקת המתנה')
+      }
     }
   }
 

@@ -490,6 +490,17 @@ export async function deleteWord(wordId: number) {
   if (error) throw error
 }
 
+/** Get all rewards (including inactive) */
+export async function getAllRewards() {
+  const { data, error } = await supabase
+    .from('worder_rewards')
+    .select('*')
+    .order('id', { ascending: true })
+  
+  if (error) throw error
+  return data as Reward[]
+}
+
 /** Create reward */
 export async function createReward(reward: Omit<Reward, 'id' | 'created_at'>) {
   const { data, error } = await supabase
@@ -500,6 +511,29 @@ export async function createReward(reward: Omit<Reward, 'id' | 'created_at'>) {
   
   if (error) throw error
   return data as Reward
+}
+
+/** Update reward */
+export async function updateReward(rewardId: number, updates: Partial<Reward>) {
+  const { data, error } = await supabase
+    .from('worder_rewards')
+    .update(updates)
+    .eq('id', rewardId)
+    .select()
+    .single()
+  
+  if (error) throw error
+  return data as Reward
+}
+
+/** Delete reward */
+export async function deleteReward(rewardId: number) {
+  const { error } = await supabase
+    .from('worder_rewards')
+    .delete()
+    .eq('id', rewardId)
+  
+  if (error) throw error
 }
 
 /** Get user reward choices */
