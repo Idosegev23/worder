@@ -29,6 +29,12 @@ function isMichelUser(username?: string): boolean {
   return username === 'מישל מישמיש'
 }
 
+// פונקציה לזיהוי אביגיל ותמר (משימה 2)
+function isTask2User(username?: string): boolean {
+  if (!username) return false
+  return username === 'אביגיל אביגיל' || username === 'תמר תמר'
+}
+
 export default function CategoryGrid() {
   const [cats, setCats] = useState<CategoryWithProgress[]>([])
   const [allCats, setAllCats] = useState<CategoryWithProgress[]>([])
@@ -48,6 +54,7 @@ export default function CategoryGrid() {
   
   const isMeitar = isMeitarUser(user?.username)
   const isMichel = isMichelUser(user?.username)
+  const isTask2 = isTask2User(user?.username)
 
   // טעינת אווטר
   useEffect(() => {
@@ -144,13 +151,15 @@ export default function CategoryGrid() {
           ? allCategories.filter(cat => cat.name.startsWith('Meitar'))
           : isMichel
           ? allCategories.filter(cat => cat.name === 'כתיבת מילים' || cat.name === 'הקלטה של משפטים')
-          : allCategories.filter(cat => !cat.name.startsWith('Meitar') && cat.name !== 'כתיבת מילים' && cat.name !== 'הקלטה של משפטים')
+          : isTask2
+          ? allCategories.filter(cat => cat.name.startsWith('Task2_'))
+          : allCategories.filter(cat => !cat.name.startsWith('Meitar') && !cat.name.startsWith('Task2_') && cat.name !== 'כתיבת מילים' && cat.name !== 'הקלטה של משפטים')
         
         // קבלת כל ההתקדמות של המשתמש פעם אחת
         const userProgress = await getUserProgress(user.id)
         
         console.log(`📊 User ${user.id} has ${userProgress.length} progress entries`)
-        console.log(`👤 User type: ${isMeitar ? 'Meitar' : 'Regular'}, showing ${filteredCategories.length} categories`)
+        console.log(`👤 User type: ${isMeitar ? 'Meitar' : isTask2 ? 'Task2' : isMichel ? 'Michel' : 'Regular'}, showing ${filteredCategories.length} categories`)
         
         const catsWithProgress = await Promise.all(
           filteredCategories.map(async (cat) => {
@@ -190,7 +199,7 @@ export default function CategoryGrid() {
         )
         
         // שמירת כל הקטגוריות (כולל ישנות) למשתמשים רגילים
-        if (!isMeitar) {
+        if (!isMeitar && !isTask2 && !isMichel) {
           const oldGames = ['Nouns', 'Verbs', 'Prepositions', 'Adjectives', 'Pronouns', 'Vocabulary']
           const newGamesCats = catsWithProgress.filter(c => !oldGames.includes(c.name))
           
@@ -287,8 +296,8 @@ export default function CategoryGrid() {
         {/* סרגל התקדמות גלובלי - לא למישל */}
         {!isMichel && <GlobalProgress />}
         
-        {/* כפתור משחקים ישנים - רק למשתמשים רגילים (לא מיתר ולא מישל) */}
-        {!isMeitar && !isMichel && allCats.length > 0 && (
+        {/* כפתור משחקים ישנים - רק למשתמשים רגילים (לא מיתר, לא מישל, לא Task2) */}
+        {!isMeitar && !isMichel && !isTask2 && allCats.length > 0 && (
           <div className="mb-6">
             <button
               onClick={() => setShowOldGames(!showOldGames)}
@@ -397,7 +406,7 @@ export default function CategoryGrid() {
         </div>
         
         {/* משחקים ישנים - רק למשתמשים רגילים */}
-        {!isMeitar && showOldGames && (
+        {!isMeitar && !isMichel && !isTask2 && showOldGames && (
           <div>
             <h2 className="text-2xl font-bold mb-4 text-center text-white">משחקים ישנים 📚</h2>
             <div className="grid md:grid-cols-2 gap-6">
