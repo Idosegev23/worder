@@ -29,10 +29,11 @@ function isMichelUser(username?: string): boolean {
   return username === 'מישל מישמיש'
 }
 
-// פונקציה לזיהוי אביגיל ותמר (משימה 2)
+// פונקציה לזיהוי משתמשות Task2 (אביגיל, תמר, אוריה, אריאל)
 function isTask2User(username?: string): boolean {
   if (!username) return false
-  return username === 'אביגיל אביגיל' || username === 'תמר תמר'
+  const task2Users = ['אביגיל אביגיל', 'תמר תמר', 'אוריה אוריה', 'אריאל אריאל']
+  return task2Users.includes(username)
 }
 
 export default function CategoryGrid() {
