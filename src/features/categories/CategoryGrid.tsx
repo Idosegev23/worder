@@ -159,7 +159,7 @@ export default function CategoryGrid() {
         const filteredCategories = isMeitar
           ? allCategories.filter(cat => cat.name.startsWith('Meitar'))
           : isMichel
-          ? allCategories.filter(cat => cat.name === 'כתיבת מילים' || cat.name === 'הקלטה של משפטים')
+          ? allCategories.filter(cat => cat.name === 'הקלטה של משפטים')
           : isTask2
           ? allCategories.filter(cat => cat.name.startsWith('Task2_'))
           : isSet
