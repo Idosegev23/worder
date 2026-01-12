@@ -177,7 +177,7 @@ export default function CategoryGrid() {
             const catWords = await getWordsByCategory(cat.id)
             
             if (catWords.length === 0) {
-              return { ...cat, completed: false, progress: 0 }
+              return null // קטגוריה ריקה - לא להציג
             }
             
             console.log(`📁 Category ${cat.name} has ${catWords.length} words`)
@@ -209,18 +209,21 @@ export default function CategoryGrid() {
           })
         )
         
+        // סינון קטגוריות ריקות
+        const nonEmptyCategories = catsWithProgress.filter(cat => cat !== null) as CategoryWithProgress[]
+        
         // שמירת כל הקטגוריות (כולל ישנות) למשתמשים רגילים
         if (!isMeitar && !isTask2 && !isSet && !isMichel) {
           const oldGames = ['Nouns', 'Verbs', 'Prepositions', 'Adjectives', 'Pronouns', 'Vocabulary']
-          const newGamesCats = catsWithProgress.filter(c => !oldGames.includes(c.name))
+          const newGamesCats = nonEmptyCategories.filter(c => !oldGames.includes(c.name))
           
-          setAllCats(catsWithProgress)
+          setAllCats(nonEmptyCategories)
           setCats(newGamesCats)
         } else {
-          setCats(catsWithProgress)
+          setCats(nonEmptyCategories)
         }
         
-        console.log('📊 Categories summary:', catsWithProgress.map(c => ({ 
+        console.log('📊 Categories summary:', nonEmptyCategories.map(c => ({ 
           name: c.name, 
           completed: c.completed, 
           progress: c.progress 
