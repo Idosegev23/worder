@@ -181,7 +181,14 @@ function RegularGameScreen() {
     loadWords()
   }, [categoryId, user, nav])
 
-  const normalizeAnswer = (str: string) => str.trim().toLowerCase()
+  const normalizeAnswer = (str: string) => {
+    return str
+      .trim()
+      .toLowerCase()
+      // נרמול תווים מיוחדים (geresh, apostrophe, וכו')
+      .replace(/[\u05F3\u2019\u0060]/g, "'") // ׳ ' ` -> '
+      .replace(/[\u05F4]/g, '"') // ״ -> "
+  }
 
   const handlePlayAudio = async () => {
     if (!currentWord || isPlayingAudio) return

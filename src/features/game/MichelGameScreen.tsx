@@ -84,7 +84,15 @@ export default function MichelGameScreen() {
   }
 
   // נרמול תשובה (הסרת רווחים, אותיות קטנות)
-  const normalizeAnswer = (text: string) => text.trim().toLowerCase().replace(/\s+/g, '')
+  const normalizeAnswer = (text: string) => {
+    return text
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      // נרמול תווים מיוחדים (geresh, apostrophe, וכו')
+      .replace(/[\u05F3\u2019\u0060]/g, "'") // ׳ ' ` -> '
+      .replace(/[\u05F4]/g, '"') // ״ -> "
+  }
 
   // בדיקת תשובה
   const checkAnswer = async () => {
