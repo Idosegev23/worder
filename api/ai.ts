@@ -10,9 +10,11 @@ export const config = { runtime: 'edge' }
 
 type Task = 'parent-summary' | 'worksheet'
 
+// gpt-4o-mini לא זמין לפרויקט הזה. gpt-5.4-mini נבדק ועובד,
+// והוא הזול והמהיר מבין המודלים שיש לו גישה אליהם.
 const MODELS: Record<Task, string> = {
-  'parent-summary': 'gpt-4o-mini',
-  worksheet: 'gpt-4o-mini'
+  'parent-summary': 'gpt-5.4-mini',
+  worksheet: 'gpt-5.4-mini'
 }
 
 const SYSTEM: Record<Task, string> = {
