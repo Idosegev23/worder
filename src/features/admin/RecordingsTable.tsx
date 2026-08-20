@@ -237,32 +237,32 @@ export default function RecordingsTable() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen app-bg p-4 sm:p-6 md:p-8">
       <div className="max-w-5xl mx-auto">
         {/* כותרת */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">ממשק אדמין</p>
-            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <p className="text-xs uppercase tracking-[0.4em] text-muted">ממשק אדמין</p>
+            <h1 className="text-3xl sm:text-5xl font-bold bg-surface bg-clip-text text-transparent">
               הקלטות מישל 🎤
             </h1>
-            <p className="text-white/70">
+            <p className="text-muted">
               סה"כ {recordings.length} הקלטות
             </p>
           </div>
           <div className="flex gap-3">
             <button 
               onClick={() => setShowDebug(!showDebug)}
-              className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition-all ${
+              className={`rounded-md2 border px-4 py-3 text-sm font-semibold transition-all ${
                 showDebug 
-                  ? 'border-yellow-400/60 text-yellow-400 bg-yellow-400/10' 
-                  : 'border-white/20 text-white/60 hover:text-white'
+                  ? 'border-sun text-sun bg-sun' 
+                  : 'border-ink text-muted hover:text-ink'
               }`}
             >
               🐛 Debug
             </button>
             <Link to="/admin/dashboard">
-              <button className="rounded-2xl border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all">
+              <button className="rounded-md2 border border-ink px-6 py-3 text-sm font-semibold text-muted hover:text-ink hover:border-white/40 transition-all">
                 ← חזרה
               </button>
             </Link>
@@ -271,8 +271,8 @@ export default function RecordingsTable() {
 
         {/* אזהרת iOS */}
         {isIOS() && recordings.some(r => (r.format || 'webm') === 'webm') && (
-          <div className="mb-6 bg-yellow-500/20 border border-yellow-400/40 rounded-2xl p-4">
-            <p className="text-yellow-200 text-sm">
+          <div className="mb-6 bg-sun border border-sun rounded-md2 p-4">
+            <p className="text-sun text-sm">
               ⚠️ <strong>שים לב:</strong> את/ה משתמש/ת ב-iOS/Safari. 
               חלק מההקלטות (WebM) לא יתנגנו במכשיר זה.
               <br />
@@ -283,27 +283,27 @@ export default function RecordingsTable() {
 
         {/* Debug Panel */}
         {showDebug && (
-          <div className="mb-6 bg-black/50 rounded-2xl border border-yellow-400/30 p-4 font-mono text-xs">
+          <div className="mb-6 bg-black/50 rounded-md2 border border-sun p-4 font-mono text-xs">
             <div className="flex justify-between items-center mb-3">
-              <span className="text-yellow-400 font-bold">🐛 Debug Logs</span>
+              <span className="text-sun font-bold">🐛 Debug Logs</span>
               <button 
                 onClick={() => setDebugLogs([])}
-                className="text-red-400 hover:text-red-300"
+                className="text-berry hover:text-berry"
               >
                 🗑️ נקה
               </button>
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
               {debugLogs.length === 0 ? (
-                <p className="text-white/50">לחץ על "השמע" כדי לראות לוגים...</p>
+                <p className="text-muted">לחץ על "השמע" כדי לראות לוגים...</p>
               ) : (
                 debugLogs.map((log, i) => (
                   <div 
                     key={i} 
-                    className={`text-white/80 ${
-                      log.includes('❌') ? 'text-red-400' : 
-                      log.includes('✅') ? 'text-green-400' : 
-                      log.includes('⚠️') ? 'text-yellow-400' : ''
+                    className={`text-muted ${
+                      log.includes('❌') ? 'text-berry' : 
+                      log.includes('✅') ? 'text-mint' : 
+                      log.includes('⚠️') ? 'text-sun' : ''
                     }`}
                   >
                     {log}
@@ -315,36 +315,36 @@ export default function RecordingsTable() {
         )}
 
         {/* רשימת הקלטות */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+        <div className="bg-surface rounded-md2 border border-ink p-6">
           {recordings.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-xl text-white/70">אין הקלטות עדיין</p>
+              <p className="text-xl text-muted">אין הקלטות עדיין</p>
             </div>
           ) : (
             <div className="space-y-4">
               {recordings.map((recording, index) => (
                 <div
                   key={recording.id}
-                  className="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-all"
+                  className="bg-white rounded-sm2 p-5 shadow-md hover:shadow-lg transition-all"
                 >
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     {/* מספר ופרטי ההקלטה */}
                     <div className="flex-1 space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="bg-primary text-white text-sm font-bold px-3 py-1 rounded-full">
+                        <span className="bg-sky text-ink text-sm font-bold px-3 py-1 rounded-full">
                           #{index + 1}
                         </span>
-                        <span className="text-sm font-semibold text-gray-700">
+                        <span className="text-sm font-semibold text-muted">
                           👤 {recording.user_name}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted">
                           📅 {formatDate(recording.created_at)}
                         </span>
                         {/* תג פורמט */}
                         <span className={`text-xs px-2 py-1 rounded-full font-mono ${
                           canPlayFormat(recording.format || 'webm')
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
+                            ? 'bg-mint text-mint'
+                            : 'bg-berry text-berry'
                         }`}>
                           {(recording.format || 'webm').toUpperCase()}
                           {!canPlayFormat(recording.format || 'webm') && ' ⚠️'}
@@ -352,12 +352,12 @@ export default function RecordingsTable() {
                       </div>
                       {/* אזהרת תאימות */}
                       {!canPlayFormat(recording.format || 'webm') && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 text-xs text-yellow-800">
+                        <div className="bg-sun border border-sun rounded-lg p-2 text-xs text-sun">
                           ⚠️ פורמט זה לא נתמך במכשיר הנוכחי. נסה לשמוע במחשב או באנדרואיד.
                         </div>
                       )}
-                      <div className="bg-gray-100 p-4 rounded-lg">
-                        <p className="text-lg font-bold text-gray-800 leading-relaxed" dir="rtl">
+                      <div className="bg-muted p-4 rounded-lg">
+                        <p className="text-lg font-bold text-muted leading-relaxed" dir="rtl">
                           📝 {recording.sentence}
                         </p>
                       </div>
@@ -367,17 +367,17 @@ export default function RecordingsTable() {
                     <div className="flex gap-3">
                       <button
                         onClick={() => playRecording(recording)}
-                        className={`px-5 py-3 rounded-xl font-semibold transition-all ${
+                        className={`px-5 py-3 rounded-sm2 font-semibold transition-all ${
                           playingId === recording.id
-                            ? 'bg-green-500 text-white animate-pulse'
-                            : 'bg-blue-500 hover:bg-blue-600 text-white'
+                            ? 'bg-mint text-ink animate-pulse'
+                            : 'bg-sky hover:bg-sky text-ink'
                         }`}
                       >
                         {playingId === recording.id ? '🔊 מנגן...' : '▶️ השמע'}
                       </button>
                       <button
                         onClick={() => deleteRecording(recording.id)}
-                        className="px-4 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-all"
+                        className="px-4 py-3 rounded-sm2 bg-berry hover:bg-berry text-ink font-semibold transition-all"
                       >
                         🗑️
                       </button>

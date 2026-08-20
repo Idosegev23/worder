@@ -4,16 +4,22 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Card } from '../../shared/ui/Card'
 import { Input } from '../../shared/ui/Input'
 import { Button } from '../../shared/ui/Button'
+import { IconBook } from '../../shared/ui/icons'
 
 export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [err, setErr] = useState('')
+  const [loading, setLoading] = useState(false)
   const login = useAuth(s => s.login)
   const nav = useNavigate()
 
   const handleLogin = async () => {
+    if (!username.trim() || !password) return
+    setLoading(true)
+    setErr('')
     const ok = await login(username, password)
+    setLoading(false)
     if (!ok) {
       setErr('שם משתמש או סיסמה שגויים')
       return
@@ -22,57 +28,64 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-sky via-purple to-pink relative overflow-hidden">
-      {/* אפקט רקע מנצנץ */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-gold rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-40 right-20 w-40 h-40 bg-pink rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-20 left-1/2 w-36 h-36 bg-purple rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
-      
-      <Card className="w-full max-w-md shadow-2xl relative z-10 border-4 border-white/30 p-6 sm:p-8 space-y-6">
-        <div className="text-center space-y-3">
-          <div className="text-6xl mb-4">📚</div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            ברוכים הבאים ל-WordQuest
-          </h1>
-          <p className="text-muted mt-2">למידת אנגלית מהנה ומרגשת!</p>
-        </div>
-        <div className="space-y-4">
-          <Input
-            placeholder="שם משתמש (למשל: עידו שגב)"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleLogin()}
-          />
-          <Input
-            placeholder="סיסמה"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleLogin()}
-          />
-          {err && (
-            <div className="rounded-lg border border-danger/40 bg-danger/10 text-danger text-sm px-3 py-2">
-              {err}
+    <div className="min-h-screen app-bg grid place-items-center p-6">
+      <div className="w-full max-w-md animate-pop-in">
+        <Card variant="solid" padding="lg" className="space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-grid place-items-center w-16 h-16 rounded-md2 bg-sun text-ink border-outline border-ink shadow-solid mb-1">
+              <IconBook size={30} />
             </div>
-          )}
-          <Button className="w-full py-3 text-lg font-semibold rounded-xl" onClick={handleLogin}>
-            התחבר
-          </Button>
-          <div className="text-sm text-center text-muted mt-4 space-x-2 space-x-reverse">
-            <span>משתמש חדש?</span>
-            <Link to="/register" className="text-secondary hover:underline">
-              הרשמה
+            <h1 className="text-[26px] font-bold text-ink tracking-tight leading-tight">
+              ברוכים הבאים
+            </h1>
+            <p className="text-muted text-base font-medium">
+              נכנסים, לומדים, נהנים — ולומדים עוד.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Input
+              placeholder="שם מלא — למשל: עידו שגב"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              autoFocus
+            />
+            <Input
+              placeholder="סיסמה"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              error={!!err}
+            />
+            {err && (
+              <div className="bg-berry text-ink text-sm font-bold px-3 py-2 rounded-sm2 border-2 border-ink animate-nudge">
+                {err}
+              </div>
+            )}
+            <Button
+              size="lg"
+              fullWidth
+              onClick={handleLogin}
+              disabled={loading || !username.trim() || !password}
+              className="mt-2"
+            >
+              {loading ? 'בודק…' : 'כניסה'}
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-center gap-3 text-sm text-muted pt-2">
+            <Link to="/register" className="font-bold text-ink underline underline-offset-4 decoration-2">
+              משתמש חדש? הרשמה
             </Link>
-            <span>•</span>
-            <Link to="/admin" className="text-secondary hover:underline">
+            <span className="text-muted">·</span>
+            <Link to="/admin" className="font-medium hover:text-ink transition-colors">
               כניסת אדמין
             </Link>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   )
 }
-

@@ -148,28 +148,28 @@ export default function ErrorsTable() {
   const errorsWithMistakes = errors.filter(e => e.wrongAttempts > 0)
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen app-bg p-4 sm:p-6 md:p-8">
       <div className="max-w-5xl mx-auto">
         {loading && <LoadingOverlay fullscreen message="טוען ניתוח טעויות..." />}
         
         {/* כותרת */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">ממשק אדמין</p>
-            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <p className="text-xs uppercase tracking-[0.4em] text-muted">ממשק אדמין</p>
+            <h1 className="text-3xl sm:text-5xl font-bold bg-surface bg-clip-text text-transparent">
               ניתוח טעויות 📊
             </h1>
-            <p className="text-white/60">צפייה בטעויות נפוצות ומי טעה בכל מילה</p>
+            <p className="text-muted">צפייה בטעויות נפוצות ומי טעה בכל מילה</p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={loadErrors}
-              className="px-5 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+              className="px-5 py-3 bg-sky text-ink rounded-sm2 font-semibold hover:bg-sky/90 transition-colors"
             >
               🔄 רענן
             </button>
             <Link to="/admin/dashboard">
-              <button className="rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all">
+              <button className="rounded-sm2 border border-ink px-5 py-3 text-sm font-semibold text-muted hover:text-ink hover:border-white/40 transition-all">
                 ← חזרה
               </button>
             </Link>
@@ -177,16 +177,16 @@ export default function ErrorsTable() {
         </div>
 
         {errorMessage && !loading && (
-          <div className="mb-6 rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-red-100">
+          <div className="mb-6 rounded-sm2 border border-berry bg-berry p-4 text-berry">
             {errorMessage}
           </div>
         )}
 
         {/* סיכום */}
         {errorsWithMistakes.length > 0 && (
-          <div className="mb-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-4">
-            <p className="text-white/80 text-center">
-              נמצאו <span className="text-red-400 font-bold text-xl">{errorsWithMistakes.length}</span> מילים עם טעויות
+          <div className="mb-6 bg-surface rounded-md2 border border-ink p-4">
+            <p className="text-muted text-center">
+              נמצאו <span className="text-berry font-bold text-xl">{errorsWithMistakes.length}</span> מילים עם טעויות
             </p>
           </div>
         )}
@@ -194,62 +194,62 @@ export default function ErrorsTable() {
         {/* רשימת טעויות */}
         <div className="space-y-4">
           {errorsWithMistakes.length === 0 ? (
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-12 text-center">
+            <div className="bg-surface rounded-md2 border border-ink p-12 text-center">
               <p className="text-2xl mb-2">🎉</p>
-              <p className="text-white/60 text-lg">אין עדיין נתוני טעויות</p>
+              <p className="text-muted text-lg">אין עדיין נתוני טעויות</p>
             </div>
           ) : (
             errorsWithMistakes.map((error, index) => (
               <div 
                 key={index} 
-                className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-5 hover:bg-white/10 transition-colors"
+                className="bg-surface rounded-md2 border border-ink p-5 hover:bg-surface transition-colors"
               >
                 <div className="space-y-4">
                   {/* כותרת */}
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-xl font-bold text-primary">
+                      <h3 className="text-xl font-bold text-sky">
                         {error.word} → {error.hebrewWord}
                       </h3>
-                      <p className="text-sm text-white/60">{error.category}</p>
+                      <p className="text-sm text-muted">{error.category}</p>
                     </div>
-                    <div className="text-center bg-red-500/20 px-4 py-2 rounded-xl border border-red-400/30">
-                      <div className="text-2xl font-bold text-red-400">
+                    <div className="text-center bg-berry px-4 py-2 rounded-sm2 border border-berry">
+                      <div className="text-2xl font-bold text-berry">
                         {error.wrongAttempts}
                       </div>
-                      <div className="text-xs text-red-300">טעויות</div>
+                      <div className="text-xs text-berry">טעויות</div>
                     </div>
                   </div>
 
                   {/* סטטיסטיקות */}
-                  <div className="grid grid-cols-3 gap-4 py-3 border-t border-b border-white/10">
+                  <div className="grid grid-cols-3 gap-4 py-3 border-t border-b border-ink">
                     <div className="text-center">
-                      <div className="text-lg font-bold text-white">{error.totalAttempts}</div>
-                      <div className="text-xs text-white/60">סה"כ ניסיונות</div>
+                      <div className="text-lg font-bold text-ink">{error.totalAttempts}</div>
+                      <div className="text-xs text-muted">סה"כ ניסיונות</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-green-400">{error.usersWhoListened}</div>
-                      <div className="text-xs text-white/60">שמעו הקראה 🔉</div>
+                      <div className="text-lg font-bold text-mint">{error.usersWhoListened}</div>
+                      <div className="text-xs text-muted">שמעו הקראה 🔉</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-orange-400">{error.usersWhoDidntListen}</div>
-                      <div className="text-xs text-white/60">לא שמעו 🔇</div>
+                      <div className="text-lg font-bold text-sun">{error.usersWhoDidntListen}</div>
+                      <div className="text-xs text-muted">לא שמעו 🔇</div>
                     </div>
                   </div>
 
                   {/* משתמשים שטעו */}
                   {error.usersWhoFailed.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold mb-2 text-white">👥 מי טעה:</h4>
+                      <h4 className="text-sm font-semibold mb-2 text-ink">👥 מי טעה:</h4>
                       <div className="flex flex-wrap gap-2">
                         {error.usersWhoFailed.map((user, i) => (
                           <div
                             key={i}
-                            className="bg-red-500/20 border border-red-400/40 px-3 py-2 rounded-lg"
+                            className="bg-berry border border-berry px-3 py-2 rounded-lg"
                             title={`תשובה אחרונה: "${user.lastAnswer}"`}
                           >
-                            <span className="font-medium text-white">{user.name}</span>
-                            <span className="text-xs text-red-300 mr-2">({user.attempts} טעויות)</span>
+                            <span className="font-medium text-ink">{user.name}</span>
+                            <span className="text-xs text-berry mr-2">({user.attempts} טעויות)</span>
                           </div>
                         ))}
                       </div>
@@ -259,15 +259,15 @@ export default function ErrorsTable() {
                   {/* טעויות נפוצות */}
                   {error.commonErrors.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold mb-2 text-white">❌ תשובות שגויות נפוצות:</h4>
+                      <h4 className="text-sm font-semibold mb-2 text-ink">❌ תשובות שגויות נפוצות:</h4>
                       <div className="space-y-1">
                         {error.commonErrors.map((err, i) => (
                           <div
                             key={i}
-                            className="flex justify-between items-center bg-red-500/10 border border-red-400/30 px-3 py-2 rounded-lg"
+                            className="flex justify-between items-center bg-berry border border-berry px-3 py-2 rounded-lg"
                           >
-                            <span className="font-medium text-red-300">"{err.answer}"</span>
-                            <span className="text-sm text-white/60">{err.count} פעמים</span>
+                            <span className="font-medium text-berry">"{err.answer}"</span>
+                            <span className="text-sm text-muted">{err.count} פעמים</span>
                           </div>
                         ))}
                       </div>
@@ -276,8 +276,8 @@ export default function ErrorsTable() {
 
                   {/* המלצות */}
                   {error.usersWhoDidntListen > error.usersWhoListened && (
-                    <div className="bg-orange-500/20 border border-orange-400/40 rounded-lg p-3">
-                      <p className="text-sm text-orange-200">
+                    <div className="bg-sun border border-sun rounded-lg p-3">
+                      <p className="text-sm text-sun">
                         💡 <strong>המלצה:</strong> רוב התלמידים לא שמעו את ההקראה. 
                         כדאי לעודד שימוש בכפתור ההשמעה!
                       </p>

@@ -65,18 +65,15 @@ export default function AvatarPicker() {
   }
 
   return (
-    <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-gold via-orange-300 to-pink relative overflow-hidden">
+    <div className="min-h-screen grid place-items-center p-6 app-bg to-pink relative overflow-hidden">
       {/* אפקט רקע מנצנץ */}
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-primary rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-40 right-20 w-40 h-40 bg-sky rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-20 left-1/2 w-36 h-36 bg-secondary rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
       
-      <Card className="w-full max-w-md shadow-2xl relative z-10 border-4 border-white/30">
+      <Card className="w-full max-w-md shadow-solid relative z-10 border-4 border-white/30">
         <div className="text-center mb-6">
           <div className="text-6xl mb-4">🎨</div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold app-bg bg-clip-text text-transparent">
             בחר אווטאר
           </h1>
           <p className="text-muted mt-2">תן לעצמך זהות ייחודית!</p>
@@ -87,18 +84,18 @@ export default function AvatarPicker() {
             <img 
               src={avatarUrl} 
               alt="Avatar" 
-              className="w-48 h-48 rounded-full bg-white border-8 border-gradient-to-r from-primary to-secondary shadow-2xl hover:scale-110 transition-transform"
+              className="w-48 h-48 rounded-full bg-white border-8 border-gradient-to-r from-sky to-berry shadow-solid hover:scale-110 transition-transform"
               onError={() => setError('שגיאה בטעינת אווטאר')}
             />
           ) : (
-            <div className="w-48 h-48 rounded-full bg-white border-8 border-primary/20 flex items-center justify-center shadow-2xl">
+            <div className="w-48 h-48 rounded-full bg-white border-8 border-sky/20 flex items-center justify-center shadow-solid">
               <span className="text-6xl">👤</span>
             </div>
           )}
         </div>
 
         {error && (
-          <div className="text-danger text-sm text-center mb-4">{error}</div>
+          <div className="text-berry text-sm text-center mb-4">{error}</div>
         )}
 
         <div className="space-y-4">
@@ -110,7 +107,7 @@ export default function AvatarPicker() {
                   key={s}
                   onClick={() => setStyle(s)}
                   className={`p-2 rounded-lg border-2 transition-colors text-sm ${
-                    style === s ? 'border-primary bg-primary/20' : 'border-surface hover:border-primary/50'
+                    style === s ? 'border-sky bg-sky/20' : 'border-surface hover:border-sky/50'
                   }`}
                 >
                   {s}
@@ -125,11 +122,11 @@ export default function AvatarPicker() {
               type="text"
               value={seed}
               onChange={e => setSeed(e.target.value)}
-              className="w-full p-3 rounded-lg bg-bg text-text border border-surface focus:border-primary focus:outline-none"
+              className="w-full p-3 rounded-lg bg-cream text-ink border border-surface focus:border-sky focus:outline-none"
             />
             <button
               onClick={() => setSeed(Math.random().toString(36).substring(2, 9))}
-              className="text-sm text-secondary mt-2 hover:underline"
+              className="text-sm text-berry mt-2 hover:underline"
             >
               🎲 אקראי
             </button>
@@ -141,7 +138,7 @@ export default function AvatarPicker() {
             </Button>
             <button
               onClick={handleSkip}
-              className="w-full text-sm text-muted hover:text-secondary"
+              className="w-full text-sm text-muted hover:text-berry"
             >
               דלג (תמשיך עם אווטאר ברירת מחדל)
             </button>

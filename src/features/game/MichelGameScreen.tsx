@@ -192,7 +192,7 @@ export default function MichelGameScreen() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-md text-center">
-          <p className="text-xl text-white mb-4">{loadError}</p>
+          <p className="text-xl text-ink mb-4">{loadError}</p>
           <Button onClick={() => nav('/categories')}>חזרה לקטגוריות</Button>
         </Card>
       </div>
@@ -203,7 +203,7 @@ export default function MichelGameScreen() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-md text-center">
-          <p className="text-xl text-white mb-4">אין מילים זמינות</p>
+          <p className="text-xl text-ink mb-4">אין מילים זמינות</p>
           <Button onClick={() => nav('/categories')}>חזרה לקטגוריות</Button>
         </Card>
       </div>
@@ -214,38 +214,38 @@ export default function MichelGameScreen() {
   const imagePath = `/images/${currentWord.en}`
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8 relative">
+    <div className="min-h-screen app-bg p-4 sm:p-6 md:p-8 relative">
       {/* אין GlobalProgress למישל - לא רלוונטי */}
       
       <div className="max-w-4xl mx-auto">
         {/* כותרת */}
         <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
           <div className="text-center sm:text-right space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">משחק מיוחד</p>
-            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <p className="text-xs uppercase tracking-[0.4em] text-muted">משחק מיוחד</p>
+            <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-sky to-berry bg-clip-text text-transparent">
               מה יש בתמונה? 🎨
             </h1>
-            <p className="text-sm text-white/70">
+            <p className="text-sm text-muted">
               מילה {currentIndex + 1} מתוך {words.length}
             </p>
           </div>
           <button
             onClick={() => nav('/categories')}
-            className="rounded-2xl border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all"
+            className="rounded-md2 border border-ink px-6 py-3 text-sm font-semibold text-muted hover:text-ink hover:border-white/40 transition-all"
           >
             ← חזרה
           </button>
         </div>
 
         {/* כרטיס המשחק */}
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 sm:p-8">
+        <div className="relative overflow-hidden rounded-md2 border-outline border-ink bg-surface shadow-solid p-6 sm:p-8">
           {/* התמונה */}
           <div className="flex items-center justify-center mb-8">
-            <div className="bg-white rounded-2xl p-4 shadow-2xl">
+            <div className="bg-white rounded-md2 p-4 shadow-2xl">
               <img
                 src={imagePath}
                 alt="תמונה"
-                className="max-w-full max-h-[250px] sm:max-h-[300px] rounded-xl object-contain"
+                className="max-w-full max-h-[250px] sm:max-h-[300px] rounded-sm2 object-contain"
                 onError={(e) => {
                   e.currentTarget.src = '/images/placeholder.png'
                 }}
@@ -258,12 +258,12 @@ export default function MichelGameScreen() {
             <button
               onClick={handlePlayAudio}
               disabled={isPlayingAudio}
-              className={`px-10 py-5 rounded-2xl text-xl font-bold transition-all shadow-lg ${
+              className={`px-10 py-5 rounded-md2 text-xl font-bold transition-all shadow-lg ${
                 isPlayingAudio
-                  ? 'bg-primary/50 animate-pulse'
+                  ? 'bg-sky/50 animate-pulse'
                   : audioPlayed
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:scale-105'
-                  : 'bg-gradient-to-r from-primary to-secondary text-white hover:scale-105 hover:shadow-xl'
+                  ? 'bg-mint text-ink border-outline border-ink shadow-solid '
+                  : 'bg-gradient-to-r from-sky to-berry text-ink  hover:shadow-xl'
               }`}
             >
               {isPlayingAudio ? '🔊 מנגן...' : '🔉 מה יש בתמונה?'}
@@ -272,10 +272,10 @@ export default function MichelGameScreen() {
 
           {/* שדה כתיבה */}
           <div className="space-y-4 mb-6">
-            <label className="block text-center text-lg font-semibold text-white">
+            <label className="block text-center text-lg font-semibold text-ink">
               כתבי את המילה בעברית:
             </label>
-            <div className="bg-white rounded-2xl p-2">
+            <div className="bg-white rounded-md2 p-2">
               <input
                 ref={inputRef}
                 type="text"
@@ -284,7 +284,7 @@ export default function MichelGameScreen() {
                 onKeyPress={handleKeyPress}
                 disabled={!!feedback}
                 placeholder="הקלידי כאן..."
-                className="w-full text-center text-2xl font-bold p-4 rounded-xl bg-gray-50 text-gray-800 border-2 border-transparent focus:border-primary focus:outline-none transition-all"
+                className="w-full text-center text-2xl font-bold p-4 rounded-sm2 bg-muted text-muted border-2 border-transparent focus:border-sky focus:outline-none transition-all"
                 dir="rtl"
                 autoFocus
               />
@@ -295,12 +295,12 @@ export default function MichelGameScreen() {
           <button
             onClick={checkAnswer}
             disabled={!answer.trim() || !!feedback}
-            className={`w-full py-5 text-xl font-bold rounded-2xl transition-all shadow-lg ${
+            className={`w-full py-5 text-xl font-bold rounded-md2 transition-all shadow-lg ${
               feedback === 'correct'
-                ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                ? 'bg-mint text-ink border-outline border-ink shadow-solid'
                 : feedback === 'wrong'
-                ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
-                : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:shadow-xl hover:scale-[1.02] disabled:opacity-50'
+                ? 'bg-sky text-ink'
+                : 'bg-sky text-ink hover:shadow-xl hover:scale-[1.02] disabled:opacity-50'
             }`}
           >
             {feedback === 'correct' ? '✅ נכון!' : feedback === 'wrong' ? '❌ לא נכון' : 'בדקי'}
@@ -309,14 +309,14 @@ export default function MichelGameScreen() {
           {/* פידבק */}
           {feedback === 'correct' && (
             <div className="mt-6 text-center py-4">
-              <div className="text-3xl font-bold text-green-400 animate-bounce">
+              <div className="text-3xl font-bold text-ink animate-bounce">
                 🎉 כל הכבוד מישל! 🌟
               </div>
             </div>
           )}
           {feedback === 'wrong' && attempts < 2 && (
             <div className="mt-6 text-center py-4">
-              <div className="text-2xl font-bold text-yellow-400">
+              <div className="text-2xl font-bold text-sun">
                 נסי שוב! 💪
               </div>
             </div>
@@ -324,9 +324,9 @@ export default function MichelGameScreen() {
 
           {/* Progress bar */}
           <div className="mt-8">
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-2 bg-track rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
+                className="h-full bg-gradient-to-r from-sky to-berry transition-all duration-500"
                 style={{ width: `${((currentIndex + 1) / words.length) * 100}%` }}
               />
             </div>

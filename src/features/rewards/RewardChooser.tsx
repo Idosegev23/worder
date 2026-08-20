@@ -199,8 +199,8 @@ export default function RewardChooser() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-purple to-pink">
-        <Card className="shadow-2xl">
+      <div className="min-h-screen grid place-items-center p-6 app-bg">
+        <Card className="shadow-solid">
           <p className="text-muted">מכין פרסים... 🎁</p>
         </Card>
       </div>
@@ -210,12 +210,12 @@ export default function RewardChooser() {
   if (result) {
     if (result.type === 'benefit') {
       return (
-        <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-gold via-yellow-300 to-orange-400">
-          <Card className="w-full max-w-lg text-center shadow-2xl border-4 border-gold">
+        <div className="min-h-screen grid place-items-center p-6 app-bg">
+          <Card className="w-full max-w-lg text-center shadow-solid border-4 border-sun">
             <div className="text-8xl mb-6 animate-bounce">🎉</div>
-            <h1 className="text-5xl font-bold mb-6 text-primary">מזל טוב!</h1>
+            <h1 className="text-5xl font-bold mb-6 text-sky">מזל טוב!</h1>
             <p className="text-2xl mb-4 font-semibold">זכית בהטבה! ⭐</p>
-            <div className="text-4xl font-bold text-secondary mb-4 animate-pulse">
+            <div className="text-4xl font-bold text-berry mb-4 animate-pulse">
               הטבה #{result.benefit?.id}
             </div>
             <p className="text-muted text-lg mb-6">
@@ -235,16 +235,16 @@ export default function RewardChooser() {
       // פרס מעפן
       const silly = result.silly!
       return (
-        <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-purple-400 via-pink-300 to-orange-300">
-          <Card className="w-full max-w-lg text-center shadow-2xl border-4 border-purple-500">
+        <div className="min-h-screen grid place-items-center p-6 app-bg">
+          <Card className="w-full max-w-lg text-center shadow-solid border-4 border-sky">
             <div className="text-8xl mb-6 animate-bounce">{silly.emoji}</div>
-            <h1 className="text-5xl font-bold mb-6 text-purple-600">אופס!</h1>
+            <h1 className="text-5xl font-bold mb-6 text-sky">אופס!</h1>
             <p className="text-2xl mb-4 font-semibold">זכית ב:</p>
-            <div className="text-4xl font-bold text-orange-600 mb-4 animate-pulse">
+            <div className="text-4xl font-bold text-sun mb-4 animate-pulse">
               {silly.title}
             </div>
             <p className="text-muted text-lg mb-6">{silly.description}</p>
-            <p className="text-sm text-purple-600 mb-6">
+            <p className="text-sm text-sky mb-6">
               😅 אל תדאג, בפעם הבאה תזכה בהטבה!
             </p>
             <Button 
@@ -260,22 +260,19 @@ export default function RewardChooser() {
   }
 
   return (
-    <div className="min-h-screen grid place-items-center p-6 bg-gradient-to-br from-sky via-purple to-pink relative overflow-hidden">
+    <div className="min-h-screen grid place-items-center p-6 app-bg relative overflow-hidden">
       {/* אפקט רקע מנצנץ */}
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-gold rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-40 right-20 w-40 h-40 bg-pink rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-20 left-1/2 w-36 h-36 bg-purple rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="w-full max-w-5xl relative z-10">
         <h1 
           ref={titleRef}
-          className="text-6xl font-bold text-center mb-4 text-white drop-shadow-2xl"
+          className="text-6xl font-bold text-center mb-4 text-ink drop-shadow-solid"
         >
           🎁 בחר את המתנה שלך! 🎁
         </h1>
-        <p className="text-center text-white text-xl mb-12 drop-shadow-lg">
+        <p className="text-center text-ink text-xl mb-12 drop-shadow-lg">
           סיימת את כל הקטגוריות! הגיע זמן לבחור פרס מדהים! ✨
         </p>
         
@@ -287,9 +284,9 @@ export default function RewardChooser() {
               className="relative"
             >
               <Card
-                className={`cursor-pointer transition-all transform shadow-2xl border-4 ${
+                className={`cursor-pointer transition-all transform shadow-solid border-4 ${
                   hoveredId === boxId 
-                    ? 'border-gold shadow-gold/50' 
+                    ? 'border-sun shadow-sun/50' 
                     : 'border-white/30'
                 }`}
                 onClick={() => handleChoose(boxId as 1 | 2)}
@@ -301,7 +298,7 @@ export default function RewardChooser() {
                   🎁
                 </div>
                 
-                <div className="text-3xl font-bold mb-4 text-center text-primary">
+                <div className="text-3xl font-bold mb-4 text-center text-sky">
                   קופסה מסתורית #{boxId}
                 </div>
                 
@@ -311,7 +308,7 @@ export default function RewardChooser() {
                 
                 {/* אפקט זוהר */}
                 {hoveredId === boxId && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-gold/20 via-yellow-300/20 to-gold/20 rounded-xl animate-pulse pointer-events-none" />
+                  <div className="absolute inset-0 app-bg/20 to-sun/20 rounded-sm2 animate-pulse pointer-events-none" />
                 )}
               </Card>
               

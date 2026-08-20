@@ -35,7 +35,7 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen grid place-items-center p-6">
+    <div className="min-h-screen app-bg grid place-items-center p-6">
       <Card className="w-full max-w-md">
         <h1 className="text-3xl font-bold mb-6 text-center">כניסת אדמין</h1>
         <div className="space-y-4">
@@ -51,12 +51,12 @@ export default function AdminLogin() {
             onChange={e => setP(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleLogin()}
           />
-          {e && <div className="text-danger text-sm">{e}</div>}
+          {e && <div className="text-berry text-sm">{e}</div>}
           <Button className="w-full" variant="secondary" onClick={handleLogin}>
             כניסה
           </Button>
           <div className="text-sm text-center text-muted mt-4">
-            <Link to="/" className="text-secondary hover:underline">
+            <Link to="/" className="text-berry hover:underline">
               חזרה לדף הבית
             </Link>
           </div>

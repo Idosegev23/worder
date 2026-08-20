@@ -85,10 +85,10 @@ export default function UserProfile() {
   if (showSuccess) {
     return (
       <div className="p-6">
-        <Card className="w-full text-center shadow-2xl border-4 border-gold bg-gradient-to-br from-gold/20 via-yellow-300/20 to-orange-400/20">
+        <Card className="w-full text-center shadow-solid border-4 border-sun app-bg/20">
           <div className="text-8xl mb-6 animate-bounce">🎁</div>
-          <h1 className="text-5xl font-bold mb-6 text-primary">מזל טוב!</h1>
-          <p className="text-2xl mb-6 font-semibold text-secondary">
+          <h1 className="text-5xl font-bold mb-6 text-sky">מזל טוב!</h1>
+          <p className="text-2xl mb-6 font-semibold text-berry">
             זכית בפרס הגדול! 🎉
           </p>
           <p className="text-lg text-muted mb-8">
@@ -112,7 +112,7 @@ export default function UserProfile() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-muted mb-1">Profile</p>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-primary">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-sky">
               האזור האישי שלי 👤
             </h1>
           </div>
@@ -122,17 +122,17 @@ export default function UserProfile() {
         </div>
 
         {/* פרטי משתמש */}
-        <Card className="mb-6 shadow-2xl">
+        <Card className="mb-6 shadow-solid">
           <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
             {avatarUrl && (
               <img 
                 src={avatarUrl} 
                 alt="Avatar" 
-                className="w-32 h-32 rounded-full border-4 border-primary shadow-xl"
+                className="w-32 h-32 rounded-full border-4 border-sky shadow-xl"
               />
             )}
             <div className="flex-1">
-              <h2 className="text-3xl font-bold text-primary mb-2">
+              <h2 className="text-3xl font-bold text-sky mb-2">
                 {user.firstName} {user.lastName}
               </h2>
               <p className="text-muted text-lg mb-3">@{user.username}</p>
@@ -147,16 +147,16 @@ export default function UserProfile() {
         </Card>
 
         {/* BenefitsTracker */}
-        <Card className="mb-6 shadow-2xl border-4 border-gold relative overflow-hidden">
+        <Card className="mb-6 shadow-solid border-4 border-sun relative overflow-hidden">
           {loading && <LoadingOverlay message="טוען הטבות..." />}
           <div className="text-center">
             <div className="text-6xl mb-4">⭐</div>
-            <h2 className="text-4xl font-bold text-gold mb-4">
+            <h2 className="text-4xl font-bold text-sun mb-4">
               מעקב הטבות
             </h2>
             
             {loadError && !loading && (
-              <div className="mb-4 rounded-xl bg-red-500/10 border border-red-400/40 text-red-200 py-2 px-4 text-sm">
+              <div className="mb-4 rounded-sm2 bg-berry border border-berry text-berry py-2 px-4 text-sm">
                 {loadError}
               </div>
             )}
@@ -165,7 +165,7 @@ export default function UserProfile() {
               <>
                 {/* מד התקדמות */}
                 <div className="mb-6">
-                  <p className="text-2xl font-bold text-primary mb-4">
+                  <p className="text-2xl font-bold text-sky mb-4">
                     {unclaimedCount} / 10 הטבות
                   </p>
                   
@@ -186,9 +186,9 @@ export default function UserProfile() {
                   </div>
                   
                   {/* פס התקדמות */}
-                  <div className="w-full bg-surface rounded-full h-8 overflow-hidden border-2 border-gold">
+                  <div className="w-full bg-surface rounded-full h-8 overflow-hidden border-2 border-sun">
                     <div 
-                      className="h-full bg-gradient-to-r from-gold via-yellow-300 to-gold transition-all duration-1000 flex items-center justify-center text-white font-bold"
+                      className="h-full app-bg to-sun transition-all duration-1000 flex items-center justify-center text-ink font-bold"
                       style={{ width: `${(unclaimedCount / 10) * 100}%` }}
                     >
                       {unclaimedCount > 0 && `${Math.round((unclaimedCount / 10) * 100)}%`}
@@ -198,23 +198,23 @@ export default function UserProfile() {
 
                 {/* כפתור קבלת פרס גדול */}
                 {unclaimedCount >= 10 ? (
-                  <div className="bg-gradient-to-r from-gold via-yellow-300 to-gold p-6 rounded-xl border-4 border-yellow-500 animate-pulse">
-                    <p className="text-2xl font-bold text-orange-700 mb-4">
+                  <div className="app-bg to-sun p-6 rounded-sm2 border-4 border-sun animate-pulse">
+                    <p className="text-2xl font-bold text-sun mb-4">
                       🎉 יש לך 10 הטבות! 🎉
                     </p>
                     <Button
-                      className="w-full max-w-md mx-auto text-2xl py-6 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                      className="w-full max-w-md mx-auto text-2xl py-6 app-bg hover:from-orange-600 hover:to-red-600"
                       onClick={handleClaimBigPrize}
                       disabled={claiming}
                     >
                       {claiming ? '⏳ מעבד...' : '🎁 קבל פרס גדול!'}
                     </Button>
-                    <p className="text-sm text-orange-800 mt-3">
+                    <p className="text-sm text-sun mt-3">
                       הפרס יינתן לך בשיעור הקרוב!
                     </p>
                   </div>
                 ) : (
-                  <div className="bg-sky/20 p-4 rounded-xl">
+                  <div className="bg-sky/20 p-4 rounded-sm2">
                     <p className="text-muted">
                       צבור עוד {10 - unclaimedCount} הטבות כדי לקבל פרס גדול! 💪
                     </p>
@@ -226,8 +226,8 @@ export default function UserProfile() {
         </Card>
 
         {/* היסטוריית הטבות */}
-        <Card className="shadow-2xl">
-          <h3 className="text-2xl font-bold text-primary mb-4">
+        <Card className="shadow-solid">
+          <h3 className="text-2xl font-bold text-sky mb-4">
             📜 היסטוריית הטבות
           </h3>
           
@@ -249,7 +249,7 @@ export default function UserProfile() {
                   className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-lg border-2 ${
                     benefit.claimed 
                       ? 'bg-muted/20 border-muted' 
-                      : 'bg-accent/10 border-accent'
+                      : 'bg-mint/10 border-mint'
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -275,7 +275,7 @@ export default function UserProfile() {
                     {benefit.claimed ? (
                       <span className="text-muted font-semibold">נוצל ✓</span>
                     ) : (
-                      <span className="text-accent font-semibold">פעיל ⭐</span>
+                      <span className="text-mint font-semibold">פעיל ⭐</span>
                     )}
                   </div>
                 </div>

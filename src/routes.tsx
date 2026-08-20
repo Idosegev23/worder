@@ -24,6 +24,7 @@ export default function RoutesView() {
     { path: '/register', element: <Register /> },
     { path: '/avatar', element: <AvatarPicker /> },
     { path: '/categories', element: <CategoryGrid /> },
+    { path: '/categories/:parentId', element: <CategoryGrid /> },
     { path: '/play/:categoryId', element: <GameScreen /> },
     { path: '/rewards', element: <RewardChooser /> },
     { path: '/profile', element: <UserProfile /> },

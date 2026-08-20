@@ -1,5 +1,7 @@
 import { ReactNode } from 'react'
 
+/** טבלה בגרסה הצפופה של השפה — קו מתאר 2px, בלי אריחים גדולים. */
+
 interface TableProps {
   children: ReactNode
   className?: string
@@ -7,7 +9,7 @@ interface TableProps {
 
 export function Table({ children, className = '' }: TableProps) {
   return (
-    <div className={`overflow-x-auto ${className}`}>
+    <div className={`overflow-x-auto rounded-md2 border-2 border-ink bg-surface shadow-solid ${className}`}>
       <table className="w-full border-collapse">
         {children}
       </table>
@@ -15,19 +17,11 @@ export function Table({ children, className = '' }: TableProps) {
   )
 }
 
-interface TableHeaderProps {
-  children: ReactNode
+export function TableHeader({ children }: { children: ReactNode }) {
+  return <thead className="bg-track border-b-2 border-ink">{children}</thead>
 }
 
-export function TableHeader({ children }: TableHeaderProps) {
-  return <thead className="bg-bg">{children}</thead>
-}
-
-interface TableBodyProps {
-  children: ReactNode
-}
-
-export function TableBody({ children }: TableBodyProps) {
+export function TableBody({ children }: { children: ReactNode }) {
   return <tbody>{children}</tbody>
 }
 
@@ -39,7 +33,7 @@ interface TableRowProps {
 export function TableRow({ children, onClick }: TableRowProps) {
   return (
     <tr
-      className={`border-b border-surface ${onClick ? 'cursor-pointer hover:bg-surface/50' : ''}`}
+      className={`border-b border-line last:border-b-0 ${onClick ? 'cursor-pointer hover:bg-cream' : ''}`}
       onClick={onClick}
     >
       {children}
@@ -57,12 +51,11 @@ interface TableCellProps {
 export function TableCell({ children, header, colSpan, className = '' }: TableCellProps) {
   const Tag = header ? 'th' : 'td'
   return (
-    <Tag 
-      className={`p-3 text-right ${header ? 'font-semibold' : ''} ${className}`}
+    <Tag
+      className={`p-3 text-right text-ink ${header ? 'font-bold text-sm' : 'text-sm'} ${className}`}
       colSpan={colSpan}
     >
       {children}
     </Tag>
   )
 }
-

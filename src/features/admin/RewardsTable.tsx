@@ -99,12 +99,12 @@ export default function RewardsTable() {
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen app-bg p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-muted mb-1">פרסים</p>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-primary leading-tight">ניהול מתנות</h1>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-sky leading-tight">ניהול מתנות</h1>
           </div>
           <Link to="/admin/dashboard" className="w-full md:w-auto">
             <Button variant="secondary" className="w-full md:w-auto justify-center">
@@ -120,7 +120,7 @@ export default function RewardsTable() {
         <Card className="relative overflow-hidden">
           {isLoading && <LoadingOverlay message="טוען מתנות..." />}
           {error && !isLoading && (
-            <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            <div className="mb-4 rounded-sm2 border border-berry bg-berry px-4 py-3 text-sm text-berry">
               {error}
             </div>
           )}
@@ -144,13 +144,13 @@ export default function RewardsTable() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEdit(reward)}
-                          className="text-secondary hover:underline text-sm"
+                          className="text-berry hover:underline text-sm"
                         >
                           ערוך
                         </button>
                         <button
                           onClick={() => handleDelete(reward.id!)}
-                          className="text-danger hover:underline text-sm"
+                          className="text-berry hover:underline text-sm"
                         >
                           מחק
                         </button>
@@ -164,13 +164,13 @@ export default function RewardsTable() {
 
           <div className="md:hidden space-y-4">
             {rewards.map(reward => (
-              <div key={reward.id} className="rounded-2xl border border-white/10 bg-bg/80 p-4 shadow-lg">
+              <div key={reward.id} className="rounded-md2 border border-ink bg-cream/80 p-4 shadow-lg">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase text-muted tracking-widest">כותרת</p>
-                    <p className="text-lg font-bold text-primary">{reward.title}</p>
+                    <p className="text-xs uppercase text-muted ">כותרת</p>
+                    <p className="text-lg font-bold text-sky">{reward.title}</p>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${reward.active ? 'bg-accent/20 text-accent' : 'bg-danger/20 text-danger'}`}>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${reward.active ? 'bg-mint/20 text-mint' : 'bg-berry/20 text-berry'}`}>
                     {reward.active ? 'פעיל' : 'לא פעיל'}
                   </span>
                 </div>
@@ -180,13 +180,13 @@ export default function RewardsTable() {
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleEdit(reward)}
-                    className="rounded-xl border border-secondary/40 py-2 text-sm font-semibold text-secondary"
+                    className="rounded-sm2 border border-berry/40 py-2 text-sm font-semibold text-berry"
                   >
                     ערוך
                   </button>
                   <button
                     onClick={() => handleDelete(reward.id!)}
-                    className="rounded-xl border border-danger/40 py-2 text-sm font-semibold text-danger"
+                    className="rounded-sm2 border border-berry/40 py-2 text-sm font-semibold text-berry"
                   >
                     מחק
                   </button>

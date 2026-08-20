@@ -158,36 +158,36 @@ export default function LeaderboardTable() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen app-bg p-4 sm:p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
         {isLoading && <LoadingOverlay fullscreen message="טוען דירוג..." />}
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">ממשק אדמין</p>
-            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+            <p className="text-xs uppercase tracking-[0.4em] text-muted">ממשק אדמין</p>
+            <h1 className="text-3xl sm:text-5xl font-bold bg-surface bg-clip-text text-transparent">
               דירוג תלמידים 🏆
             </h1>
-            <p className="text-white/60">צפייה בהתקדמות ודירוג כל התלמידים</p>
+            <p className="text-muted">צפייה בהתקדמות ודירוג כל התלמידים</p>
           </div>
           <Link to="/admin/dashboard">
-            <button className="rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all">
+            <button className="rounded-sm2 border border-ink px-5 py-3 text-sm font-semibold text-muted hover:text-ink hover:border-white/40 transition-all">
               ← חזרה לדשבורד
             </button>
           </Link>
         </div>
 
         {/* Filters */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-4 mb-6">
+        <div className="bg-surface rounded-md2 border border-ink p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Category Filter */}
             <div className="flex-1">
-              <label className="block text-sm text-white/70 mb-2">סנן לפי קטגוריה:</label>
+              <label className="block text-sm text-muted mb-2">סנן לפי קטגוריה:</label>
               <select
                 value={selectedCategory || ''}
                 onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary"
+                className="w-full bg-surface border border-ink rounded-sm2 px-4 py-3 text-ink focus:outline-none focus:border-sky"
               >
                 <option value="">כל הקטגוריות</option>
                 {categories.map(cat => (
@@ -198,11 +198,11 @@ export default function LeaderboardTable() {
             
             {/* Sort Field */}
             <div className="flex-1">
-              <label className="block text-sm text-white/70 mb-2">מיין לפי:</label>
+              <label className="block text-sm text-muted mb-2">מיין לפי:</label>
               <select
                 value={sortField}
                 onChange={(e) => setSortField(e.target.value as SortField)}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary"
+                className="w-full bg-surface border border-ink rounded-sm2 px-4 py-3 text-ink focus:outline-none focus:border-sky"
               >
                 <option value="wordsLearned">מילים שנלמדו</option>
                 <option value="successRate">אחוז הצלחה</option>
@@ -215,63 +215,63 @@ export default function LeaderboardTable() {
 
         {/* Summary */}
         <div className="mb-6 text-center">
-          <span className="text-white/60">
-            מציג <span className="text-primary font-bold">{sortedStudents.length}</span> תלמידים
+          <span className="text-muted">
+            מציג <span className="text-sky font-bold">{sortedStudents.length}</span> תלמידים
           </span>
         </div>
 
         {/* Leaderboard */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
+        <div className="bg-surface rounded-md2 border border-ink overflow-hidden">
           {sortedStudents.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-2xl mb-2">📭</p>
-              <p className="text-white/60">אין נתונים להצגה</p>
+              <p className="text-muted">אין נתונים להצגה</p>
             </div>
           ) : (
             <div className="divide-y divide-white/10">
               {sortedStudents.map((student, index) => (
                 <div 
                   key={student.id}
-                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 hover:bg-white/5 transition-colors ${
-                    index === 0 ? 'bg-yellow-500/10' :
-                    index === 1 ? 'bg-gray-400/10' :
-                    index === 2 ? 'bg-orange-500/10' : ''
+                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 hover:bg-surface transition-colors ${
+                    index === 0 ? 'bg-sun' :
+                    index === 1 ? 'bg-muted' :
+                    index === 2 ? 'bg-sun' : ''
                   }`}
                 >
                   <div className="flex items-center gap-4 mb-3 sm:mb-0">
-                    <span className={`text-3xl w-12 text-center ${index < 3 ? '' : 'text-white/50 text-xl'}`}>
+                    <span className={`text-3xl w-12 text-center ${index < 3 ? '' : 'text-muted text-xl'}`}>
                       {getMedal(index)}
                     </span>
                     <div>
-                      <p className="font-bold text-white text-lg">{student.name}</p>
-                      <p className="text-sm text-white/50">פעיל לאחרונה: {formatDate(student.lastActive)}</p>
+                      <p className="font-bold text-ink text-lg">{student.name}</p>
+                      <p className="text-sm text-muted">פעיל לאחרונה: {formatDate(student.lastActive)}</p>
                     </div>
                   </div>
                   
                   <div className="flex flex-wrap gap-3 sm:gap-6 mr-16 sm:mr-0">
                     <div className="text-center">
-                      <p className={`text-xl font-bold ${sortField === 'wordsLearned' ? 'text-green-400' : 'text-white'}`}>
+                      <p className={`text-xl font-bold ${sortField === 'wordsLearned' ? 'text-mint' : 'text-ink'}`}>
                         {student.wordsLearned}
                       </p>
-                      <p className="text-xs text-white/50">מילים</p>
+                      <p className="text-xs text-muted">מילים</p>
                     </div>
                     <div className="text-center">
-                      <p className={`text-xl font-bold ${sortField === 'successRate' ? 'text-blue-400' : 'text-white'}`}>
+                      <p className={`text-xl font-bold ${sortField === 'successRate' ? 'text-sky' : 'text-ink'}`}>
                         {student.successRate}%
                       </p>
-                      <p className="text-xs text-white/50">הצלחה</p>
+                      <p className="text-xs text-muted">הצלחה</p>
                     </div>
                     <div className="text-center">
-                      <p className={`text-xl font-bold ${sortField === 'bestStreak' ? 'text-orange-400' : 'text-white'}`}>
+                      <p className={`text-xl font-bold ${sortField === 'bestStreak' ? 'text-sun' : 'text-ink'}`}>
                         🔥 {student.bestStreak}
                       </p>
-                      <p className="text-xs text-white/50">רצף</p>
+                      <p className="text-xs text-muted">רצף</p>
                     </div>
                     <div className="text-center">
-                      <p className={`text-xl font-bold ${sortField === 'totalAttempts' ? 'text-purple-400' : 'text-white'}`}>
+                      <p className={`text-xl font-bold ${sortField === 'totalAttempts' ? 'text-sky' : 'text-ink'}`}>
                         {student.totalAttempts}
                       </p>
-                      <p className="text-xs text-white/50">ניסיונות</p>
+                      <p className="text-xs text-muted">ניסיונות</p>
                     </div>
                   </div>
                 </div>

@@ -51,7 +51,7 @@ export default function BackupRestore() {
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen app-bg p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">גיבוי ושחזור</h1>
@@ -93,7 +93,7 @@ export default function BackupRestore() {
           {status && (
             <div
               className={`p-4 rounded-lg ${
-                status.startsWith('✓') ? 'bg-accent/20 text-accent' : 'bg-danger/20 text-danger'
+                status.startsWith('✓') ? 'bg-mint/20 text-mint' : 'bg-berry/20 text-berry'
               }`}
             >
               {status}

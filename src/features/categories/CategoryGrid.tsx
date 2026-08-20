@@ -1,512 +1,279 @@
-import { useEffect, useState, useRef } from 'react'
-import { Category, getCategories, getWordsByCategory, getUserProgress, getUnclaimedBenefitsCount } from '../../lib/supabase'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import {
+  Category,
+  getCategories,
+  getWordsByCategory,
+  getUserProgress,
+  getUnclaimedBenefitsCount,
+  getUserCategoryIds,
+  resolveVisibleLeafIds
+} from '../../lib/supabase'
+import { Link, useParams } from 'react-router-dom'
 import { Card } from '../../shared/ui/Card'
 import { Modal } from '../../shared/ui/Modal'
+import { Badge } from '../../shared/ui/Badge'
 import { useAuth } from '../../store/useAuth'
 import { useGame } from '../../store/useGame'
 import { makeAvatar, AvatarStyle } from '../../lib/dicebear'
-import { gsap } from 'gsap'
 import { GlobalProgress } from '../../shared/ui/GlobalProgress'
 import UserProfile from '../profile/UserProfile'
 import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
+import { iconForCategory, tileColor, IconArrowRight, IconLogout } from '../../shared/ui/icons'
 
 type CategoryWithProgress = Category & {
   completed: boolean
   progress: number
-}
-
-// פונקציה לזיהוי מיתר
-function isMeitarUser(username?: string): boolean {
-  if (!username) return false
-  const lower = username.toLowerCase()
-  return lower.includes('meitar') || lower.includes('מיתר')
-}
-
-// פונקציה לזיהוי מישל
-function isMichelUser(username?: string): boolean {
-  if (!username) return false
-  return username === 'מישל מישמיש'
-}
-
-// פונקציה לזיהוי משתמשות Task2 (אביגיל, תמר, אוריה, אריאל)
-function isTask2User(username?: string): boolean {
-  if (!username) return false
-  const task2Users = ['אביגיל אביגיל', 'תמר תמר', 'אוריה אוריה', 'אריאל אריאל']
-  return task2Users.includes(username)
-}
-
-// פונקציה לזיהוי משתמשי Set (איתי, ליעד)
-function isSetUser(username?: string): boolean {
-  if (!username) return false
-  const setUsers = ['איתי איתי', 'ליעד ליעד']
-  return setUsers.includes(username)
+  wordCount: number
+  correctCount: number
+  /** כמה יחידות יש תחת הקטגוריה — 0 כשזו יחידה שאפשר לשחק בה */
+  childCount: number
 }
 
 export default function CategoryGrid() {
   const [cats, setCats] = useState<CategoryWithProgress[]>([])
-  const [allCats, setAllCats] = useState<CategoryWithProgress[]>([])
   const [avatarUrl, setAvatarUrl] = useState('')
   const [showProfile, setShowProfile] = useState(false)
   const [benefitsCount, setBenefitsCount] = useState(0)
-  const [showOldGames, setShowOldGames] = useState(false)
   const user = useAuth(s => s.user)
   const logout = useAuth(s => s.logout)
-  const nav = useNavigate()
-  const avatarRef = useRef<HTMLDivElement>(null)
   const { achievements } = useGame()
-  const cardsRef = useRef<(HTMLDivElement | null)[]>([])
   const [showAchievement, setShowAchievement] = useState<typeof achievements[0] | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  
-  const isMeitar = isMeitarUser(user?.username)
-  const isMichel = isMichelUser(user?.username)
-  const isTask2 = isTask2User(user?.username)
-  const isSet = isSetUser(user?.username)
 
-  // טעינת אווטר
+  // ניווט דו-שלבי: ללא פרמטר = רמת הכיתות; עם פרמטר = היחידות שבתוך כיתה
+  const { parentId: parentIdParam } = useParams()
+  const parentId = parentIdParam ? Number(parentIdParam) : null
+  const [parentName, setParentName] = useState<string | null>(null)
+
   useEffect(() => {
     if (user?.avatarStyle && user?.avatarSeed) {
       try {
-        const url = makeAvatar(user.avatarStyle as AvatarStyle, user.avatarSeed, 120)
-        setAvatarUrl(url)
+        setAvatarUrl(makeAvatar(user.avatarStyle as AvatarStyle, user.avatarSeed, 96))
       } catch (e) {
         console.error('Avatar error:', e)
       }
     }
   }, [user])
 
-  // אנימציה של האווטר - טיול מצד לצד
   useEffect(() => {
-    if (avatarRef.current) {
-      gsap.to(avatarRef.current, {
-        x: 50,
-        duration: 3,
-        yoyo: true,
-        repeat: -1,
-        ease: 'power1.inOut'
-      })
-      
-      // קפיצה קלה
-      gsap.to(avatarRef.current, {
-        y: -10,
-        duration: 0.6,
-        yoyo: true,
-        repeat: -1,
-        ease: 'sine.inOut'
-      })
-    }
-  }, [avatarUrl])
-
-  // אנימציית כרטיסי קטגוריות בכניסה
-  useEffect(() => {
-    if (cats.length > 0) {
-      cardsRef.current.forEach((card, index) => {
-        if (card) {
-          gsap.fromTo(
-            card,
-            { y: 50, opacity: 0, scale: 0.8 },
-            { 
-              y: 0, 
-              opacity: 1, 
-              scale: 1, 
-              duration: 0.5, 
-              delay: index * 0.1,
-              ease: 'back.out(1.7)'
-            }
-          )
-        }
-      })
-    }
-  }, [cats])
-
-  // הצגת הישגים חדשים
-  useEffect(() => {
-    const latestAchievement = achievements[achievements.length - 1]
-    if (latestAchievement && latestAchievement.unlockedAt && Date.now() - latestAchievement.unlockedAt < 5000) {
-      setShowAchievement(latestAchievement)
-      setTimeout(() => setShowAchievement(null), 5000)
+    const latest = achievements[achievements.length - 1]
+    if (latest?.unlockedAt && Date.now() - latest.unlockedAt < 5000) {
+      setShowAchievement(latest)
+      const t = setTimeout(() => setShowAchievement(null), 5000)
+      return () => clearTimeout(t)
     }
   }, [achievements])
 
-  // טעינת מספר הטבות
   useEffect(() => {
     if (!user) return
-    
-    const loadBenefitsCount = async () => {
-      try {
-        const count = await getUnclaimedBenefitsCount(user.id)
-        setBenefitsCount(count)
-      } catch (error) {
-        console.error('Error loading benefits count:', error)
-      }
-    }
-    
-    loadBenefitsCount()
+    getUnclaimedBenefitsCount(user.id).then(setBenefitsCount).catch(console.error)
   }, [user])
 
   useEffect(() => {
     if (!user) return
-    
-    const loadCategoriesWithProgress = async () => {
+
+    const load = async () => {
       setIsLoading(true)
       setLoadError(null)
       try {
         const allCategories = await getCategories()
-        
-        // סינון קטגוריות לפי משתמש
-        const filteredCategories = isMeitar
-          ? allCategories.filter(cat => cat.name.startsWith('Meitar'))
-          : isMichel
-          ? allCategories.filter(cat => cat.name === 'הקלטה של משפטים')
-          : isTask2
-          ? allCategories.filter(cat => cat.name.startsWith('Task2_'))
-          : isSet
-          ? allCategories.filter(cat => cat.name.startsWith('Set'))
-          : allCategories.filter(cat => !cat.name.startsWith('Meitar') && !cat.name.startsWith('Task2_') && !cat.name.startsWith('Set') && cat.name !== 'כתיבת מילים' && cat.name !== 'הקלטה של משפטים')
-        
-        // קבלת כל ההתקדמות של המשתמש פעם אחת
+
+        // נראוּת נקבעת אך ורק לפי שיוך מפורש שהאדמין הגדיר.
+        // שיוך לכיתה (קטגוריית אב) מזכה בכל היחידות שתחתיה.
+        const assignedIds = await getUserCategoryIds(user.id)
+        const visibleLeafIds = resolveVisibleLeafIds(assignedIds, allCategories)
+
         const userProgress = await getUserProgress(user.id)
-        
-        console.log(`📊 User ${user.id} has ${userProgress.length} progress entries`)
-        console.log(`👤 User type: ${isMeitar ? 'Meitar' : isTask2 ? 'Task2' : isSet ? 'Set' : isMichel ? 'Michel' : 'Regular'}, showing ${filteredCategories.length} categories`)
-        
-        const catsWithProgress = await Promise.all(
-          filteredCategories.map(async (cat) => {
-            const catWords = await getWordsByCategory(cat.id)
-            
-            if (catWords.length === 0) {
-              return null // קטגוריה ריקה - לא להציג
-            }
-            
-            console.log(`📁 Category ${cat.name} has ${catWords.length} words`)
-            
-            // ספירת תשובות נכונות ייחודיות לכל מילה בקטגוריה
-            const correctWordsInCategory = new Set<number>()
-            
-            catWords.forEach(word => {
-              // בדיקה אם יש תשובה נכונה למילה הזו
-              const progressForWord = userProgress.filter(p => p.wordId === word.id)
-              const hasCorrectAnswer = progressForWord.some(p => p.isCorrect === true)
-              
-              if (hasCorrectAnswer) {
-                correctWordsInCategory.add(word.id)
-                console.log(`  ✅ Word "${word.en}" (${word.id}): CORRECT`)
-              } else if (progressForWord.length > 0) {
-                console.log(`  ❌ Word "${word.en}" (${word.id}): attempted but wrong`)
-              } else {
-                console.log(`  ⏸️  Word "${word.en}" (${word.id}): not attempted`)
-              }
+
+        // התקדמות לכל יחידה גלויה. יחידות ללא מילים נושרות.
+        const leafStats = new Map<number, { wordCount: number; correctCount: number }>()
+        await Promise.all(
+          allCategories
+            .filter(c => visibleLeafIds.has(c.id))
+            .map(async cat => {
+              const catWords = await getWordsByCategory(cat.id)
+              if (catWords.length === 0) return
+              const correctCount = catWords.filter(w =>
+                userProgress.some(p => p.wordId === w.id && p.isCorrect)
+              ).length
+              leafStats.set(cat.id, { wordCount: catWords.length, correctCount })
             })
-            
-            const completed = correctWordsInCategory.size === catWords.length && catWords.length > 0
-            const progress = catWords.length > 0 ? Math.round((correctWordsInCategory.size / catWords.length) * 100) : 0
-            
-            console.log(`📈 Category ${cat.name}: ${correctWordsInCategory.size}/${catWords.length} = ${progress}%`)
-            
-            return { ...cat, completed, progress }
-          })
         )
-        
-        // סינון קטגוריות ריקות
-        const nonEmptyCategories = catsWithProgress.filter(cat => cat !== null) as CategoryWithProgress[]
-        
-        // שמירת כל הקטגוריות (כולל ישנות) למשתמשים רגילים
-        if (!isMeitar && !isTask2 && !isSet && !isMichel) {
-          const oldGames = ['Nouns', 'Verbs', 'Prepositions', 'Adjectives', 'Pronouns', 'Vocabulary']
-          const newGamesCats = nonEmptyCategories.filter(c => !oldGames.includes(c.name))
-          
-          setAllCats(nonEmptyCategories)
-          setCats(newGamesCats)
+
+        const decorate = (
+          cat: Category,
+          wordCount: number,
+          correctCount: number,
+          childCount: number
+        ): CategoryWithProgress => ({
+          ...cat,
+          wordCount,
+          correctCount,
+          childCount,
+          completed: wordCount > 0 && correctCount === wordCount,
+          progress: wordCount > 0 ? Math.round((correctCount / wordCount) * 100) : 0
+        })
+
+        let view: CategoryWithProgress[]
+
+        if (parentId !== null) {
+          // בתוך כיתה: היחידות שלה
+          const parent = allCategories.find(c => c.id === parentId)
+          setParentName(parent?.displayName ?? null)
+          view = allCategories
+            .filter(c => c.parentId === parentId && leafStats.has(c.id))
+            .map(c => {
+              const st = leafStats.get(c.id)!
+              return decorate(c, st.wordCount, st.correctCount, 0)
+            })
         } else {
-          setCats(nonEmptyCategories)
+          setParentName(null)
+          // רמה עליונה: כיתות שיש תחתן לפחות יחידה גלויה אחת, ועוד יחידות בודדות ללא אב
+          const parents = allCategories.filter(c =>
+            c.parentId === null && allCategories.some(ch => ch.parentId === c.id)
+          )
+
+          const parentCards = parents
+            .map(p => {
+              const children = allCategories.filter(
+                c => c.parentId === p.id && leafStats.has(c.id)
+              )
+              if (children.length === 0) return null
+              const wordCount = children.reduce((a, c) => a + leafStats.get(c.id)!.wordCount, 0)
+              const correctCount = children.reduce((a, c) => a + leafStats.get(c.id)!.correctCount, 0)
+              return decorate(p, wordCount, correctCount, children.length)
+            })
+            .filter(Boolean) as CategoryWithProgress[]
+
+          const orphanCards = allCategories
+            .filter(c => c.parentId === null && leafStats.has(c.id))
+            .map(c => {
+              const st = leafStats.get(c.id)!
+              return decorate(c, st.wordCount, st.correctCount, 0)
+            })
+
+          view = [...parentCards, ...orphanCards]
         }
-        
-        console.log('📊 Categories summary:', nonEmptyCategories.map(c => ({ 
-          name: c.name, 
-          completed: c.completed, 
-          progress: c.progress 
-        })))
-        setIsLoading(false)
+
+        setCats(view.sort((a, b) => a.displayOrder - b.displayOrder))
       } catch (error) {
-        console.error('Error loading categories with progress:', error)
-        setLoadError('לא הצלחנו לטעון קטגוריות. נסו שוב אחרי רענון.')
+        console.error('Error loading categories:', error)
+        setLoadError('לא הצלחנו לטעון קטגוריות. נסי שוב אחרי רענון.')
+      } finally {
         setIsLoading(false)
       }
     }
-    
-    // טען נתונים רק פעם אחת בכניסה למסך
-    loadCategoriesWithProgress()
-  }, [user, nav])
+
+    load()
+  }, [user, parentId])
+
+  const greeting = `שלום, ${user?.firstName} 👋`
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 relative overflow-hidden bg-gradient-to-b from-[#05091A] to-[#0a1640] text-white">
-      {isLoading && <LoadingOverlay fullscreen message="טוען קטגוריות..." />}
-      <div className="max-w-4xl mx-auto">
-        {!isLoading && loadError && (
-          <div className="mb-4 rounded-2xl border border-red-400/50 bg-red-500/10 p-4 text-center text-sm text-red-100 shadow-lg">
-            {loadError}
-          </div>
-        )}
-        {/* הודעת הישג */}
+    <div className="min-h-screen app-bg p-4 sm:p-6 relative">
+      {isLoading && <LoadingOverlay fullscreen message="טוען קטגוריות…" />}
+
+      <div className="max-w-5xl mx-auto">
+        {/* Achievement toast */}
         {showAchievement && (
-          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-            <Card className="bg-gradient-to-r from-gold to-yellow-300 border-4 border-gold shadow-2xl">
-              <div className="text-center">
-                <div className="text-6xl mb-2">{showAchievement.icon}</div>
-                <div className="text-2xl font-bold text-white mb-1">{showAchievement.title}</div>
-                <div className="text-white/90">{showAchievement.description}</div>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between mb-8">
-          <div className="text-center sm:text-right space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">
-              {isMichel ? 'משחקים מיוחדים' : 'learning hub'}
-            </p>
-            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              {isMichel ? `שלום ${user?.firstName}! 🎨` : 'בחר קטגוריה'}
-            </h1>
-            {user && !isMichel && (
-              <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 text-sm text-white/70">
-                <span>שלום, {user.firstName}! 👋</span>
-                {achievements.length > 0 && (
-                  <span className="flex items-center gap-1 rounded-full bg-gold/15 px-3 py-1 font-semibold">
-                    🏆 {achievements.length} הישגים
-                  </span>
-                )}
-                {benefitsCount > 0 && (
-                  <span className="flex items-center gap-1 rounded-full bg-accent/15 px-3 py-1 font-semibold">
-                    ⭐ {benefitsCount} הטבות
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            {!isMichel && (
-              <button
-                onClick={() => setShowProfile(true)}
-                className="w-full sm:w-auto bg-gradient-to-r from-accent to-secondary text-white px-4 py-3 rounded-2xl font-semibold shadow-lg hover:translate-y-[-2px] transition-transform"
-              >
-                👤 האזור האישי
-              </button>
-            )}
-            <button
-              onClick={() => {
-                logout()
-                window.location.href = '/'
-              }}
-              className="w-full sm:w-auto rounded-2xl border border-white/20 px-4 py-3 text-sm font-semibold text-white/80 hover:text-white"
-            >
-              יציאה
-            </button>
-          </div>
-        </div>
-
-        {/* סרגל התקדמות גלובלי - לא למישל */}
-        {!isMichel && <GlobalProgress />}
-        
-        {/* כפתור משחקים ישנים - רק למשתמשים רגילים */}
-        {!isMeitar && !isMichel && !isTask2 && !isSet && allCats.length > 0 && (
-          <div className="mb-6">
-            <button
-              onClick={() => setShowOldGames(!showOldGames)}
-              className="w-full rounded-2xl border border-white/15 bg-white/5 px-6 py-4 text-lg font-semibold tracking-wide text-white shadow-lg backdrop-blur hover:bg-white/10 flex items-center justify-between"
-            >
-              <span className="flex items-center gap-2">
-                <span className="text-xl">{showOldGames ? '📚' : '🗂️'}</span>
-                משחקים ישנים
-              </span>
-              <span className="text-sm text-white/60">(6 קטגוריות) {showOldGames ? '▲' : '▼'}</span>
-            </button>
-          </div>
-        )}
-
-        {/* האווטר המטייל */}
-        {avatarUrl && (
-          <div 
-            ref={avatarRef}
-            className="fixed bottom-8 right-8 z-10"
-            style={{ willChange: 'transform' }}
-          >
-            <div className="relative">
-              <img 
-                src={avatarUrl} 
-                alt="Avatar" 
-                className="w-24 h-24 rounded-full border-4 border-primary shadow-2xl"
-              />
-              <div className="absolute -bottom-2 -right-2 bg-accent text-white text-xs px-2 py-1 rounded-full">
-                {user?.firstName}
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-pop-in">
+            <div className="bg-sun text-ink rounded-md2 border-outline border-ink shadow-solid-lg px-5 py-3.5 flex items-center gap-3">
+              <span className="text-3xl">{showAchievement.icon}</span>
+              <div>
+                <div className="font-bold text-base">{showAchievement.title}</div>
+                <div className="text-sm text-muted">{showAchievement.description}</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* משחקים חדשים או משחקים של מיתר */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
-          {cats.map((c, index) => (
-            <Link key={c.id} to={`/play/${c.id}`}>
-              <div 
-                ref={el => cardsRef.current[index] = el}
-                className="transform transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded-3xl"
-              >
-                <Card className={`cursor-pointer h-full relative shadow-2xl hover:shadow-2xl transition-all p-5 sm:p-6 border border-white/10 bg-white/5 text-white rounded-3xl ${
-                  c.completed 
-                    ? 'border-4 border-accent bg-gradient-to-br from-accent/10 to-accent/5' 
-                    : 'border-2 border-primary/20'
-                }`}>
-                  {c.completed && (
-                    <div className="absolute top-3 left-3 text-accent text-4xl animate-bounce">
-                      ✓
-                    </div>
-                  )}
-                  
-                  <div className="text-sm uppercase tracking-[0.3em] text-white/80 mb-1">
-                    {c.displayName}
-                  </div>
-                  
-                  <div className="text-2xl sm:text-3xl font-black mb-4 text-white break-words">
-                    {c.name}
-                  </div>
-                  
-                  <div className="flex flex-col gap-2 mb-4">
-                    <div className="text-sm text-white font-semibold">
-                      {c.completed ? (
-                        <span className="text-white font-bold flex items-center gap-1">
-                          🎉 הושלם!
-                        </span>
-                      ) : (
-                        <span>התקדמות: {c.progress}%</span>
-                      )}
-                    </div>
-                    
-                    {!c.completed && c.progress > 0 && (
-                      <span className="self-start text-xs font-semibold text-white bg-white/10 px-3 py-1 rounded-full animate-pulse">
-                        בדרך ליעד 🚀
-                      </span>
-                    )}
-                  </div>
-                  
-                  {!c.completed && (
-                    <div className="w-full bg-white/10 h-4 rounded-full overflow-hidden border border-white/20 relative">
-                      <div 
-                        className="h-full rounded-full transition-all duration-700 ease-out relative"
-                        style={{ 
-                          width: `${Math.max(c.progress, 5)}%`,
-                          background: 'linear-gradient(90deg, #5ee7df 0%, #b490ca 100%)',
-                          boxShadow: '0 0 12px rgba(94,231,223,0.5)'
-                        }}
-                      >
-                        <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle,_white,_transparent_70%)] animate-[pulse_2s_infinite]" />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {c.completed && (
-                    <div className="mt-4 flex items-center justify-center gap-2 text-gold text-2xl">
-                      <span>⭐</span>
-                      <span>⭐</span>
-                      <span>⭐</span>
-                    </div>
-                  )}
-                </Card>
+        {/* Header — clean, integrated */}
+        <header className="flex items-center justify-between gap-3 mb-6">
+          <button
+            onClick={() => setShowProfile(true)}
+            className="flex items-center gap-3 group"
+          >
+            {avatarUrl && (
+              <div className="relative">
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="w-12 h-12 sm:w-13 sm:h-13 rounded-sm2 bg-sky border-2 border-ink shadow-solid-sm"
+                />
               </div>
-            </Link>
+            )}
+            <div className="text-right">
+              <div className="text-lg font-bold text-ink leading-tight">{greeting}</div>
+              <div className="text-sm text-muted font-medium">הפרופיל שלי</div>
+            </div>
+          </button>
+
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {achievements.length > 0 && (
+              <Badge tone="gold" icon="🏆">{achievements.length}</Badge>
+            )}
+            {benefitsCount > 0 && (
+              <Badge tone="mint" icon="🎁">{benefitsCount}</Badge>
+            )}
+            <button
+              onClick={() => { logout(); window.location.href = '/' }}
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-ink bg-track border-2 border-ink shadow-solid-sm pressable px-3 py-1.5 rounded-pill"
+            >
+              <IconLogout size={16} /> יציאה
+            </button>
+          </div>
+        </header>
+
+        <GlobalProgress />
+
+        {parentId !== null && (
+          <Link
+            to="/categories"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-ink bg-surface border-2 border-ink shadow-solid-sm pressable px-3 py-1.5 rounded-pill mb-4"
+          >
+            <IconArrowRight size={16} /> חזרה לכיתות
+          </Link>
+        )}
+
+        <div className="mb-5 flex items-baseline justify-between">
+          <h1 className="text-2xl sm:text-[26px] font-bold text-ink tracking-tight">
+            {parentId !== null ? (parentName ?? 'יחידות') : 'בחרי קטגוריה'}
+          </h1>
+          {!isLoading && cats.length > 0 && (
+            <span className="text-sm text-muted font-medium">
+              {cats.length} {parentId !== null ? 'יחידות' : 'קטגוריות'}
+            </span>
+          )}
+        </div>
+
+        {!isLoading && loadError && (
+          <Card variant="solid" className="bg-berry text-ink text-center font-bold mb-5">
+            {loadError}
+          </Card>
+        )}
+
+        {!isLoading && !loadError && cats.length === 0 && (
+          <Card variant="solid" padding="lg" className="text-center">
+            <div className="text-5xl mb-3">📭</div>
+            <p className="text-muted font-medium">
+              {parentId !== null
+                ? 'אין יחידות זמינות בכיתה הזאת.'
+                : 'עדיין לא שויכו לך קטגוריות. פני למורה.'}
+            </p>
+          </Card>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          {cats.map((c, i) => (
+            <CategoryCard key={c.id} cat={c} delay={i * 45} index={i} />
           ))}
         </div>
-        
-        {/* משחקים ישנים - רק למשתמשים רגילים */}
-        {!isMeitar && !isMichel && !isTask2 && !isSet && showOldGames && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4 text-center text-white">משחקים ישנים 📚</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {allCats
-                .filter(c => ['Nouns', 'Verbs', 'Prepositions', 'Adjectives', 'Pronouns', 'Vocabulary'].includes(c.name))
-                .map((c, index) => (
-                  <Link key={c.id} to={`/play/${c.id}`}>
-                    <div 
-                      ref={el => cardsRef.current[cats.length + index] = el}
-                      className="transform transition-transform hover:scale-105"
-                    >
-                      <Card className={`cursor-pointer h-full relative shadow-lg hover:shadow-2xl transition-all ${
-                        c.completed 
-                          ? 'border-4 border-accent bg-gradient-to-br from-accent/10 to-accent/5' 
-                          : 'border-2 border-primary/20'
-                      }`}>
-                        {c.completed && (
-                          <div className="absolute top-3 left-3 text-accent text-4xl animate-bounce">
-                            ✓
-                          </div>
-                        )}
-                        
-                        <div className="text-white/80 text-sm mb-2 font-semibold">
-                          {c.displayName}
-                        </div>
-                        
-                        <div className="text-3xl font-bold mb-3 text-white">
-                          {c.name}
-                        </div>
-                        
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="text-sm text-white font-semibold flex-1">
-                            {c.completed ? (
-                              <span className="text-white font-bold">🎉 הושלם!</span>
-                            ) : (
-                              <span>התקדמות: {c.progress}%</span>
-                            )}
-                          </div>
-                          
-                          {!c.completed && c.progress > 0 && (
-                            <div className="text-white text-xs font-bold bg-white/10 px-2 py-1 rounded-full whitespace-nowrap">
-                              בדרך! 🚀
-                            </div>
-                          )}
-                        </div>
-                        
-                        {!c.completed && (
-                          <div className="w-full bg-gray-200 h-4 rounded-full overflow-hidden border border-gray-300/50 relative">
-                            <div className="absolute inset-0 opacity-10 bg-[length:10px_10px] bg-[linear-gradient(45deg,rgba(0,0,0,.1)_25%,transparent_25%,transparent_50%,rgba(0,0,0,.1)_50%,rgba(0,0,0,.1)_75%,transparent_75%,transparent)]" />
-                            
-                            <div 
-                              className="h-full rounded-full transition-all duration-1000 ease-out relative"
-                              style={{ 
-                                width: `${Math.max(c.progress, 5)}%`,
-                                background: 'linear-gradient(90deg, #FFD700 0%, #FFA500 100%)',
-                                boxShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
-                              }}
-                            >
-                              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                            </div>
-                          </div>
-                        )}
-                        
-                        {c.completed && (
-                          <div className="mt-2 flex items-center justify-center gap-2 text-gold">
-                            <span>⭐</span>
-                            <span>⭐</span>
-                            <span>⭐</span>
-                          </div>
-                        )}
-                      </Card>
-                    </div>
-                  </Link>
-                ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* מודל פרופיל */}
       <Modal isOpen={showProfile} onClose={() => {
         setShowProfile(false)
-        // רענון מספר ההטבות בסגירה
-        if (user) {
-          getUnclaimedBenefitsCount(user.id).then(count => setBenefitsCount(count))
-        }
+        if (user) getUnclaimedBenefitsCount(user.id).then(setBenefitsCount).catch(() => {})
       }}>
         <UserProfile />
       </Modal>
@@ -514,3 +281,55 @@ export default function CategoryGrid() {
   )
 }
 
+function CategoryCard({ cat, delay, index }: { cat: CategoryWithProgress; delay: number; index: number }) {
+  const Icon = iconForCategory(cat.name)
+
+  // כיתה (יש לה יחידות) נכנסת פנימה; יחידה פותחת את המשחק
+  const isParent = cat.childCount > 0
+  const remaining = cat.wordCount - cat.correctCount
+
+  return (
+    <Link
+      to={isParent ? `/categories/${cat.id}` : `/play/${cat.id}`}
+      className="block animate-pop-in"
+      style={{ animationDelay: `${delay}ms`, animationFillMode: 'both' }}
+    >
+      <Card variant="solid" padding="sm" interactive className="h-full">
+        <div className="flex items-start justify-between gap-3">
+          <div
+            className={`w-12 h-12 rounded-sm2 grid place-items-center text-ink border-2 border-ink shadow-solid-sm ${tileColor(index)}`}
+          >
+            <Icon size={24} />
+          </div>
+
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-xs font-bold text-ink border-2 border-ink shadow-solid-sm ${
+              cat.completed ? 'bg-mint' : cat.correctCount > 0 ? 'bg-sun' : 'bg-track'
+            }`}
+          >
+            {cat.correctCount}/{cat.wordCount}
+          </span>
+        </div>
+
+        <h3 className="text-lg font-bold text-ink leading-tight break-words mt-3">
+          {cat.displayName}
+        </h3>
+        <p className="text-sm text-muted font-medium mt-0.5">
+          {isParent && <>{cat.childCount} יחידות · </>}
+          {cat.completed
+            ? 'סיימת הכול'
+            : cat.correctCount === 0
+            ? 'עוד לא התחלת'
+            : `עוד ${remaining} ${remaining === 1 ? 'מילה' : 'מילים'} לסיום`}
+        </p>
+
+        <div className="mt-3 h-2.5 rounded-pill bg-track border-2 border-ink overflow-hidden">
+          <div
+            className="h-full bg-mint transition-all duration-500 ease-out"
+            style={{ width: `${cat.progress}%` }}
+          />
+        </div>
+      </Card>
+    </Link>
+  )
+}

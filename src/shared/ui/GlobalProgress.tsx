@@ -11,14 +11,12 @@ export function GlobalProgress() {
 
   useEffect(() => {
     if (!user) return
-    
+
     const loadProgress = async () => {
       try {
-        // ספירת כל המילים הפעילות
         const allWords = await getAllActiveWords()
         setTotalWords(allWords.length)
-        
-        // ספירת מילים שנענו עליהן נכון
+
         const progress = await getUserProgress(user.id)
         const correctProgress = progress.filter(p => p.isCorrect)
         const uniqueWords = new Set(correctProgress.map(p => p.wordId))
@@ -27,7 +25,7 @@ export function GlobalProgress() {
         console.error('Error loading global progress:', error)
       }
     }
-    
+
     loadProgress()
   }, [user, totalCorrect])
 
@@ -35,64 +33,43 @@ export function GlobalProgress() {
   const wordsLeft = totalWords - completedWords
 
   return (
-    <div className="bg-gradient-to-r from-purple via-indigo-500 to-pink shadow-lg rounded-2xl p-4 sm:p-5 mb-6 space-y-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
-          {/* כוכבים */}
-          <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-full justify-center">
-            <span className="text-2xl">⭐</span>
-            <span className="text-white font-bold text-xl">{stars}</span>
-          </div>
-          
-          {/* רצף נוכחי */}
-          <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-full justify-center">
-            <span className="text-2xl">🔥</span>
-            <span className="text-white font-bold text-xl">{streak}</span>
-            {maxStreak > 0 && (
-              <span className="text-white/70 text-sm">(שיא: {maxStreak})</span>
-            )}
-          </div>
-          
-          {/* סך הכל נכונות */}
-          <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-full justify-center">
-            <span className="text-2xl">✓</span>
-            <span className="text-white font-bold text-xl">{totalCorrect}</span>
-          </div>
+    <div className="bg-surface rounded-md2 border-outline border-ink shadow-solid p-4 sm:p-5 mb-5 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Stat icon="⭐" value={stars} tone="bg-sun" label="כוכבים" />
+          <Stat icon="🔥" value={streak} tone="bg-berry" label={maxStreak > 0 ? `שיא ${maxStreak}` : 'רצף'} />
+          <Stat icon="✓" value={totalCorrect} tone="bg-mint" label="נכונות" />
         </div>
-        
-        {/* ספירה לאחור */}
+
         {wordsLeft > 0 && (
-          <div className="text-white text-sm bg-white/20 backdrop-blur px-4 py-2 rounded-full self-start sm:self-center text-center">
-            עוד {wordsLeft} מילים למתנה! 🎁
+          <div className="text-sm font-bold text-ink bg-track border-2 border-ink px-3.5 py-1.5 rounded-pill">
+            עוד {wordsLeft} מילים למתנה 🎁
           </div>
         )}
       </div>
-      
-      {/* סרגל התקדמות */}
-      <div className="relative">
-        <div className="w-full bg-white/30 h-3 sm:h-4 rounded-full overflow-hidden">
-          <div 
-            className="bg-gradient-to-r from-gold to-yellow-300 h-full rounded-full transition-all duration-500 ease-out flex items-center justify-end px-2"
-            style={{ width: `${progressPercent}%` }}
-          >
-            {progressPercent > 10 && (
-              <span className="text-white text-xs font-bold drop-shadow">
-                {progressPercent}%
-              </span>
-            )}
-          </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs font-semibold">
+          <span className="text-muted">התקדמות כוללת</span>
+          <span className="text-ink">{completedWords} / {totalWords}</span>
         </div>
-        {progressPercent <= 10 && (
-          <span className="absolute top-0 left-2 text-white text-xs font-bold">
-            {progressPercent}%
-          </span>
-        )}
-      </div>
-      
-      <div className="text-white/80 text-xs mt-1 text-center">
-        {completedWords} / {totalWords} מילים
+        <div className="relative w-full bg-track h-3 rounded-pill border-2 border-ink overflow-hidden">
+          <div
+            className="absolute inset-y-0 right-0 bg-mint transition-all duration-500 ease-out"
+            style={{ width: `${Math.max(progressPercent, 2)}%` }}
+          />
+        </div>
       </div>
     </div>
   )
 }
 
+function Stat({ icon, value, label, tone }: { icon: string; value: number; label: string; tone: string }) {
+  return (
+    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-pill border-2 border-ink text-ink ${tone}`}>
+      <span className="text-base leading-none">{icon}</span>
+      <span className="font-bold text-base leading-none">{value}</span>
+      <span className="text-[11px] font-semibold opacity-75">{label}</span>
+    </div>
+  )
+}

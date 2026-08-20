@@ -74,6 +74,7 @@ interface CategoryDB {
   name: string // שם הקטגוריה - יכול להיות כל טקסט
   display_name: string
   display_order: number
+  parent_id: number | null // קטגוריית אב (כיתה); null = קטגוריה ברמה העליונה
   created_at: string
 }
 
@@ -97,6 +98,7 @@ export interface Category {
   name: string // שם הקטגוריה - יכול להיות כל טקסט
   displayName: string
   displayOrder: number
+  parentId: number | null // קטגוריית אב (כיתה); null = קטגוריה ברמה העליונה
   createdAt: string
 }
 
@@ -121,6 +123,7 @@ function dbToCategory(db: CategoryDB): Category {
     name: db.name,
     displayName: db.display_name,
     displayOrder: db.display_order,
+    parentId: db.parent_id ?? null,
     createdAt: db.created_at
   }
 }
@@ -303,6 +306,77 @@ export async function getCategories() {
   
   if (error) throw error
   return (data as CategoryDB[]).map(dbToCategory)
+}
+
+/**
+ * הקטגוריות המשויכות לתלמיד (ids גולמיים, כולל אבות).
+ * מקור האמת היחיד לנראוּת — אין יותר סינון לפי שם משתמש.
+ */
+export async function getUserCategoryIds(userId: string): Promise<number[]> {
+  const { data, error } = await supabase
+    .from('worder_user_categories')
+    .select('category_id')
+    .eq('user_id', userId)
+
+  if (error) throw error
+  return (data as { category_id: number }[]).map(r => r.category_id)
+}
+
+/**
+ * קובע מחדש את השיוכים של תלמיד. מחליף את הרשימה כולה.
+ * שיוך לקטגוריית אב מזכה אוטומטית בכל היחידות שתחתיה — ראה resolveVisibleCategories.
+ */
+export async function setUserCategoryIds(userId: string, categoryIds: number[]) {
+  const { error: delError } = await supabase
+    .from('worder_user_categories')
+    .delete()
+    .eq('user_id', userId)
+
+  if (delError) throw delError
+  if (categoryIds.length === 0) return
+
+  const rows = categoryIds.map(category_id => ({ user_id: userId, category_id }))
+  const { error: insError } = await supabase
+    .from('worder_user_categories')
+    .insert(rows)
+
+  if (insError) throw insError
+}
+
+/** שיוכי כל התלמידים בבת אחת — לתצוגת טבלת המשתמשים */
+export async function getAllUserCategoryIds(): Promise<Record<string, number[]>> {
+  const { data, error } = await supabase
+    .from('worder_user_categories')
+    .select('user_id, category_id')
+
+  if (error) throw error
+  const map: Record<string, number[]> = {}
+  for (const r of data as { user_id: string; category_id: number }[]) {
+    ;(map[r.user_id] ||= []).push(r.category_id)
+  }
+  return map
+}
+
+/**
+ * מרחיב שיוכים גולמיים לרשימת העלים שהתלמיד רשאי לשחק בהם.
+ * שיוך לאב => כל ילדיו. שיוך לעלה => העלה עצמו.
+ * טהורה (בלי גישה לרשת) כדי שתהיה קלה לבדיקה.
+ */
+export function resolveVisibleLeafIds(
+  assignedIds: number[],
+  categories: Category[]
+): Set<number> {
+  const assigned = new Set(assignedIds)
+  const visible = new Set<number>()
+
+  for (const cat of categories) {
+    const isLeaf = !categories.some(c => c.parentId === cat.id)
+    if (!isLeaf) continue
+    if (assigned.has(cat.id) || (cat.parentId !== null && assigned.has(cat.parentId))) {
+      visible.add(cat.id)
+    }
+  }
+  return visible
 }
 
 /** Get all active words for a category */

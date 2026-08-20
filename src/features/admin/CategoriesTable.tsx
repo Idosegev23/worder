@@ -12,6 +12,7 @@ interface CategoryWithCount {
   name: string
   display_name: string
   display_order: number
+  parent_id: number | null
   is_active: boolean
   word_count: number
 }
@@ -23,7 +24,15 @@ export default function CategoriesTable() {
   const [isLoading, setIsLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<CategoryWithCount | null>(null)
-  const [newCategory, setNewCategory] = useState({ name: '', display_name: '', display_order: 100 })
+  const [newCategory, setNewCategory] = useState<{
+    name: string
+    display_name: string
+    display_order: number
+    parent_id: number | null
+  }>({ name: '', display_name: '', display_order: 100, parent_id: null })
+
+  // קטגוריות־על בלבד — היררכיה של רמה אחת, כיתה לא יכולה להיכנס תחת כיתה
+  const parentOptions = categories.filter(c => c.parent_id === null)
 
   useEffect(() => {
     if (!isAuth) {
@@ -64,6 +73,7 @@ export default function CategoriesTable() {
         name: cat.name,
         display_name: cat.display_name,
         display_order: cat.display_order,
+        parent_id: cat.parent_id ?? null,
         is_active: cat.is_active !== false, // Default to true if not set
         word_count: wordCounts.get(cat.id) || 0
       }))
@@ -88,12 +98,13 @@ export default function CategoriesTable() {
         .insert({
           name: newCategory.name,
           display_name: newCategory.display_name,
-          display_order: newCategory.display_order
+          display_order: newCategory.display_order,
+          parent_id: newCategory.parent_id
         })
 
       if (error) throw error
 
-      setNewCategory({ name: '', display_name: '', display_order: 100 })
+      setNewCategory({ name: '', display_name: '', display_order: 100, parent_id: null })
       setIsModalOpen(false)
       loadCategories()
     } catch (error) {
@@ -111,7 +122,8 @@ export default function CategoriesTable() {
         .update({
           name: editingCategory.name,
           display_name: editingCategory.display_name,
-          display_order: editingCategory.display_order
+          display_order: editingCategory.display_order,
+          parent_id: editingCategory.parent_id
         })
         .eq('id', editingCategory.id)
 
@@ -204,28 +216,28 @@ export default function CategoriesTable() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen app-bg p-4 sm:p-6 md:p-8">
       <div className="max-w-5xl mx-auto">
         {isLoading && <LoadingOverlay fullscreen message="טוען קטגוריות..." />}
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">ממשק אדמין</p>
-            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <p className="text-xs uppercase tracking-[0.4em] text-muted">ממשק אדמין</p>
+            <h1 className="text-3xl sm:text-5xl font-bold bg-surface bg-clip-text text-transparent">
               ניהול קטגוריות 📂
             </h1>
-            <p className="text-white/60">הוספה, עריכה וסידור קטגוריות</p>
+            <p className="text-muted">הוספה, עריכה וסידור קטגוריות</p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="px-5 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+              className="px-5 py-3 bg-sky text-ink rounded-sm2 font-semibold hover:bg-sky/90 transition-colors"
             >
               ➕ קטגוריה חדשה
             </button>
             <Link to="/admin/dashboard">
-              <button className="rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all">
+              <button className="rounded-sm2 border border-ink px-5 py-3 text-sm font-semibold text-muted hover:text-ink hover:border-white/40 transition-all">
                 ← חזרה
               </button>
             </Link>
@@ -233,27 +245,27 @@ export default function CategoriesTable() {
         </div>
 
         {/* Summary */}
-        <div className="mb-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-4 text-center">
-          <span className="text-white/60">
-            סה"כ <span className="text-primary font-bold">{categories.length}</span> קטגוריות
+        <div className="mb-6 bg-surface rounded-md2 border border-ink p-4 text-center">
+          <span className="text-muted">
+            סה"כ <span className="text-sky font-bold">{categories.length}</span> קטגוריות
             {' • '}
-            <span className="text-green-400 font-bold">{categories.filter(c => c.is_active).length}</span> פעילות
+            <span className="text-mint font-bold">{categories.filter(c => c.is_active).length}</span> פעילות
           </span>
         </div>
 
         {/* Categories List */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
+        <div className="bg-surface rounded-md2 border border-ink overflow-hidden">
           {categories.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-2xl mb-2">📭</p>
-              <p className="text-white/60">אין קטגוריות</p>
+              <p className="text-muted">אין קטגוריות</p>
             </div>
           ) : (
             <div className="divide-y divide-white/10">
               {categories.map((cat, index) => (
                 <div 
                   key={cat.id}
-                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 hover:bg-white/5 transition-colors ${
+                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 hover:bg-surface transition-colors ${
                     !cat.is_active ? 'opacity-50' : ''
                   }`}
                 >
@@ -263,23 +275,28 @@ export default function CategoriesTable() {
                       <button
                         onClick={() => handleMoveUp(cat, index)}
                         disabled={index === 0}
-                        className="text-white/50 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="text-muted hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         ▲
                       </button>
                       <button
                         onClick={() => handleMoveDown(cat, index)}
                         disabled={index === categories.length - 1}
-                        className="text-white/50 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="text-muted hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         ▼
                       </button>
                     </div>
                     
                     <div>
-                      <p className="font-bold text-white text-lg">{cat.display_name}</p>
-                      <p className="text-sm text-white/50">
+                      <p className="font-bold text-ink text-lg">{cat.display_name}</p>
+                      <p className="text-sm text-muted">
                         {cat.name} • סדר: {cat.display_order}
+                        {cat.parent_id !== null && (
+                          <span className="text-muted">
+                            {' '}• בתוך: {categories.find(c => c.id === cat.parent_id)?.display_name ?? '?'}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -287,8 +304,8 @@ export default function CategoriesTable() {
                   <div className="flex items-center gap-4 mr-10 sm:mr-0">
                     {/* Word count */}
                     <div className="text-center px-3">
-                      <p className="text-xl font-bold text-blue-400">{cat.word_count}</p>
-                      <p className="text-xs text-white/50">מילים</p>
+                      <p className="text-xl font-bold text-sky">{cat.word_count}</p>
+                      <p className="text-xs text-muted">מילים</p>
                     </div>
 
                     {/* Status toggle */}
@@ -296,8 +313,8 @@ export default function CategoriesTable() {
                       onClick={() => handleToggleActive(cat)}
                       className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors ${
                         cat.is_active 
-                          ? 'bg-green-500/20 text-green-400 border border-green-400/30' 
-                          : 'bg-red-500/20 text-red-400 border border-red-400/30'
+                          ? 'bg-mint text-mint border border-mint' 
+                          : 'bg-berry text-berry border border-berry'
                       }`}
                     >
                       {cat.is_active ? '✓ פעיל' : '✗ מושבת'}
@@ -307,13 +324,13 @@ export default function CategoriesTable() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => setEditingCategory(cat)}
-                        className="px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+                        className="px-3 py-2 bg-sky text-sky rounded-lg hover:bg-sky transition-colors"
                       >
                         ✏️
                       </button>
                       <button
                         onClick={() => handleDeleteCategory(cat)}
-                        className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+                        className="px-3 py-2 bg-berry text-berry rounded-lg hover:bg-berry transition-colors"
                         disabled={cat.word_count > 0}
                       >
                         🗑️
@@ -330,7 +347,7 @@ export default function CategoriesTable() {
         <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="הוספת קטגוריה חדשה">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm mb-1 text-white/70">שם מזהה (באנגלית):</label>
+              <label className="block text-sm mb-1 text-muted">שם מזהה (באנגלית):</label>
               <Input
                 value={newCategory.name}
                 onChange={e => setNewCategory({ ...newCategory, name: e.target.value })}
@@ -338,7 +355,7 @@ export default function CategoriesTable() {
               />
             </div>
             <div>
-              <label className="block text-sm mb-1 text-white/70">שם תצוגה (בעברית):</label>
+              <label className="block text-sm mb-1 text-muted">שם תצוגה (בעברית):</label>
               <Input
                 value={newCategory.display_name}
                 onChange={e => setNewCategory({ ...newCategory, display_name: e.target.value })}
@@ -346,12 +363,28 @@ export default function CategoriesTable() {
               />
             </div>
             <div>
-              <label className="block text-sm mb-1 text-white/70">סדר תצוגה:</label>
+              <label className="block text-sm mb-1 text-muted">סדר תצוגה:</label>
               <Input
                 type="number"
                 value={newCategory.display_order}
                 onChange={e => setNewCategory({ ...newCategory, display_order: Number(e.target.value) })}
               />
+            </div>
+            <div>
+              <label className="block text-sm mb-1 text-muted">שייכת לכיתה:</label>
+              <select
+                className="w-full rounded-sm2 bg-surface border border-ink text-ink px-3 py-2 outline-none focus:border-ink"
+                value={newCategory.parent_id ?? ''}
+                onChange={e => setNewCategory({
+                  ...newCategory,
+                  parent_id: e.target.value ? Number(e.target.value) : null
+                })}
+              >
+                <option value="">— ללא (זו קטגוריית־על / כיתה) —</option>
+                {parentOptions.map(p => (
+                  <option key={p.id} value={p.id}>{p.display_name}</option>
+                ))}
+              </select>
             </div>
             <div className="flex gap-3 mt-6">
               <Button onClick={handleAddCategory} className="flex-1">
@@ -373,26 +406,44 @@ export default function CategoriesTable() {
           {editingCategory && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm mb-1 text-white/70">שם מזהה (באנגלית):</label>
+                <label className="block text-sm mb-1 text-muted">שם מזהה (באנגלית):</label>
                 <Input
                   value={editingCategory.name}
                   onChange={e => setEditingCategory({ ...editingCategory, name: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1 text-white/70">שם תצוגה (בעברית):</label>
+                <label className="block text-sm mb-1 text-muted">שם תצוגה (בעברית):</label>
                 <Input
                   value={editingCategory.display_name}
                   onChange={e => setEditingCategory({ ...editingCategory, display_name: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1 text-white/70">סדר תצוגה:</label>
+                <label className="block text-sm mb-1 text-muted">סדר תצוגה:</label>
                 <Input
                   type="number"
                   value={editingCategory.display_order}
                   onChange={e => setEditingCategory({ ...editingCategory, display_order: Number(e.target.value) })}
                 />
+              </div>
+              <div>
+                <label className="block text-sm mb-1 text-muted">שייכת לכיתה:</label>
+                <select
+                  className="w-full rounded-sm2 bg-surface border border-ink text-ink px-3 py-2 outline-none focus:border-ink"
+                  value={editingCategory.parent_id ?? ''}
+                  onChange={e => setEditingCategory({
+                    ...editingCategory,
+                    parent_id: e.target.value ? Number(e.target.value) : null
+                  })}
+                >
+                  <option value="">— ללא (זו קטגוריית־על / כיתה) —</option>
+                  {parentOptions
+                    .filter(p => p.id !== editingCategory.id)
+                    .map(p => (
+                      <option key={p.id} value={p.id}>{p.display_name}</option>
+                    ))}
+                </select>
               </div>
               <div className="flex gap-3 mt-6">
                 <Button onClick={handleEditCategory} className="flex-1">

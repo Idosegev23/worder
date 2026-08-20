@@ -223,34 +223,34 @@ export default function ProgressTable() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen app-bg p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">ממשק אדמין</p>
-            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <p className="text-xs uppercase tracking-[0.4em] text-muted">ממשק אדמין</p>
+            <h1 className="text-3xl sm:text-5xl font-bold bg-surface bg-clip-text text-transparent">
               התקדמות תלמידים 📊
             </h1>
-            <p className="text-white/60">מעקב מפורט על התקדמות בכל קטגוריה</p>
+            <p className="text-muted">מעקב מפורט על התקדמות בכל קטגוריה</p>
           </div>
           <Link to="/admin/dashboard">
-            <button className="rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all">
+            <button className="rounded-sm2 border border-ink px-5 py-3 text-sm font-semibold text-muted hover:text-ink hover:border-white/40 transition-all">
               ← חזרה לדשבורד
             </button>
           </Link>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-white/70">
-            <span>סה״כ <span className="text-primary font-bold">{stats.length}</span> תלמידים</span>
-            <span><span className="text-green-400 font-bold">{stats.reduce((sum, s) => sum + s.totalAttempts, 0)}</span> ניסיונות</span>
+        <div className="bg-surface rounded-md2 border border-ink p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted">
+            <span>סה״כ <span className="text-sky font-bold">{stats.length}</span> תלמידים</span>
+            <span><span className="text-mint font-bold">{stats.reduce((sum, s) => sum + s.totalAttempts, 0)}</span> ניסיונות</span>
           </div>
         </div>
 
         <div className="relative">
           {isLoading && <LoadingOverlay fullscreen message="טוען סטטיסטיקות..." />}
           {error && !isLoading && (
-            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            <div className="mb-4 rounded-sm2 border border-berry bg-berry px-4 py-3 text-sm text-berry">
               {error}
             </div>
           )}
@@ -258,75 +258,75 @@ export default function ProgressTable() {
           {/* תצוגת כרטיסים - מובייל ודסקטופ */}
           <div className="space-y-6">
             {stats.map(stat => (
-              <div key={stat.user.id} className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+              <div key={stat.user.id} className="rounded-md2 border border-ink bg-surface p-5 ">
                 {/* כותרת - פרטי תלמיד */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-white/10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-ink">
                   <div>
-                    <p className="text-xl font-bold text-white">
+                    <p className="text-xl font-bold text-ink">
                       {stat.user.firstName} {stat.user.lastName}
                     </p>
-                    <p className="text-sm text-white/50">@{stat.user.username}</p>
+                    <p className="text-sm text-muted">@{stat.user.username}</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-green-400">{stat.correctAnswers}</p>
-                      <p className="text-xs text-white/50">נכונים</p>
+                      <p className="text-2xl font-bold text-mint">{stat.correctAnswers}</p>
+                      <p className="text-xs text-muted">נכונים</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-red-400">{stat.wrongAnswers}</p>
-                      <p className="text-xs text-white/50">שגויים</p>
+                      <p className="text-2xl font-bold text-berry">{stat.wrongAnswers}</p>
+                      <p className="text-xs text-muted">שגויים</p>
                     </div>
                     <div className="text-center">
                       <p className={`text-2xl font-bold ${
-                        stat.successRate >= 80 ? 'text-green-400' :
-                        stat.successRate >= 60 ? 'text-yellow-400' : 'text-red-400'
+                        stat.successRate >= 80 ? 'text-mint' :
+                        stat.successRate >= 60 ? 'text-sun' : 'text-berry'
                       }`}>
                         {stat.successRate.toFixed(0)}%
                       </p>
-                      <p className="text-xs text-white/50">הצלחה</p>
+                      <p className="text-xs text-muted">הצלחה</p>
                     </div>
                   </div>
                 </div>
 
                 {/* התקדמות לפי קטגוריה */}
                 <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-white/70 mb-3">📂 התקדמות לפי קטגוריה:</h4>
+                  <h4 className="text-sm font-semibold text-muted mb-3">📂 התקדמות לפי קטגוריה:</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {stat.categoryProgress.map(cp => (
                       <div 
                         key={cp.categoryId}
-                        className={`rounded-xl p-3 border ${
-                          cp.progressPercent === 0 ? 'bg-gray-500/10 border-gray-500/30' :
-                          cp.progressPercent < 50 ? 'bg-red-500/10 border-red-500/30' :
-                          cp.progressPercent < 100 ? 'bg-yellow-500/10 border-yellow-500/30' :
-                          'bg-green-500/10 border-green-500/30'
+                        className={`rounded-sm2 p-3 border ${
+                          cp.progressPercent === 0 ? 'bg-muted border-muted' :
+                          cp.progressPercent < 50 ? 'bg-berry border-berry' :
+                          cp.progressPercent < 100 ? 'bg-sun border-sun' :
+                          'bg-mint border-mint'
                         }`}
                       >
                         <div className="flex justify-between items-start mb-2">
-                          <span className="text-sm font-medium text-white truncate flex-1">
+                          <span className="text-sm font-medium text-ink truncate flex-1">
                             {cp.displayName}
                           </span>
                           <span className={`text-sm font-bold ${
-                            cp.progressPercent === 0 ? 'text-gray-400' :
-                            cp.progressPercent < 50 ? 'text-red-400' :
-                            cp.progressPercent < 100 ? 'text-yellow-400' :
-                            'text-green-400'
+                            cp.progressPercent === 0 ? 'text-muted' :
+                            cp.progressPercent < 50 ? 'text-berry' :
+                            cp.progressPercent < 100 ? 'text-sun' :
+                            'text-mint'
                           }`}>
                             {cp.progressPercent}%
                           </span>
                         </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+                        <div className="h-2 bg-surface rounded-full overflow-hidden mb-2">
                           <div 
                             className={`h-full transition-all ${
-                              cp.progressPercent === 0 ? 'bg-gray-500' :
-                              cp.progressPercent < 50 ? 'bg-red-500' :
-                              cp.progressPercent < 100 ? 'bg-yellow-500' :
-                              'bg-green-500'
+                              cp.progressPercent === 0 ? 'bg-muted' :
+                              cp.progressPercent < 50 ? 'bg-berry' :
+                              cp.progressPercent < 100 ? 'bg-sun' :
+                              'bg-mint'
                             }`}
                             style={{ width: `${cp.progressPercent}%` }}
                           />
                         </div>
-                        <div className="flex justify-between text-xs text-white/50">
+                        <div className="flex justify-between text-xs text-muted">
                           <span>{cp.completedWords} / {cp.totalWords} מילים</span>
                           <span>✓ {cp.correctWords} נכון</span>
                         </div>
@@ -334,20 +334,20 @@ export default function ProgressTable() {
                     ))}
                   </div>
                   {stat.categoryProgress.length === 0 && (
-                    <p className="text-sm text-white/40 text-center py-4">
+                    <p className="text-sm text-muted text-center py-4">
                       עדיין לא התחיל לשחק
                     </p>
                   )}
                 </div>
 
                 {/* כותרת תחתונה */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-white/10">
-                  <span className="text-xs text-white/50">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-ink">
+                  <span className="text-xs text-muted">
                     פעילות אחרונה: {formatDate(stat.lastActivity)}
                   </span>
                   <button
                     onClick={() => handleViewDetails(stat.user)}
-                    className="px-4 py-2 rounded-xl bg-primary/20 text-primary text-sm font-semibold hover:bg-primary/30 transition-colors"
+                    className="px-4 py-2 rounded-sm2 bg-sky/20 text-sky text-sm font-semibold hover:bg-sky/30 transition-colors"
                   >
                     📋 פירוט מילים
                   </button>
@@ -355,9 +355,9 @@ export default function ProgressTable() {
               </div>
             ))}
             {stats.length === 0 && !isLoading && (
-              <div className="rounded-2xl border border-dashed border-white/20 p-12 text-center">
+              <div className="rounded-md2 border border-dashed border-ink p-12 text-center">
                 <p className="text-2xl mb-2">📭</p>
-                <p className="text-white/50">אין עדיין תלמידים עם פעילות</p>
+                <p className="text-muted">אין עדיין תלמידים עם פעילות</p>
               </div>
             )}
           </div>
@@ -388,15 +388,15 @@ export default function ProgressTable() {
                       <div className="text-sm text-muted">({p.word?.he})</div>
                     </TableCell>
                     <TableCell>
-                      <span className={p.isCorrect ? 'text-text' : 'text-danger'}>
+                      <span className={p.isCorrect ? 'text-ink' : 'text-berry'}>
                         {p.lastAnswer || '-'}
                       </span>
                     </TableCell>
                     <TableCell>
                       {p.isCorrect ? (
-                        <span className="text-accent">✓ נכון</span>
+                        <span className="text-mint">✓ נכון</span>
                       ) : (
-                        <span className="text-danger">✗ שגוי</span>
+                        <span className="text-berry">✗ שגוי</span>
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-muted">

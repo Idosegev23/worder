@@ -331,7 +331,7 @@ export default function RecordingGameScreen() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-md text-center">
-          <p className="text-xl text-white mb-4">{loadError}</p>
+          <p className="text-xl text-ink mb-4">{loadError}</p>
           <Button onClick={() => nav('/categories')}>חזרה לקטגוריות</Button>
         </Card>
       </div>
@@ -342,7 +342,7 @@ export default function RecordingGameScreen() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-md text-center">
-          <p className="text-xl text-white mb-4">אין משפטים זמינים</p>
+          <p className="text-xl text-ink mb-4">אין משפטים זמינים</p>
           <Button onClick={() => nav('/categories')}>חזרה לקטגוריות</Button>
         </Card>
       </div>
@@ -350,41 +350,41 @@ export default function RecordingGameScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#050A1C] to-[#0b1c3a] p-4 sm:p-6 md:p-8 relative">
+    <div className="min-h-screen app-bg p-4 sm:p-6 md:p-8 relative">
       {/* אין GlobalProgress למישל - לא רלוונטי */}
       
       <div className="max-w-4xl mx-auto">
         {/* כותרת */}
         <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
           <div className="text-center sm:text-right space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">משחק מיוחד</p>
-            <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <p className="text-xs uppercase tracking-[0.4em] text-muted">משחק מיוחד</p>
+            <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-sky to-berry bg-clip-text text-transparent">
               הקלטת משפטים 🎤
             </h1>
-            <p className="text-sm text-white/70">
+            <p className="text-sm text-muted">
               משפט {currentIndex + 1} מתוך {words.length}
             </p>
           </div>
           <button
             onClick={() => nav('/categories')}
-            className="rounded-2xl border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 hover:text-white hover:border-white/40 transition-all"
+            className="rounded-md2 border border-ink px-6 py-3 text-sm font-semibold text-muted hover:text-ink hover:border-white/40 transition-all"
           >
             ← חזרה
           </button>
         </div>
 
         {/* כרטיס המשחק */}
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 sm:p-8">
+        <div className="relative overflow-hidden rounded-md2 border-outline border-ink bg-surface shadow-solid p-6 sm:p-8">
           {/* הוראות */}
           <div className="text-center mb-8">
-            <div className="inline-block bg-gradient-to-r from-primary/20 to-secondary/20 px-6 py-3 rounded-full border border-white/10 mb-4">
-              <span className="text-white font-semibold">📢 קראי את המשפט והקליטי אותו</span>
+            <div className="inline-block bg-gradient-to-r from-sky/20 to-berry/20 px-6 py-3 rounded-full border border-ink mb-4">
+              <span className="text-ink font-semibold">📢 קראי את המשפט והקליטי אותו</span>
             </div>
           </div>
 
           {/* המשפט */}
-          <div className="text-center mb-10 py-8 px-4 bg-white rounded-2xl shadow-lg">
-            <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 leading-relaxed" dir="rtl">
+          <div className="text-center mb-10 py-8 px-4 bg-white rounded-md2 shadow-lg">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-muted leading-relaxed" dir="rtl">
               {currentWord.he}
             </p>
           </div>
@@ -396,14 +396,14 @@ export default function RecordingGameScreen() {
                 {!isRecording ? (
                   <button
                     onClick={startRecording}
-                    className="px-10 py-5 text-xl font-bold rounded-2xl bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                    className="px-10 py-5 text-xl font-bold rounded-md2 bg-sky text-ink shadow-lg hover:shadow-xl transition-all"
                   >
                     🎤 התחילי הקלטה
                   </button>
                 ) : (
                   <button
                     onClick={stopRecording}
-                    className="px-10 py-5 text-xl font-bold rounded-2xl bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg animate-pulse"
+                    className="px-10 py-5 text-xl font-bold rounded-md2 bg-sky text-ink shadow-lg animate-pulse"
                   >
                     ⏹️ עצרי הקלטה
                   </button>
@@ -414,30 +414,30 @@ export default function RecordingGameScreen() {
             {/* מצב המרה */}
             {isConverting && (
               <div className="text-center py-8">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mb-4"></div>
-                <p className="text-white text-lg font-semibold">מעבד את ההקלטה...</p>
-                <p className="text-white/60 text-sm mt-2">זה יקח רק שנייה 🎵</p>
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-sky border-t-transparent mb-4"></div>
+                <p className="text-ink text-lg font-semibold">מעבד את ההקלטה...</p>
+                <p className="text-muted text-sm mt-2">זה יקח רק שנייה 🎵</p>
               </div>
             )}
 
             {/* נגן ההקלטה */}
             {audioBlob && !hasSubmitted && (
               <div className="space-y-6">
-                <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-6 rounded-2xl border border-green-500/30 text-center">
-                  <p className="text-white text-xl font-bold mb-6">
+                <div className="bg-gradient-to-r from-green-500/20 p-6 rounded-md2 border border-mint text-center">
+                  <p className="text-ink text-xl font-bold mb-6">
                     ההקלטה שלך מוכנה! 🎉
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <button
                       onClick={playRecording}
                       disabled={isPlaying}
-                      className="px-6 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-all disabled:opacity-50"
+                      className="px-6 py-3 rounded-sm2 bg-sky hover:bg-sky text-ink font-semibold transition-all disabled:opacity-50"
                     >
                       {isPlaying ? '▶️ מנגן...' : '▶️ שמעי את ההקלטה'}
                     </button>
                     <button
                       onClick={deleteRecording}
-                      className="px-6 py-3 rounded-xl bg-gray-600 hover:bg-gray-700 text-white font-semibold transition-all"
+                      className="px-6 py-3 rounded-sm2 bg-muted hover:bg-muted text-ink font-semibold transition-all"
                     >
                       🗑️ מחקי והקליטי שוב
                     </button>
@@ -447,7 +447,7 @@ export default function RecordingGameScreen() {
                 <button
                   onClick={submitRecording}
                   disabled={isUploading}
-                  className="w-full py-5 text-xl font-bold rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50"
+                  className="w-full py-5 text-xl font-bold rounded-md2 bg-mint text-ink border-outline border-ink shadow-solid shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50"
                 >
                   {isUploading ? '⏳ שולח...' : '✅ שלחי את ההקלטה'}
                 </button>
@@ -456,19 +456,19 @@ export default function RecordingGameScreen() {
 
             {hasSubmitted && (
               <div className="text-center py-8">
-                <div className="text-3xl font-bold text-green-400 animate-bounce">
+                <div className="text-3xl font-bold text-ink animate-bounce">
                   🎉 נשלח בהצלחה! 🌟
                 </div>
-                <p className="text-white/70 mt-2">עוברים למשפט הבא...</p>
+                <p className="text-muted mt-2">עוברים למשפט הבא...</p>
               </div>
             )}
           </div>
 
           {/* Progress bar */}
           <div className="mt-8">
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-2 bg-track rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
+                className="h-full bg-gradient-to-r from-sky to-berry transition-all duration-500"
                 style={{ width: `${((currentIndex + 1) / words.length) * 100}%` }}
               />
             </div>

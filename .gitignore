@@ -32,3 +32,9 @@ dist-ssr
 backups/
 
 .superpowers/
+
+# נתוני הזרעה — שמות מלאים וסיסמאות של תלמידות. הריפו ציבורי.
+scripts/seed-data.json
+
+# קבצי עבודה של Supabase CLI
+supabase/.temp/
