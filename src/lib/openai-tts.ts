@@ -1,7 +1,8 @@
 // Text-to-Speech Service
 // תומך גם ב-OpenAI (בתשלום) וגם ב-Web Speech API (חינמי)
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY
+// המפתח כבר לא נמצא בדפדפן — ההקראה עוברת דרך /api/tts.
+// VITE_USE_BROWSER_TTS=true כופה את מנוע הדפדפן החינמי.
 const USE_BROWSER_TTS = import.meta.env.VITE_USE_BROWSER_TTS === 'true'
 
 // מילון תיקוני הגייה - מילים שה-TTS לא מבטא נכון
@@ -18,7 +19,8 @@ function speakWithBrowserAPI(text: string): Promise<void> {
     }
 
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US'
+    // היה מקודד ל-en-US — קול אנגלי שמנסה לקרוא עברית מייצר ג'יבריש
+    utterance.lang = /[\u0590-\u05FF]/.test(text) ? 'he-IL' : 'en-US'
     utterance.rate = 0.85 // קצב דיבור
     utterance.pitch = 1.0
     
@@ -38,37 +40,18 @@ function fixPronunciation(text: string): string {
   return fixed
 }
 
-// הקראה באמצעות OpenAI TTS (בתשלום, איכות גבוהה יותר)
+// הקראה דרך הפונקציה השרתית — המפתח נשאר בשרת
 async function speakWithOpenAI(word: string): Promise<void> {
-  if (!OPENAI_API_KEY) {
-    throw new Error('OpenAI API Key not configured')
-  }
-
-  // תיקון הגייה
   const fixedWord = fixPronunciation(word)
 
-  // זיהוי אם הטקסט בעברית
-  const isHebrew = /[\u0590-\u05FF]/.test(fixedWord)
-
-  const response = await fetch('https://api.openai.com/v1/audio/speech', {
+  const response = await fetch('/api/tts', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini-tts',
-      voice: 'coral', // קול חדש ואיכותי
-      input: fixedWord,
-      speed: 1.1, // קצב מהיר יותר
-      instructions: isHebrew 
-        ? "Speak clearly in Hebrew at a normal pace. Pay attention to nikud (vowel marks) for correct pronunciation." 
-        : "Speak clearly at a normal pace, suitable for children learning English.",
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: fixedWord })
   })
 
   if (!response.ok) {
-    throw new Error(`OpenAI TTS failed: ${response.statusText}`)
+    throw new Error(`TTS failed: ${response.status}`)
   }
 
   const audioBlob = await response.blob()
@@ -91,15 +74,12 @@ export async function speakWord(word: string): Promise<void> {
       return
     }
     
-    // נסה OpenAI קודם (אם יש API key)
-    if (OPENAI_API_KEY) {
-      try {
-        console.log('Using OpenAI TTS with model: gpt-4o-mini-tts, voice: coral')
-        await speakWithOpenAI(word)
-        return
-      } catch (error) {
-        console.warn('OpenAI TTS failed, falling back to browser TTS:', error)
-      }
+    // ניסיון ראשון: הפונקציה השרתית
+    try {
+      await speakWithOpenAI(word)
+      return
+    } catch (error) {
+      console.warn('Server TTS failed, falling back to browser TTS:', error)
     }
     
     // fallback לדפדפן

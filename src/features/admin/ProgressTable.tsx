@@ -1,421 +1,277 @@
-import { useEffect, useState } from 'react'
-import { Progress, Profile, Word, supabase, getAllWords } from '../../lib/supabase'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAdmin } from '../../store/useAdmin'
-import { Button } from '../../shared/ui/Button'
-import { Table, TableHeader, TableBody, TableRow, TableCell } from '../../shared/ui/Table'
-import { Modal } from '../../shared/ui/Modal'
+import {
+  supabase,
+  Word,
+  Category,
+  Progress,
+  getCategories,
+  getAllWords,
+  getAllUsers,
+  getAllUserCategoryIds,
+  resolveVisibleLeafIds
+} from '../../lib/supabase'
+import {
+  summarizeStudent,
+  hardestWords,
+  formatSince,
+  STATUS_LABEL,
+  STATUS_TONE,
+  StudentSummary
+} from '../../lib/progressAnalytics'
 import { LoadingOverlay } from '../../shared/ui/LoadingOverlay'
+import { Modal } from '../../shared/ui/Modal'
+import { IconArrowRight } from '../../shared/ui/icons'
+import StudentDetail from './StudentDetail'
 
-type CategoryProgress = {
-  categoryId: number
-  categoryName: string
-  displayName: string
-  totalWords: number
-  completedWords: number
-  correctWords: number
-  progressPercent: number
-}
-
-type StudentStats = {
-  user: Profile
-  totalAttempts: number
-  correctAnswers: number
-  wrongAnswers: number
-  successRate: number
-  lastActivity: string
-  categoryProgress: CategoryProgress[]
-}
-
-type DetailedProgress = Progress & {
-  word?: Word
-}
+type Tab = 'class' | 'words'
 
 export default function ProgressTable() {
   const nav = useNavigate()
   const isAuth = useAdmin(s => s.isAuthenticated)
 
-  const [stats, setStats] = useState<StudentStats[]>([])
-  const [selectedUser, setSelectedUser] = useState<Profile | null>(null)
-  const [userProgress, setUserProgress] = useState<DetailedProgress[]>([])
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [tab, setTab] = useState<Tab>('class')
+  const [summaries, setSummaries] = useState<StudentSummary[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [selected, setSelected] = useState<StudentSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isDetailsLoading, setIsDetailsLoading] = useState(false)
 
   useEffect(() => {
     if (!isAuth) {
       nav('/admin')
       return
     }
-    loadStats()
+    load()
   }, [isAuth, nav])
 
-  const loadStats = async () => {
+  const load = async () => {
     try {
       setIsLoading(true)
       setError(null)
-      
-      // טעינת כל המשתמשים
-      const { data: users } = await supabase
-        .from('worder_profiles')
+
+      const [users, cats, words, assignments] = await Promise.all([
+        getAllUsers(),
+        getCategories(),
+        getAllWords(),
+        getAllUserCategoryIds()
+      ])
+
+      const { data: progressRows, error: pErr } = await supabase
+        .from('worder_progress')
         .select('*')
-        .eq('role', 'user')
-      
-      // טעינת כל הקטגוריות
-      const { data: categories } = await supabase
-        .from('worder_categories')
-        .select('*')
-        .order('display_order')
-      
-      // טעינת כל המילים
-      const { data: words } = await supabase
-        .from('worder_words')
-        .select('id, category_id')
-      
-      if (!users || !categories || !words) return
-      
-      // ספירת מילים לכל קטגוריה
-      const wordsPerCategory = new Map<number, number>()
-      words.forEach(w => {
-        wordsPerCategory.set(w.category_id, (wordsPerCategory.get(w.category_id) || 0) + 1)
-      })
-      
-      // יצירת מפה של מילה -> קטגוריה
-      const wordToCategory = new Map<number, number>()
-      words.forEach(w => wordToCategory.set(w.id, w.category_id))
-      
-      // חישוב סטטיסטיקות לכל משתמש
-      const statsPromises = users.map(async (user) => {
-        const { data: progressRecords } = await supabase
-          .from('worder_progress')
-          .select('*')
-          .eq('user_id', user.id)
-        
-        const records = progressRecords || []
-        const totalAttempts = records.length
-        const correctAnswers = records.filter(p => p.is_correct).length
-        const wrongAnswers = totalAttempts - correctAnswers
-        const successRate = totalAttempts > 0 ? (correctAnswers / totalAttempts) * 100 : 0
-        const lastActivity = records.length > 0 
-          ? records.reduce((max, p) => p.answered_at > max ? p.answered_at : max, records[0].answered_at)
-          : user.created_at
+      if (pErr) throw pErr
 
-        // חישוב התקדמות לכל קטגוריה
-        const categoryStats = new Map<number, { completed: Set<number>; correct: Set<number> }>()
-        
-        records.forEach(p => {
-          const catId = wordToCategory.get(p.word_id)
-          if (!catId) return
-          
-          if (!categoryStats.has(catId)) {
-            categoryStats.set(catId, { completed: new Set(), correct: new Set() })
-          }
-          
-          const stat = categoryStats.get(catId)!
-          stat.completed.add(p.word_id)
-          if (p.is_correct) {
-            stat.correct.add(p.word_id)
-          }
-        })
+      const progress: Progress[] = (progressRows || []).map((r: any) => ({
+        id: r.id,
+        userId: r.user_id,
+        wordId: r.word_id,
+        isCorrect: r.is_correct,
+        attempts: r.attempts,
+        lastAnswer: r.last_answer,
+        wrongAnswers: r.wrong_answers,
+        audioPlayed: r.audio_played,
+        answeredAt: r.answered_at
+      }))
 
-        const categoryProgress: CategoryProgress[] = categories.map(cat => {
-          const totalWords = wordsPerCategory.get(cat.id) || 0
-          const stat = categoryStats.get(cat.id)
-          const completedWords = stat ? stat.completed.size : 0
-          const correctWords = stat ? stat.correct.size : 0
-          const progressPercent = totalWords > 0 ? Math.round((completedWords / totalWords) * 100) : 0
-          
-          return {
-            categoryId: cat.id,
-            categoryName: cat.name,
-            displayName: cat.display_name,
-            totalWords,
-            completedWords,
-            correctWords,
-            progressPercent
-          }
-        }).filter(cp => cp.totalWords > 0) // רק קטגוריות עם מילים
+      const byUser = new Map<string, Progress[]>()
+      for (const p of progress) {
+        const list = byUser.get(p.userId)
+        if (list) list.push(p)
+        else byUser.set(p.userId, [p])
+      }
 
-        return {
-          user: {
-            id: user.id,
-            firstName: user.first_name,
-            lastName: user.last_name,
-            username: user.username,
-            password: user.password,
-            role: user.role,
-            avatarStyle: user.avatar_style,
-            avatarSeed: user.avatar_seed,
-            createdAt: user.created_at
-          },
-          totalAttempts,
-          correctAnswers,
-          wrongAnswers,
-          successRate,
-          lastActivity,
-          categoryProgress
-        }
+      const now = Date.now()
+      const students = users.filter(u => u.role === 'user')
+
+      const result = students.map(user => {
+        // רק המילים שהתלמידה בכלל אמורה לראות — אחרת האחוזים משקרים
+        const visibleLeafIds = resolveVisibleLeafIds(assignments[user.id] ?? [], cats)
+        const visibleWords: Word[] = words.filter(
+          w => visibleLeafIds.has(w.categoryId) && w.active
+        )
+        return summarizeStudent(user, byUser.get(user.id) ?? [], visibleWords, now)
       })
 
-      const allStats = await Promise.all(statsPromises)
-      // מיון לפי פעילות אחרונה
-      allStats.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
-      setStats(allStats)
-    } catch (error) {
-      console.error('Error loading stats:', error)
-      setError('טעינת נתוני התלמידים נכשלה.')
+      // המתקשות והנעלמות למעלה — הן הסיבה שנכנסים למסך הזה
+      const rank: Record<string, number> = {
+        struggling: 0, inactive: 1, 'never-started': 2, 'on-track': 3, done: 4
+      }
+      result.sort((a, b) => rank[a.status] - rank[b.status] || a.progressPercent - b.progressPercent)
+
+      setCategories(cats)
+      setSummaries(result)
+    } catch (e) {
+      console.error('Error loading progress:', e)
+      setError('טעינת ההתקדמות נכשלה. נסי לרענן.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleViewDetails = async (user: Profile) => {
-    setSelectedUser(user)
-    setIsDetailsLoading(true)
-    try {
-      // טעינת כל ההתקדמות של המשתמש עם המילים
-      const { data: progressRecords } = await supabase
-        .from('worder_progress')
-        .select('*')
-        .eq('user_id', user.id)
-      
-      if (!progressRecords) return
-      
-      const allWords = await getAllWords()
-      
-      // הוספת פרטי המילים
-      const detailedProgress = progressRecords.map((p) => {
-        const word = allWords.find(w => w.id === p.word_id)
-        return {
-          id: p.id,
-          userId: p.user_id,
-          wordId: p.word_id,
-          isCorrect: p.is_correct,
-          attempts: p.attempts,
-          lastAnswer: p.last_answer,
-          wrongAnswers: p.wrong_answers,
-          audioPlayed: p.audio_played,
-          answeredAt: p.answered_at,
-          word
-        }
-      })
-    
-      // מיון לפי זמן (אחרון קודם)
-      detailedProgress.sort((a, b) => new Date(b.answeredAt).getTime() - new Date(a.answeredAt).getTime())
-      setUserProgress(detailedProgress)
-      setIsModalOpen(true)
-    } catch (error) {
-      console.error('Error loading user details:', error)
-    } finally {
-      setIsDetailsLoading(false)
-    }
-  }
-
-  const formatDate = (timestamp: string) => {
-    return new Date(timestamp).toLocaleDateString('he-IL', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+  const hard = useMemo(() => hardestWords(summaries), [summaries])
+  const anyActivity = summaries.some(s => s.totalAttempts > 0)
 
   return (
-    <div className="min-h-screen app-bg p-4 sm:p-6 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-muted">ממשק אדמין</p>
-            <h1 className="text-3xl sm:text-5xl font-bold bg-surface bg-clip-text text-transparent">
-              התקדמות תלמידים 📊
-            </h1>
-            <p className="text-muted">מעקב מפורט על התקדמות בכל קטגוריה</p>
+    <div className="min-h-screen app-bg p-4 sm:p-6">
+      <div className="max-w-5xl mx-auto">
+        <header className="flex items-center justify-between gap-3 mb-5">
+          <div>
+            <h1 className="text-2xl font-bold text-ink">מעקב התקדמות</h1>
+            <p className="text-sm text-muted font-medium">
+              {summaries.length} תלמידות
+            </p>
           </div>
-          <Link to="/admin/dashboard">
-            <button className="rounded-sm2 border border-ink px-5 py-3 text-sm font-semibold text-muted hover:text-ink hover:border-white/40 transition-all">
-              ← חזרה לדשבורד
-            </button>
+          <Link
+            to="/admin/dashboard"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-ink bg-track border-2 border-ink shadow-solid-sm pressable px-3 py-1.5 rounded-pill"
+          >
+            <IconArrowRight size={16} /> חזרה
           </Link>
+        </header>
+
+        <div className="flex gap-2 mb-5">
+          <TabButton active={tab === 'class'} onClick={() => setTab('class')}>
+            כיתה
+          </TabButton>
+          <TabButton active={tab === 'words'} onClick={() => setTab('words')}>
+            מילים קשות {hard.length > 0 && `(${hard.length})`}
+          </TabButton>
         </div>
 
-        <div className="bg-surface rounded-md2 border border-ink p-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted">
-            <span>סה״כ <span className="text-sky font-bold">{stats.length}</span> תלמידים</span>
-            <span><span className="text-mint font-bold">{stats.reduce((sum, s) => sum + s.totalAttempts, 0)}</span> ניסיונות</span>
-          </div>
-        </div>
+        <div className="relative min-h-[200px]">
+          {isLoading && <LoadingOverlay message="טוען…" />}
 
-        <div className="relative">
-          {isLoading && <LoadingOverlay fullscreen message="טוען סטטיסטיקות..." />}
           {error && !isLoading && (
-            <div className="mb-4 rounded-sm2 border border-berry bg-berry px-4 py-3 text-sm text-berry">
+            <div className="mb-4 rounded-sm2 border-2 border-ink bg-berry px-4 py-3 text-sm font-bold text-ink">
               {error}
             </div>
           )}
 
-          {/* תצוגת כרטיסים - מובייל ודסקטופ */}
-          <div className="space-y-6">
-            {stats.map(stat => (
-              <div key={stat.user.id} className="rounded-md2 border border-ink bg-surface p-5 ">
-                {/* כותרת - פרטי תלמיד */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-ink">
-                  <div>
-                    <p className="text-xl font-bold text-ink">
-                      {stat.user.firstName} {stat.user.lastName}
-                    </p>
-                    <p className="text-sm text-muted">@{stat.user.username}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-mint">{stat.correctAnswers}</p>
-                      <p className="text-xs text-muted">נכונים</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-berry">{stat.wrongAnswers}</p>
-                      <p className="text-xs text-muted">שגויים</p>
-                    </div>
-                    <div className="text-center">
-                      <p className={`text-2xl font-bold ${
-                        stat.successRate >= 80 ? 'text-mint' :
-                        stat.successRate >= 60 ? 'text-sun' : 'text-berry'
-                      }`}>
-                        {stat.successRate.toFixed(0)}%
-                      </p>
-                      <p className="text-xs text-muted">הצלחה</p>
-                    </div>
-                  </div>
-                </div>
+          {!isLoading && !error && !anyActivity && (
+            <div className="rounded-md2 border-2 border-ink bg-surface p-8 text-center mb-5">
+              <p className="text-4xl mb-2">🌱</p>
+              <p className="font-bold text-ink">עוד אין נתוני התקדמות</p>
+              <p className="text-sm text-muted mt-1">
+                המספרים יופיעו כאן אחרי שהתלמידות ישחקו בפעם הראשונה.
+              </p>
+            </div>
+          )}
 
-                {/* התקדמות לפי קטגוריה */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-muted mb-3">📂 התקדמות לפי קטגוריה:</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {stat.categoryProgress.map(cp => (
-                      <div 
-                        key={cp.categoryId}
-                        className={`rounded-sm2 p-3 border ${
-                          cp.progressPercent === 0 ? 'bg-muted border-muted' :
-                          cp.progressPercent < 50 ? 'bg-berry border-berry' :
-                          cp.progressPercent < 100 ? 'bg-sun border-sun' :
-                          'bg-mint border-mint'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-sm font-medium text-ink truncate flex-1">
-                            {cp.displayName}
-                          </span>
-                          <span className={`text-sm font-bold ${
-                            cp.progressPercent === 0 ? 'text-muted' :
-                            cp.progressPercent < 50 ? 'text-berry' :
-                            cp.progressPercent < 100 ? 'text-sun' :
-                            'text-mint'
-                          }`}>
-                            {cp.progressPercent}%
-                          </span>
-                        </div>
-                        <div className="h-2 bg-surface rounded-full overflow-hidden mb-2">
-                          <div 
-                            className={`h-full transition-all ${
-                              cp.progressPercent === 0 ? 'bg-muted' :
-                              cp.progressPercent < 50 ? 'bg-berry' :
-                              cp.progressPercent < 100 ? 'bg-sun' :
-                              'bg-mint'
-                            }`}
-                            style={{ width: `${cp.progressPercent}%` }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-xs text-muted">
-                          <span>{cp.completedWords} / {cp.totalWords} מילים</span>
-                          <span>✓ {cp.correctWords} נכון</span>
-                        </div>
-                      </div>
-                    ))}
+          {!isLoading && tab === 'class' && (
+            <div className="rounded-md2 border-2 border-ink bg-surface shadow-solid overflow-hidden">
+              {summaries.map((s, i) => (
+                <button
+                  key={s.user.id}
+                  onClick={() => setSelected(s)}
+                  className={`w-full text-right px-4 py-3 flex items-center gap-3 hover:bg-cream transition-colors ${
+                    i > 0 ? 'border-t border-line' : ''
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-ink truncate">
+                      {s.user.firstName} {s.user.lastName}
+                    </div>
+                    <div className="text-xs text-muted font-medium">
+                      {formatSince(s.daysSinceActivity)}
+                      {s.toPractice.length > 0 && ` · ${s.toPractice.length} מילים לתרגול`}
+                    </div>
                   </div>
-                  {stat.categoryProgress.length === 0 && (
-                    <p className="text-sm text-muted text-center py-4">
-                      עדיין לא התחיל לשחק
-                    </p>
-                  )}
-                </div>
 
-                {/* כותרת תחתונה */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-ink">
-                  <span className="text-xs text-muted">
-                    פעילות אחרונה: {formatDate(stat.lastActivity)}
+                  <div className="hidden sm:flex items-center gap-2 w-40">
+                    <div className="flex-1 h-2.5 rounded-pill bg-track border-2 border-ink overflow-hidden">
+                      <div className="h-full bg-mint" style={{ width: `${s.progressPercent}%` }} />
+                    </div>
+                    <span className="text-xs font-bold text-ink tabular-nums w-12 text-left">
+                      {s.masteredWords}/{s.totalWords}
+                    </span>
+                  </div>
+
+                  <span className="text-sm font-bold text-ink tabular-nums w-12 text-left">
+                    {s.totalAttempts > 0 ? `${s.successRate}%` : '—'}
                   </span>
-                  <button
-                    onClick={() => handleViewDetails(stat.user)}
-                    className="px-4 py-2 rounded-sm2 bg-sky/20 text-sky text-sm font-semibold hover:bg-sky/30 transition-colors"
+
+                  <span
+                    className={`shrink-0 text-xs font-bold text-ink border-2 border-ink rounded-pill px-2.5 py-0.5 ${STATUS_TONE[s.status]}`}
                   >
-                    📋 פירוט מילים
-                  </button>
+                    {STATUS_LABEL[s.status]}
+                  </span>
+                </button>
+              ))}
+              {summaries.length === 0 && !isLoading && (
+                <p className="p-8 text-center text-muted">אין תלמידות במערכת.</p>
+              )}
+            </div>
+          )}
+
+          {!isLoading && tab === 'words' && (
+            <div className="rounded-md2 border-2 border-ink bg-surface shadow-solid overflow-hidden">
+              {hard.map((w, i) => (
+                <div
+                  key={w.wordId}
+                  className={`px-4 py-3 flex items-center gap-3 ${i > 0 ? 'border-t border-line' : ''}`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-ink truncate" dir="ltr">
+                      {w.en}
+                    </div>
+                    <div className="text-xs text-muted font-medium truncate">
+                      {w.he} · {w.studentNames.join(', ')}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-xs font-bold text-ink bg-berry border-2 border-ink rounded-pill px-2.5 py-0.5">
+                    {w.studentsFailed} תלמידות
+                  </span>
+                  <span className="shrink-0 text-sm font-bold text-ink tabular-nums w-14 text-left">
+                    {w.totalWrong} טעויות
+                  </span>
                 </div>
-              </div>
-            ))}
-            {stats.length === 0 && !isLoading && (
-              <div className="rounded-md2 border border-dashed border-ink p-12 text-center">
-                <p className="text-2xl mb-2">📭</p>
-                <p className="text-muted">אין עדיין תלמידים עם פעילות</p>
-              </div>
-            )}
-          </div>
+              ))}
+              {hard.length === 0 && (
+                <p className="p-8 text-center text-muted">
+                  אין עדיין מילים עם טעויות. זה או שהכול הולך מצוין, או שעוד לא שיחקו.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Modal - פירוט התקדמות */}
         <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title={selectedUser ? `התקדמות: ${selectedUser.firstName} ${selectedUser.lastName}` : ''}
+          isOpen={!!selected}
+          onClose={() => setSelected(null)}
+          title={selected ? `${selected.user.firstName} ${selected.user.lastName}` : ''}
         >
-          <div className="relative max-h-96 overflow-y-auto">
-            {isDetailsLoading && <LoadingOverlay message="טוען פעילויות..." />}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableCell header>מילה</TableCell>
-                  <TableCell header>תשובה</TableCell>
-                  <TableCell header>תוצאה</TableCell>
-                  <TableCell header>זמן</TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {userProgress.map((p, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>
-                      <div className="font-medium">{p.word?.en}</div>
-                      <div className="text-sm text-muted">({p.word?.he})</div>
-                    </TableCell>
-                    <TableCell>
-                      <span className={p.isCorrect ? 'text-ink' : 'text-berry'}>
-                        {p.lastAnswer || '-'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {p.isCorrect ? (
-                        <span className="text-mint">✓ נכון</span>
-                      ) : (
-                        <span className="text-berry">✗ שגוי</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted">
-                      {formatDate(p.answeredAt)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="mt-4">
-            <Button onClick={() => setIsModalOpen(false)} className="w-full">
-              סגור
-            </Button>
-          </div>
+          {selected && (
+            <StudentDetail
+              summary={selected}
+              categories={categories}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </Modal>
       </div>
     </div>
   )
 }
 
-
+function TabButton({
+  active,
+  onClick,
+  children
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2 rounded-pill text-sm font-bold text-ink border-2 border-ink shadow-solid-sm pressable ${
+        active ? 'bg-sun' : 'bg-surface'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}

@@ -27,7 +27,7 @@ export default function AdminLogin() {
         setE('שגיאה בזיהוי אדמין')
         return
       }
-      adminLogin()
+      adminLogin(p)
       nav('/admin/dashboard')
     } catch (error) {
       setE('שגיאה בזיהוי אדמין')
