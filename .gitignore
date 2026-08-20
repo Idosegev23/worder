@@ -25,3 +25,10 @@ dist-ssr
 
 
 
+.vercel
+.env*.local
+
+# גיבויי מסד — מכילים סיסמאות בטקסט גלוי
+backups/
+
+.superpowers/
