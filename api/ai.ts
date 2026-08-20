@@ -96,7 +96,10 @@ export default async function handler(req: Request): Promise<Response> {
   if (!r.ok) {
     const detail = await r.text()
     console.error('OpenAI error:', r.status, detail.slice(0, 300))
-    return Response.json({ error: 'OpenAI request failed' }, { status: 502 })
+    return Response.json(
+      { error: 'OpenAI request failed', _debug: { status: r.status, detail: detail.slice(0, 300), model: MODELS[task], hasKey: !!apiKey, keyLen: apiKey.length } },
+      { status: 502 }
+    )
   }
 
   const data = (await r.json()) as { choices?: { message?: { content?: string } }[] }
